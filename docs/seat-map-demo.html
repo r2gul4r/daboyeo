@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>다보여 좌석배치도 실좌표 프로토타입</title>
+  <style>
+    :root {
+      --bg: #f5efe6;
+      --panel: rgba(255, 250, 244, 0.95);
+      --ink: #1f1813;
+      --muted: #6e635a;
+      --line: rgba(31, 24, 19, 0.12);
+      --accent: #bf6433;
+      --map: #231d19;
+      --map-top: #382f29;
+      --screen: linear-gradient(180deg, #efe4d5, #d8c7b2);
+      --available: linear-gradient(180deg, #42b274, #2c8456);
+      --sold: linear-gradient(180deg, #df655f, #b4433e);
+      --blocked: linear-gradient(180deg, #93a0ad, #69727d);
+      --special: linear-gradient(180deg, #986cff, #7341ff);
+      --shadow: 0 22px 64px rgba(43, 28, 17, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 28px 18px 40px;
+      color: var(--ink);
+      font-family: "Pretendard", "Noto Sans KR", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(191, 100, 51, 0.16), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(82, 125, 176, 0.14), transparent 20%),
+        linear-gradient(160deg, #faf5ee, var(--bg));
+    }
+
+    .shell {
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 20px;
+      padding: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 38px);
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+    }
+
+    .lede {
+      margin: 14px 0 22px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .chooser {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .provider-button {
+      width: 100%;
+      padding: 14px 15px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .provider-button.active {
+      border-color: rgba(191, 100, 51, 0.42);
+      background: rgba(191, 100, 51, 0.12);
+    }
+
+    .provider-button strong,
+    .provider-button span {
+      display: block;
+    }
+
+    .provider-button strong {
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .provider-button span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .meta-list,
+    .legend-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .meta-list li,
+    .legend-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .meta-list strong,
+    .legend-list strong {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .section {
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .swatch {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-right: 10px;
+      border-radius: 5px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      vertical-align: -2px;
+    }
+
+    .swatch.available { background: #379b6b; }
+    .swatch.sold { background: #cc524f; }
+    .swatch.blocked { background: #78848f; }
+    .swatch.special { background: #8453ff; }
+
+    .detail-card {
+      min-height: 170px;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.74);
+    }
+
+    .detail-card h2 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    .detail-card p,
+    .detail-card dl {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .detail-card dl {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      row-gap: 6px;
+    }
+
+    .stage { padding: 22px; }
+
+    .stage-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .stage-header h2 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: -0.05em;
+    }
+
+    .stage-header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 13px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.76);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .map-frame {
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.07), transparent 30%),
+        linear-gradient(180deg, var(--map-top), var(--map));
+      padding: 22px 18px 18px;
+    }
+
+    .screen {
+      width: min(84%, 640px);
+      margin: 0 auto 22px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      background: var(--screen);
+      color: #493a2e;
+      text-align: center;
+      font-weight: 800;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+    }
+
+    .map-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1.72 / 1;
+      overflow: hidden;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+        linear-gradient(90deg, rgba(255,255,255,0.034) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: auto, 44px 44px, 44px 44px;
+    }
+
+    .zone-box {
+      position: absolute;
+      border-radius: 18px;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      pointer-events: none;
+    }
+
+    .zone-box span {
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      color: rgba(255, 255, 255, 0.44);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .aisle {
+      position: absolute;
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+        rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+      pointer-events: none;
+    }
+
+    .row-label {
+      position: absolute;
+      left: 14px;
+      color: rgba(255, 255, 255, 0.54);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      pointer-events: none;
+    }
+
+    .entrance {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 11px;
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    .entrance::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #f0c787;
+      box-shadow: 0 0 10px rgba(240, 199, 135, 0.7);
+    }
+
+    .seat {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      padding: 0;
+      border-radius: 10px 10px 8px 8px;
+      color: #fff;
+      font-weight: 800;
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18);
+      cursor: pointer;
+    }
+
+    .seat.available { background: var(--available); }
+    .seat.sold { background: var(--sold); }
+    .seat.blocked { background: var(--blocked); }
+    .seat.special { background: var(--special); }
+    .seat.selected {
+      box-shadow:
+        0 0 0 2px rgba(255, 240, 215, 0.55),
+        0 14px 24px rgba(0, 0, 0, 0.28);
+      z-index: 5;
+    }
+
+    .seat-label {
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .map-note {
+      margin: 14px 2px 0;
+      color: rgba(255, 255, 255, 0.74);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="panel sidebar">
+      <p class="eyebrow">daboyeo prototype</p>
+      <h1>실좌표 좌석배치도</h1>
+      <p class="lede">메가박스, CGV, 롯데시네마 좌석 응답에서 뽑은 실제 좌표를 그대로 렌더한다.</p>
+      <div class="chooser" id="providerChooser"></div>
+      <ul class="meta-list" id="metaList"></ul>
+      <div class="section">
+        <ul class="legend-list">
+          <li><span><i class="swatch available"></i>예매 가능</span><strong>available</strong></li>
+          <li><span><i class="swatch sold"></i>판매 완료</span><strong>sold</strong></li>
+          <li><span><i class="swatch blocked"></i>예매 불가</span><strong>blocked</strong></li>
+          <li><span><i class="swatch special"></i>특별 좌석</span><strong>special</strong></li>
+        </ul>
+      </div>
+      <div class="detail-card section" id="seatDetail">
+        <h2>선택한 좌석</h2>
+        <p>좌석을 누르면 실좌표, 상태, 타입, 구역을 보여준다.</p>
+      </div>
+    </aside>
+
+    <main class="panel stage">
+      <div class="stage-header">
+        <div>
+          <h2 id="mapTitle"></h2>
+          <p id="mapSubtitle"></p>
+        </div>
+        <div class="badge" id="seatStats"></div>
+      </div>
+
+      <div class="map-frame">
+        <div class="screen">Screen</div>
+        <div class="map-wrap" id="mapCanvas"></div>
+        <p class="map-note" id="mapNote"></p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const DATA_SOURCES = {
+      MEGABOX: "./seat-map-data/megabox.json",
+      CGV: "./seat-map-data/cgv.json",
+      LOTTE: "./seat-map-data/lotte.json",
+    };
+
+    const providerChooser = document.getElementById("providerChooser");
+    const mapCanvas = document.getElementById("mapCanvas");
+    const mapTitle = document.getElementById("mapTitle");
+    const mapSubtitle = document.getElementById("mapSubtitle");
+    const seatStats = document.getElementById("seatStats");
+    const metaList = document.getElementById("metaList");
+    const seatDetail = document.getElementById("seatDetail");
+    const mapNote = document.getElementById("mapNote");
+
+    let datasets = {};
+    let currentProvider = "MEGABOX";
+    let selectedSeatId = null;
+
+    const SEAT_RENDER_CONFIG = {
+      MEGABOX: { fillX: 0.7, fillY: 0.74, minW: 1.1, minH: 2.05, fontWide: 4.9, fontMid: 2.8, aisleThreshold: 0.58, aisleInset: 0.08 },
+      CGV: { fillX: 0.74, fillY: 0.8, minW: 1.2, minH: 2.25, fontWide: 5.2, fontMid: 3.0, aisleThreshold: 0.9, aisleInset: 0.16 },
+      LOTTE: { fillX: 0.88, fillY: 0.9, minW: 1.25, minH: 2.45, fontWide: 5.8, fontMid: 3.3, aisleThreshold: 0.85, aisleInset: 0.1 },
+    };
+
+    function formatDate(value) {
+      if (!value || value === "실좌표 샘플") return value || "-";
+      const digits = String(value).replace(/\D/g, "");
+      if (digits.length !== 8) return value;
+      return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+    }
+
+    function formatTime(value) {
+      if (!value || value === "실좌표 샘플") return value || "-";
+      const digits = String(value).replace(/\D/g, "");
+      if (digits.length < 4) return value;
+      return `${digits.slice(0, 2)}:${digits.slice(2, 4)}`;
+    }
+
+    function humanType(value) {
+      const map = {
+        GERN_CLS: "일반석",
+        DISABLED_CLS: "장애인석",
+        GERN_ZONE: "일반존",
+      };
+      return map[value] || value;
+    }
+
+    function humanZone(value) {
+      const map = {
+        GERN_ZONE: "일반존",
+      };
+      return map[value] || value;
+    }
+
+    function statusLabel(status) {
+      if (status === "available") return "예매 가능";
+      if (status === "sold") return "판매 완료";
+      if (status === "blocked") return "예매 불가";
+      if (status === "special") return "특별 좌석";
+      return status;
+    }
+
+    function buildDataset(raw) {
+      return {
+        ...raw,
+        showDateLabel: formatDate(raw.showDate),
+        startTimeLabel: formatTime(raw.startTime),
+        rowLabels: raw.rowLabels.slice().sort((a, b) => a.y - b.y),
+        seats: raw.seats.map((seat) => ({
+          ...seat,
+          type: humanType(seat.type),
+          zone: humanZone(seat.zone),
+        })),
+      };
+    }
+
+    function seatBounds(items) {
+      return {
+        minX: Math.min(...items.map((item) => item.x)),
+        minY: Math.min(...items.map((item) => item.y)),
+        maxX: Math.max(...items.map((item) => item.x + item.w)),
+        maxY: Math.max(...items.map((item) => item.y + item.h)),
+      };
+    }
+
+    function median(values) {
+      if (!values.length) return 1;
+      const sorted = values.slice().sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : ((sorted[mid - 1] + sorted[mid]) / 2);
+    }
+
+    function seatMetrics(seats) {
+      const xs = [...new Set(seats.map((seat) => seat.x))].sort((a, b) => a - b);
+      const ys = [...new Set(seats.map((seat) => seat.y))].sort((a, b) => a - b);
+      const pitchX = median(xs.slice(1).map((value, index) => value - xs[index]).filter((gap) => gap > 0));
+      const pitchY = median(ys.slice(1).map((value, index) => value - ys[index]).filter((gap) => gap > 0));
+      return { pitchX: pitchX || 1, pitchY: pitchY || 1 };
+    }
+
+    function buildAisles(dataset, metrics) {
+      const config = SEAT_RENDER_CONFIG[dataset.key] || SEAT_RENDER_CONFIG.LOTTE;
+      const rows = new Map();
+      dataset.seats.forEach((seat) => {
+        const key = seat.label[0];
+        if (!rows.has(key)) rows.set(key, []);
+        rows.get(key).push(seat);
+      });
+
+      const rawAisles = [];
+      rows.forEach((rowSeats) => {
+        const sorted = rowSeats.slice().sort((a, b) => a.x - b.x);
+        for (let index = 0; index < sorted.length - 1; index += 1) {
+          const current = sorted[index];
+          const next = sorted[index + 1];
+          const gap = next.x - (current.x + current.w);
+          if (gap < config.aisleThreshold) continue;
+          rawAisles.push({
+            x: current.x + current.w + config.aisleInset,
+            y: current.y - (metrics.pitchY * 0.12),
+            w: Math.max(gap - (config.aisleInset * 2), metrics.pitchX * 0.32),
+            h: current.h + (metrics.pitchY * 0.24),
+          });
+        }
+      });
+
+      const merged = [];
+      rawAisles
+        .sort((a, b) => a.x - b.x || a.y - b.y)
+        .forEach((aisle) => {
+          const target = merged.find((entry) =>
+            Math.abs(entry.x - aisle.x) < (metrics.pitchX * 0.35) &&
+            Math.abs(entry.w - aisle.w) < (metrics.pitchX * 0.45) &&
+            aisle.y <= (entry.y + entry.h + metrics.pitchY * 0.45)
+          );
+          if (!target) {
+            merged.push({ ...aisle });
+            return;
+          }
+          const nextBottom = Math.max(target.y + target.h, aisle.y + aisle.h);
+          target.x = (target.x + aisle.x) / 2;
+          target.w = Math.max(target.w, aisle.w);
+          target.y = Math.min(target.y, aisle.y);
+          target.h = nextBottom - target.y;
+        });
+
+      return merged;
+    }
+
+    function buildZoneBoxes(dataset) {
+      if (dataset.zoneBoxes && dataset.zoneBoxes.length) return dataset.zoneBoxes;
+      const groups = new Map();
+      dataset.seats.forEach((seat) => {
+        if (!seat.zone || seat.zone === "일반존") return;
+        if (!groups.has(seat.zone)) {
+          groups.set(seat.zone, { label: seat.zone, minX: seat.x, minY: seat.y, maxX: seat.x + seat.w, maxY: seat.y + seat.h });
+          return;
+        }
+        const zone = groups.get(seat.zone);
+        zone.minX = Math.min(zone.minX, seat.x);
+        zone.minY = Math.min(zone.minY, seat.y);
+        zone.maxX = Math.max(zone.maxX, seat.x + seat.w);
+        zone.maxY = Math.max(zone.maxY, seat.y + seat.h);
+      });
+      return [...groups.values()].map((zone) => ({
+        label: zone.label,
+        x: zone.minX - 0.8,
+        y: zone.minY - 0.6,
+        w: zone.maxX - zone.minX + 1.6,
+        h: zone.maxY - zone.minY + 1.2,
+      }));
+    }
+
+    function renderChooser() {
+      providerChooser.innerHTML = "";
+      Object.values(datasets).forEach((dataset) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `provider-button${dataset.key === currentProvider ? " active" : ""}`;
+        button.innerHTML = `<strong>${dataset.provider}</strong><span>${dataset.theaterName} · ${dataset.screenName}</span>`;
+        button.addEventListener("click", () => {
+          currentProvider = dataset.key;
+          selectedSeatId = null;
+          render();
+        });
+        providerChooser.appendChild(button);
+      });
+    }
+
+    function renderMeta(dataset) {
+      metaList.innerHTML = `
+        <li><strong>지점</strong><span>${dataset.theaterName}</span></li>
+        <li><strong>상영관</strong><span>${dataset.screenName}</span></li>
+        <li><strong>포맷</strong><span>${dataset.screenType}</span></li>
+        <li><strong>상영 시간</strong><span>${dataset.showDateLabel} ${dataset.startTimeLabel}</span></li>
+        <li><strong>총 좌석</strong><span>${dataset.totalSeatCount}석</span></li>
+        <li><strong>잔여 좌석</strong><span>${dataset.remainingSeatCount}석</span></li>
+      `;
+    }
+
+    function renderDetail(dataset) {
+      const seat = dataset.seats.find((item) => item.id === selectedSeatId);
+      if (!seat) {
+        seatDetail.innerHTML = "<h2>선택한 좌석</h2><p>좌석을 누르면 실좌표, 상태, 타입, 구역을 보여준다.</p>";
+        return;
+      }
+      const meta = seat.providerMeta
+        ? Object.entries(seat.providerMeta)
+            .filter(([, value]) => value !== null && value !== undefined && value !== "")
+            .slice(0, 4)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join("<br>")
+        : "";
+      seatDetail.innerHTML = `
+        <h2>${seat.label}</h2>
+        <dl>
+          <dt>상태</dt><dd>${statusLabel(seat.status)}</dd>
+          <dt>좌석 타입</dt><dd>${seat.type}</dd>
+          <dt>구역</dt><dd>${seat.zone}</dd>
+          <dt>좌표</dt><dd>${seat.x}, ${seat.y}</dd>
+          <dt>크기</dt><dd>${seat.w} × ${seat.h}</dd>
+        </dl>
+        ${meta ? `<p style="margin-top:10px">` + meta + `</p>` : ""}
+      `;
+    }
+
+    function renderMap(dataset) {
+      mapCanvas.innerHTML = "";
+      const zoneBoxes = buildZoneBoxes(dataset);
+      const bounds = seatBounds(dataset.seats);
+      const boundsSpanX = bounds.maxX - bounds.minX;
+      const boundsSpanY = bounds.maxY - bounds.minY;
+      const entrancePadX = Math.max(1.2, boundsSpanX * 0.08);
+      const entrancePadY = Math.max(1.2, boundsSpanY * 0.05);
+      const leftPadding = Math.max(0.8, boundsSpanX * 0.1);
+      const minX = Math.min(
+        bounds.minX - leftPadding,
+        ...dataset.entrances.map((entry) => entry.x - entrancePadX)
+      );
+      const minY = Math.min(
+        bounds.minY - (boundsSpanY * 0.08),
+        ...dataset.entrances.map((entry) => entry.y - entrancePadY)
+      );
+      const maxX = Math.max(
+        bounds.maxX,
+        ...zoneBoxes.map((zone) => zone.x + zone.w),
+        ...dataset.entrances.map((entry) => entry.x + entrancePadX)
+      ) + (boundsSpanX * 0.05);
+      const maxY = Math.max(
+        bounds.maxY,
+        ...zoneBoxes.map((zone) => zone.y + zone.h),
+        ...dataset.entrances.map((entry) => entry.y + entrancePadY)
+      ) + (boundsSpanY * 0.08);
+      const spanX = maxX - minX;
+      const spanY = maxY - minY;
+      const insetLeft = 6;
+      const insetRight = 4;
+      const insetTop = 4;
+      const insetBottom = 6;
+      const innerWidth = 100 - insetLeft - insetRight;
+      const innerHeight = 100 - insetTop - insetBottom;
+      const px = (value) => insetLeft + (((value - minX) / spanX) * innerWidth);
+      const py = (value) => insetTop + (((value - minY) / spanY) * innerHeight);
+      const pw = (value) => (value / spanX) * innerWidth;
+      const ph = (value) => (value / spanY) * innerHeight;
+      const seatConfig = SEAT_RENDER_CONFIG[dataset.key] || SEAT_RENDER_CONFIG.LOTTE;
+      const metrics = seatMetrics(dataset.seats);
+      const aisles = buildAisles(dataset, metrics);
+
+      zoneBoxes.forEach((zone) => {
+        const node = document.createElement("div");
+        node.className = "zone-box";
+        node.style.left = `${px(zone.x)}%`;
+        node.style.top = `${py(zone.y)}%`;
+        node.style.width = `${pw(zone.w)}%`;
+        node.style.height = `${ph(zone.h)}%`;
+        node.innerHTML = `<span>${zone.label}</span>`;
+        mapCanvas.appendChild(node);
+      });
+
+      aisles.forEach((aisle) => {
+        const node = document.createElement("div");
+        node.className = "aisle";
+        node.style.left = `${px(aisle.x)}%`;
+        node.style.top = `${py(aisle.y)}%`;
+        node.style.width = `${pw(aisle.w)}%`;
+        node.style.height = `${ph(aisle.h)}%`;
+        mapCanvas.appendChild(node);
+      });
+
+      dataset.rowLabels.forEach((row) => {
+        const node = document.createElement("div");
+        node.className = "row-label";
+        node.textContent = row.row;
+        node.style.top = `${py(row.y + 0.35)}%`;
+        mapCanvas.appendChild(node);
+      });
+
+      dataset.entrances.forEach((entry) => {
+        const node = document.createElement("div");
+        node.className = "entrance";
+        node.textContent = entry.label;
+        node.style.left = `${px(entry.x)}%`;
+        node.style.top = `${py(entry.y)}%`;
+        mapCanvas.appendChild(node);
+      });
+
+      dataset.seats.forEach((seat) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `seat ${seat.status}${seat.id === selectedSeatId ? " selected" : ""}`;
+        button.title = `${seat.label} · ${statusLabel(seat.status)} · ${seat.type}`;
+        const slotWidthUnits = Math.max(seat.w, metrics.pitchX);
+        const slotHeightUnits = Math.max(seat.h, metrics.pitchY);
+        const rawSeatWidth = pw(slotWidthUnits);
+        const rawSeatHeight = ph(slotHeightUnits);
+        const seatWidth = Math.max(rawSeatWidth * seatConfig.fillX, seatConfig.minW);
+        const seatHeight = Math.max(rawSeatHeight * seatConfig.fillY, seatConfig.minH, seatWidth * 0.88);
+        const offsetX = Math.max(0, (rawSeatWidth - seatWidth) / 2);
+        const offsetY = Math.max(0, (rawSeatHeight - seatHeight) / 2);
+        button.style.left = `${px(seat.x) + offsetX}%`;
+        button.style.top = `${py(seat.y) + offsetY}%`;
+        button.style.width = `${seatWidth}%`;
+        button.style.height = `${seatHeight}%`;
+
+        const label = document.createElement("span");
+        label.className = "seat-label";
+        label.textContent = seat.label;
+        const fontScale = seatWidth;
+        label.style.fontSize = fontScale > seatConfig.fontWide ? "12px" : fontScale > seatConfig.fontMid ? "10px" : "8px";
+        button.appendChild(label);
+
+        button.addEventListener("click", () => {
+          selectedSeatId = seat.id;
+          render();
+        });
+        mapCanvas.appendChild(button);
+      });
+    }
+
+    function render() {
+      const dataset = datasets[currentProvider];
+      mapTitle.textContent = `${dataset.provider} 좌석배치도`;
+      mapSubtitle.textContent = `${dataset.theaterName} · ${dataset.screenName} · ${dataset.showDateLabel} ${dataset.startTimeLabel}`;
+      seatStats.textContent = `총 ${dataset.totalSeatCount}석 · 잔여 ${dataset.remainingSeatCount}석 · 렌더 ${dataset.seats.length}석`;
+      mapNote.textContent = dataset.note;
+      renderChooser();
+      renderMeta(dataset);
+      renderMap(dataset);
+      renderDetail(dataset);
+    }
+
+    async function boot() {
+      const entries = await Promise.all(
+        Object.entries(DATA_SOURCES).map(async ([key, path]) => [key, buildDataset(await (await fetch(path)).json())])
+      );
+      datasets = Object.fromEntries(entries);
+      render();
+    }
+
+    boot().catch((error) => {
+      mapTitle.textContent = "좌석배치도 로드 실패";
+      mapSubtitle.textContent = String(error);
+    });
+  </script>
+</body>
+</html>

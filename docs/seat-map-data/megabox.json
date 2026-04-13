@@ -1,0 +1,2893 @@
+{
+  "key": "MEGABOX",
+  "provider": "MEGABOX",
+  "theaterName": "군자",
+  "screenName": "1관",
+  "screenType": "2D(자막)",
+  "showDate": "20260410",
+  "startTime": "1130",
+  "totalSeatCount": 155,
+  "remainingSeatCount": 143,
+  "note": "메가박스 seatListSD01/SD05 실좌표 기반",
+  "rowLabels": [
+    {
+      "row": "A",
+      "y": 1
+    },
+    {
+      "row": "B",
+      "y": 2
+    },
+    {
+      "row": "C",
+      "y": 3
+    },
+    {
+      "row": "D",
+      "y": 4
+    },
+    {
+      "row": "E",
+      "y": 5
+    },
+    {
+      "row": "F",
+      "y": 6
+    },
+    {
+      "row": "G",
+      "y": 7
+    },
+    {
+      "row": "H",
+      "y": 8
+    },
+    {
+      "row": "I",
+      "y": 9
+    },
+    {
+      "row": "J",
+      "y": 10
+    },
+    {
+      "row": "K",
+      "y": 11
+    },
+    {
+      "row": "L",
+      "y": 12
+    },
+    {
+      "row": "M",
+      "y": 13
+    },
+    {
+      "row": "N",
+      "y": 14
+    },
+    {
+      "row": "O",
+      "y": 15
+    }
+  ],
+  "zoneBoxes": [],
+  "entrances": [
+    {
+      "label": "좌측 출입",
+      "x": 0,
+      "y": 0,
+      "providerMeta": {
+        "gateTypeCode": "GTL"
+      }
+    },
+    {
+      "label": "하단 출입",
+      "x": 0,
+      "y": 15,
+      "providerMeta": {
+        "gateTypeCode": "GTD"
+      }
+    },
+    {
+      "label": "우측 출입",
+      "x": 16.5,
+      "y": 15,
+      "providerMeta": {
+        "gateTypeCode": "GTU"
+      }
+    }
+  ],
+  "seats": [
+    {
+      "id": "00100401",
+      "label": "A2",
+      "x": 4,
+      "y": 1,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "장애인석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "DISABLED_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00100501",
+      "label": "A3",
+      "x": 5,
+      "y": 1,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "장애인석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "DISABLED_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00100701",
+      "label": "A5",
+      "x": 7,
+      "y": 1,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00100801",
+      "label": "A6",
+      "x": 8,
+      "y": 1,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00101001",
+      "label": "A7",
+      "x": 10.5,
+      "y": 1,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00101101",
+      "label": "A8",
+      "x": 11.5,
+      "y": 1,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00101201",
+      "label": "A9",
+      "x": 12.5,
+      "y": 1,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00101301",
+      "label": "A10",
+      "x": 13.5,
+      "y": 1,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00200401",
+      "label": "B2",
+      "x": 4,
+      "y": 2,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00200501",
+      "label": "B3",
+      "x": 5,
+      "y": 2,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00200601",
+      "label": "B4",
+      "x": 6,
+      "y": 2,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00200701",
+      "label": "B5",
+      "x": 7,
+      "y": 2,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00200801",
+      "label": "B6",
+      "x": 8,
+      "y": 2,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00201001",
+      "label": "B7",
+      "x": 10.5,
+      "y": 2,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00201101",
+      "label": "B8",
+      "x": 11.5,
+      "y": 2,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00201201",
+      "label": "B9",
+      "x": 12.5,
+      "y": 2,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00201301",
+      "label": "B10",
+      "x": 13.5,
+      "y": 2,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00300401",
+      "label": "C2",
+      "x": 4,
+      "y": 3,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00300501",
+      "label": "C3",
+      "x": 5,
+      "y": 3,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00300601",
+      "label": "C4",
+      "x": 6,
+      "y": 3,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00300701",
+      "label": "C5",
+      "x": 7,
+      "y": 3,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00300801",
+      "label": "C6",
+      "x": 8,
+      "y": 3,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00301001",
+      "label": "C7",
+      "x": 10.5,
+      "y": 3,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00301101",
+      "label": "C8",
+      "x": 11.5,
+      "y": 3,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00301201",
+      "label": "C9",
+      "x": 12.5,
+      "y": 3,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00301301",
+      "label": "C10",
+      "x": 13.5,
+      "y": 3,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00400401",
+      "label": "D2",
+      "x": 4,
+      "y": 4,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00400501",
+      "label": "D3",
+      "x": 5,
+      "y": 4,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00400601",
+      "label": "D4",
+      "x": 6,
+      "y": 4,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00400701",
+      "label": "D5",
+      "x": 7,
+      "y": 4,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00400801",
+      "label": "D6",
+      "x": 8,
+      "y": 4,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00401001",
+      "label": "D7",
+      "x": 10.5,
+      "y": 4,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00401101",
+      "label": "D8",
+      "x": 11.5,
+      "y": 4,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00401201",
+      "label": "D9",
+      "x": 12.5,
+      "y": 4,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00401301",
+      "label": "D10",
+      "x": 13.5,
+      "y": 4,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00500401",
+      "label": "E2",
+      "x": 4,
+      "y": 5,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00500501",
+      "label": "E3",
+      "x": 5,
+      "y": 5,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00500601",
+      "label": "E4",
+      "x": 6,
+      "y": 5,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00500701",
+      "label": "E5",
+      "x": 7,
+      "y": 5,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00500801",
+      "label": "E6",
+      "x": 8,
+      "y": 5,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00501001",
+      "label": "E7",
+      "x": 10.5,
+      "y": 5,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00501101",
+      "label": "E8",
+      "x": 11.5,
+      "y": 5,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00501201",
+      "label": "E9",
+      "x": 12.5,
+      "y": 5,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00501301",
+      "label": "E10",
+      "x": 13.5,
+      "y": 5,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00600401",
+      "label": "F2",
+      "x": 4,
+      "y": 6,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00600501",
+      "label": "F3",
+      "x": 5,
+      "y": 6,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00600601",
+      "label": "F4",
+      "x": 6,
+      "y": 6,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00600701",
+      "label": "F5",
+      "x": 7,
+      "y": 6,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00600801",
+      "label": "F6",
+      "x": 8,
+      "y": 6,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00601001",
+      "label": "F7",
+      "x": 10.5,
+      "y": 6,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00601101",
+      "label": "F8",
+      "x": 11.5,
+      "y": 6,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00601201",
+      "label": "F9",
+      "x": 12.5,
+      "y": 6,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00601301",
+      "label": "F10",
+      "x": 13.5,
+      "y": 6,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00700401",
+      "label": "G2",
+      "x": 4,
+      "y": 7,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00700501",
+      "label": "G3",
+      "x": 5,
+      "y": 7,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00700601",
+      "label": "G4",
+      "x": 6,
+      "y": 7,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00700701",
+      "label": "G5",
+      "x": 7,
+      "y": 7,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00700801",
+      "label": "G6",
+      "x": 8,
+      "y": 7,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00701001",
+      "label": "G7",
+      "x": 10.5,
+      "y": 7,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00701101",
+      "label": "G8",
+      "x": 11.5,
+      "y": 7,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00701201",
+      "label": "G9",
+      "x": 12.5,
+      "y": 7,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00701301",
+      "label": "G10",
+      "x": 13.5,
+      "y": 7,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00800401",
+      "label": "H2",
+      "x": 4,
+      "y": 8,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00800501",
+      "label": "H3",
+      "x": 5,
+      "y": 8,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00800601",
+      "label": "H4",
+      "x": 6,
+      "y": 8,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00800701",
+      "label": "H5",
+      "x": 7,
+      "y": 8,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00800801",
+      "label": "H6",
+      "x": 8,
+      "y": 8,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00801001",
+      "label": "H7",
+      "x": 10.5,
+      "y": 8,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00801101",
+      "label": "H8",
+      "x": 11.5,
+      "y": 8,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00801201",
+      "label": "H9",
+      "x": 12.5,
+      "y": 8,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00801301",
+      "label": "H10",
+      "x": 13.5,
+      "y": 8,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00900101",
+      "label": "I1",
+      "x": 1.8,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "특별석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "STOP_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00900201",
+      "label": "I2",
+      "x": 2.8,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "특별석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "STOP_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00900401",
+      "label": "I3",
+      "x": 4.4,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00900501",
+      "label": "I4",
+      "x": 5.4,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00900701",
+      "label": "I5",
+      "x": 7,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00900801",
+      "label": "I6",
+      "x": 8,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "blocked",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00901001",
+      "label": "I7",
+      "x": 10.5,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00901101",
+      "label": "I8",
+      "x": 11.5,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00901201",
+      "label": "I9",
+      "x": 12.5,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00901301",
+      "label": "I10",
+      "x": 13.5,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00901401",
+      "label": "I11",
+      "x": 14.5,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "특별석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "STOP_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "00901501",
+      "label": "I12",
+      "x": 15.5,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "특별석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "STOP_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01000101",
+      "label": "J1",
+      "x": 1.8,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01000201",
+      "label": "J2",
+      "x": 2.8,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01000401",
+      "label": "J3",
+      "x": 4.4,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01000501",
+      "label": "J4",
+      "x": 5.4,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01000701",
+      "label": "J5",
+      "x": 7,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01000801",
+      "label": "J6",
+      "x": 8,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01001001",
+      "label": "J7",
+      "x": 10.5,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01001101",
+      "label": "J8",
+      "x": 11.5,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01001201",
+      "label": "J9",
+      "x": 12.5,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01001301",
+      "label": "J10",
+      "x": 13.5,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01001401",
+      "label": "J11",
+      "x": 14.5,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01001501",
+      "label": "J12",
+      "x": 15.5,
+      "y": 10,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01100101",
+      "label": "K1",
+      "x": 1.8,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01100201",
+      "label": "K2",
+      "x": 2.8,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01100401",
+      "label": "K3",
+      "x": 4.4,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01100501",
+      "label": "K4",
+      "x": 5.4,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01100701",
+      "label": "K5",
+      "x": 7,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01100801",
+      "label": "K6",
+      "x": 8,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01101001",
+      "label": "K7",
+      "x": 10.5,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "blocked",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01101101",
+      "label": "K8",
+      "x": 11.5,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01101201",
+      "label": "K9",
+      "x": 12.5,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01101301",
+      "label": "K10",
+      "x": 13.5,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01101401",
+      "label": "K11",
+      "x": 14.5,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01101501",
+      "label": "K12",
+      "x": 15.5,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01200101",
+      "label": "L1",
+      "x": 1.8,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01200201",
+      "label": "L2",
+      "x": 2.8,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01200401",
+      "label": "L3",
+      "x": 4.4,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01200501",
+      "label": "L4",
+      "x": 5.4,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01200701",
+      "label": "L5",
+      "x": 7,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01200801",
+      "label": "L6",
+      "x": 8,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01201001",
+      "label": "L7",
+      "x": 10.5,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01201101",
+      "label": "L8",
+      "x": 11.5,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01201201",
+      "label": "L9",
+      "x": 12.5,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01201301",
+      "label": "L10",
+      "x": 13.5,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01201401",
+      "label": "L11",
+      "x": 14.5,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01201501",
+      "label": "L12",
+      "x": 15.5,
+      "y": 12,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01300101",
+      "label": "M1",
+      "x": 1.8,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01300201",
+      "label": "M2",
+      "x": 2.8,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01300401",
+      "label": "M3",
+      "x": 4.4,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01300501",
+      "label": "M4",
+      "x": 5.4,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01300701",
+      "label": "M5",
+      "x": 7,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01300801",
+      "label": "M6",
+      "x": 8,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01301001",
+      "label": "M7",
+      "x": 10.5,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01301101",
+      "label": "M8",
+      "x": 11.5,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01301201",
+      "label": "M9",
+      "x": 12.5,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01301301",
+      "label": "M10",
+      "x": 13.5,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01301401",
+      "label": "M11",
+      "x": 14.5,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01301501",
+      "label": "M12",
+      "x": 15.5,
+      "y": 13,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01400101",
+      "label": "N1",
+      "x": 1.8,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01400201",
+      "label": "N2",
+      "x": 2.8,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01400401",
+      "label": "N3",
+      "x": 4.4,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01400501",
+      "label": "N4",
+      "x": 5.4,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01400701",
+      "label": "N5",
+      "x": 7,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01400801",
+      "label": "N6",
+      "x": 8,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01401001",
+      "label": "N7",
+      "x": 10.5,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01401101",
+      "label": "N8",
+      "x": 11.5,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01401201",
+      "label": "N9",
+      "x": 12.5,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01401301",
+      "label": "N10",
+      "x": 13.5,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01401401",
+      "label": "N11",
+      "x": 14.5,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01401501",
+      "label": "N12",
+      "x": 15.5,
+      "y": 14,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01500101",
+      "label": "O1",
+      "x": 1.8,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "특별석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "STOP_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01500201",
+      "label": "O2",
+      "x": 2.8,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "특별석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "STOP_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01500401",
+      "label": "O3",
+      "x": 4.4,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "특별석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "STOP_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01500501",
+      "label": "O4",
+      "x": 5.4,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "특별석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "STOP_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01500701",
+      "label": "O5",
+      "x": 7,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "특별석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "STOP_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01500801",
+      "label": "O6",
+      "x": 8,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "special",
+      "type": "특별석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "STOP_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01501001",
+      "label": "O7",
+      "x": 10.5,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01501101",
+      "label": "O8",
+      "x": 11.5,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01501201",
+      "label": "O9",
+      "x": 12.5,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01501301",
+      "label": "O10",
+      "x": 13.5,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01501401",
+      "label": "O11",
+      "x": 14.5,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    },
+    {
+      "id": "01501501",
+      "label": "O12",
+      "x": 15.5,
+      "y": 15,
+      "w": 1,
+      "h": 1,
+      "status": "available",
+      "type": "일반석",
+      "zone": "일반존",
+      "providerMeta": {
+        "seatZoneCode": "GERN_ZONE",
+        "seatClassCode": "GERN_CLS",
+        "seatTypeCode": "GERN_SELL",
+        "gateTypeCode": null,
+        "rowStatusCode": "A"
+      }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+[workspace]
+name = "daboyeo"
+summary = "CGV, 롯데시네마, 메가박스 상영 데이터를 수집해 비교하는 영화 상영 비교 플랫폼이며, 현재 핵심 목표는 3사 수집기 구축과 검증이다."
+task_board_path = "STATE.md"
+multi_agent_log_path = "MULTI_AGENT_LOG.md"
+error_log_path = "ERROR_LOG.md"
+
+[architecture]
+source_of_truth = "PROJECT_HARNESS.md, collector/**, docs/**"
+shell_runtime = "PowerShell"
+route_constants = "사용자 서비스와 관리자 운영 기능은 역할을 분리하고, 비교 모델은 최소 공통 필드 중심으로 유지한다"
+
+[workflow]
+authoring_model = "프론트엔드는 바닐라 HTML/CSS/JS를 유지하고, 데이터 수집은 가능하면 사이트별 API 직접 호출을 우선하며, 비교 구조는 완전 통합보다 최소 공통 필드와 원본 특성 보존을 우선한다"
+
+[required_context]
+read = ["PROJECT_HARNESS.md", "README.md", "STATE.md"]
+
+[verification]
+recommended_commands = ["git status --short", "Get-Content -Raw WORKSPACE_CONTEXT.toml", "Select-String -Path WORKSPACE_CONTEXT.toml -Pattern '^\\[workspace\\]','^\\[architecture\\]','^\\[editing_rules\\]','^\\[verification\\]'"]
+
+[contracts]
+shared = ["프론트엔드는 HTML/CSS/JS만 사용하고 임의 프레임워크나 라이브러리를 도입하지 않는다", "사용자 서비스와 관리자 운영 기능은 역할상 분리한다", "모든 데이터를 하나의 완전 통합 스키마로 몰지 않고 비교와 필터링에 필요한 최소 공통 필드만 맞춘다", "영화관별 특수관, 포맷, 정책, 좌석 특성은 원본 성질을 유지한다", "현재 우선순위는 전체 서비스 마감보다 3사 수집기 구축과 검증이다", "브라우저 자동화는 구조 파악용으로 제한하고 실제 수집 로직은 가능하면 사이트별 API 직접 호출을 기준으로 한다"]
+
+[paths]
+shared_assets = ["collector/**", "docs/**"]
+do_not_touch = ["dist/**", "generated/**", "vendor/**", ".git/**"]
+
+[editing_rules]
+edit_in = ["collector/**", "docs/**", "user-service/**", "admin/**", "PROJECT_HARNESS.md", "README.md"]
+do_not_edit = ["dist/**", "generated/**", "vendor/**", ".git/**"]
+
+[triggers]
+hard = ["프론트엔드에 프레임워크나 외부 라이브러리를 도입하는 변경", "최소 공통 비교 필드 정책이나 원본 특성 보존 정책을 바꾸는 변경", "사용자 서비스와 관리자 운영 기능의 분리 원칙을 깨는 변경", "수집 기준을 사이트별 API 우선에서 브라우저 자동화 중심으로 바꾸는 변경", "수집기, 비교 데이터 구조, 사용자/관리자 화면이 한 작업에 함께 얽히는 변경"]
+
+[approval]
+zones = ["프론트엔드 기술 스택 변경", "큰 구조 개편", "외부 시스템 쓰기 또는 배포성 작업", "사용자 서비스와 관리자 기능 경계 변경"]
+
+[workers]
+mapping = ["worker_collectors = collector/**", "worker_user_service = user-service/**", "worker_admin = admin/**", "worker_shared = docs/**"]
+
+[reviewer]
+focus = ["3사 수집기 우선순위 정렬", "바닐라 프론트엔드 제약 유지", "최소 공통 필드와 원본 특성 보존", "사용자 서비스와 관리자 기능 분리 유지", "검증 누락 여부"]

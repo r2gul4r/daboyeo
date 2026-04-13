@@ -1,0 +1,10 @@
+.env
+.codex-backups/
+.playwright-cli/
+__pycache__/
+collectors/__pycache__/
+collectors/*/__pycache__/
+
+# 개인 작업 노트는 로컬에만 둔다. 공개 문서는 README.md와 docs/**만 유지.
+/*.md
+!/README.md
