@@ -89,3 +89,27 @@ Do not rewrite existing entries; append only.
 - summary: `Index cleanup initially failed because STATE.md had staged content different from both HEAD and the working tree.`
 - details: `Retried with git rm --cached -f, which removed only index entries and preserved local files.`
 - status: `resolved`
+
+- time: `2026-04-14 13:06:01 +09:00`
+- location: `scripts/db/apply_migrations.py`
+- summary: `003 마이그레이션 적용 중 SQL 분리 실패`
+- details: `003_raw_object_keys.sql 주석의 세미콜론을 단순 split 로직이 SQL 구분자로 처리해 TiDB가 주석 일부를 SQL로 받아 문법 오류를 반환했다. 주석 제거 후 statement를 분리하도록 마이그레이션 러너를 보강한다.`
+- status: `open`
+
+- time: `2026-04-14 13:06:37 +09:00`
+- location: `scripts/db/apply_migrations.py`
+- summary: `SQL 분리 실패 해결`
+- details: `마이그레이션 러너가 -- line comment 를 제거한 뒤 statement 를 분리하도록 수정해 주석 내 세미콜론 문제는 해결됐다.`
+- status: `resolved`
+
+- time: `2026-04-14 13:06:37 +09:00`
+- location: `db/migrations/003_raw_object_keys.sql`
+- summary: `TiDB multi-column ALTER 순서 참조 실패`
+- details: `movies 테이블에서 raw_object_key 를 추가한 같은 ALTER 문 안에서 raw_object_etag 의 AFTER raw_object_key 를 참조하자 TiDB가 Unknown column 을 반환했다. 002와 같은 방식으로 컬럼별 ALTER TABLE 문으로 쪼갠다.`
+- status: `open`
+
+- time: `2026-04-14 13:07:00 +09:00`
+- location: `db/migrations/003_raw_object_keys.sql`
+- summary: `TiDB multi-column ALTER 순서 참조 실패 해결`
+- details: `003 마이그레이션의 raw_object_* 컬럼 추가를 컬럼별 ALTER TABLE 문으로 분리했고 재실행 결과 schema_migrations 가 001,002,003 상태로 확인됐다.`
+- status: `resolved`

@@ -1,6 +1,6 @@
 -- daboyeo TiDB v1 schema
--- 목적: 검색/최저가 비교에 필요한 최소 공통 컬럼을 두고, 극장사별 원본은 JSON으로 보존한다.
--- 주의: TiDB Cloud 연결 정보나 비밀번호는 이 파일에 절대 넣지 않는다.
+-- Search/compare fields stay normalized, provider-specific payloads stay in JSON.
+-- Never store TiDB credentials or connection strings in this file.
 
 SET NAMES utf8mb4;
 
@@ -215,8 +215,8 @@ CREATE TABLE IF NOT EXISTS movie_tags (
 INSERT INTO providers (code, display_name, homepage_url)
 VALUES
   ('CGV', 'CGV', 'https://www.cgv.co.kr'),
-  ('LOTTE_CINEMA', '롯데시네마', 'https://www.lottecinema.co.kr'),
-  ('MEGABOX', '메가박스', 'https://www.megabox.co.kr')
+  ('LOTTE_CINEMA', 'Lotte Cinema', 'https://www.lottecinema.co.kr'),
+  ('MEGABOX', 'Megabox', 'https://www.megabox.co.kr')
 ON DUPLICATE KEY UPDATE
   display_name = VALUES(display_name),
   homepage_url = VALUES(homepage_url),
