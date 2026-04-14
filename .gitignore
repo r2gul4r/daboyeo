@@ -1,10 +1,47 @@
 .env
+
+# Root-level local tool artifacts. Keep these ignored if tools regenerate them.
 .codex-backups/
 .playwright-cli/
+.local/
+
+# Python caches
 __pycache__/
 collectors/__pycache__/
 collectors/*/__pycache__/
 
-# 개인 작업 노트는 로컬에만 둔다. 공개 문서는 README.md와 docs/**만 유지.
+# Root Markdown is private by default. Shared docs belong in README.md or docs/**.
 /*.md
 !/README.md
+
+# Root workflow/control files are local-only unless explicitly published later.
+/SEED.yaml
+/WORKSPACE_CONTEXT.toml
+
+# Java / Spring
+.gradle/
+build/
+backend/.gradle/
+backend/build/
+
+# Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Python
+.venv/
+venv/
+*.pyc
+
+# Local database and generated data
+db/local/
+db/samples/*.json
+db/samples/*.csv
+*.sqlite
+*.sqlite3
+
+# Logs and local runtime output
+*.log
+logs/

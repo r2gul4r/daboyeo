@@ -1,0 +1,23 @@
+server:
+  port: ${DABOYEO_BACKEND_PORT:8080}
+
+spring:
+  application:
+    name: daboyeo-backend
+  datasource:
+    url: ${DABOYEO_DB_URL:jdbc:mysql://localhost:4000/daboyeo?serverTimezone=Asia/Seoul&characterEncoding=utf8&useSSL=false}
+    username: ${DABOYEO_DB_USERNAME:root}
+    password: ${DABOYEO_DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      initialization-fail-timeout: -1
+  flyway:
+    enabled: ${DABOYEO_FLYWAY_ENABLED:false}
+    locations: classpath:db/migration
+  sql:
+    init:
+      mode: never
+
+logging:
+  level:
+    kr.daboyeo: INFO

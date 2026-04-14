@@ -4,6 +4,11 @@
 
 ### Added
 
+- `docs/CONCURRENT_STATE_MODE.md` 를 추가해 기본 single `STATE.md` 유지 원칙, concurrent-registry 전환 조건, root registry 필드, thread state 파일 구조를 문서화
+- `docs/OPERATIONS_RETROSPECTIVE.md` 를 추가해 task retrospective 와 rule evolution log 를 어떤 기준으로 남길지 운영 규칙을 정리
+- `examples/STATE.registry.example.md`, `examples/STATE.thread.example.md` 로 동시 작업용 root/thread 상태 파일 예시를 추가
+- `examples/TASK_RETROSPECTIVE.example.md`, `examples/RULE_EVOLUTION_LOG.example.md` 로 사후 회고와 규칙 진화 로그 예시를 추가
+
 - 각 핵심 기능 영역의 기대 동작을 `pass|partial|fail` 로 판정할 수 있도록 `docs/AREA_EVALUATION_METRICS.md` 에 공통 평가 축, 측정 항목, 최소 합격선, 기록 예시를 추가
 - 프로젝트 목표 기준으로 저장소를 비교할 수 있도록 `docs/GOAL_COMPARISON_AREAS.md`에 핵심 기능 영역, 포함/제외 범위, 비교 질문, 최소 합격선을 추가
 - `docs/GOAL_COMPARISON_AREAS.md` 각 기능 영역에 현재 구현과 직접 대조 가능한 `기대 동작`, `현재 구현에서 확인할 증거`, `비교 기록 포맷`을 추가
@@ -18,6 +23,11 @@
 
 ### Changed
 
+- PowerShell installer가 UTF-8 no BOM `WORKSPACE_CONTEXT.toml` 의 한글을 깨뜨리지 않도록 명시적 UTF-8 읽기/쓰기로 고정
+- 설치 시 함께 복사되는 `docs/WORKSPACE_CONTEXT_GUIDE.md` 의 깨진 한글 문서를 정상 한국어 가이드로 교체
+- `AGENTS.md` 와 `MULTI_AGENT_GUIDE.md` 에 same-workspace 동시 작업 충돌을 위한 optional concurrent registry mode, overlap 충돌 시 중단 규칙, retrospective/metrics 기록 규칙을 추가
+- shell/PowerShell installer 생성 문구가 기본 single `STATE.md` 유지, concurrent registry 전환, retrospective/rule-evolution 기록 규칙까지 함께 출력하도록 동기화
+
 - `docs/GOAL_COMPARISON_AREAS.md` 가 추상 비교 문서에 머물지 않도록 영역별 실제 판정 루브릭 문서 연결을 추가
 - `docs/AREA_EVALUATION_METRICS.md` 와 `docs/GOAL_COMPARISON_AREAS.md` 가 후보 종류별 개별 루브릭뿐 아니라 동일 포맷 비교 규칙까지 확인하도록 보강
 - 저장소 기본 검증 도구를 `markdownlint-cli2`, `shellcheck`, `pwsh + PSScriptAnalyzer` 기준으로 식별하고, 미설치 환경에서는 문법 검사와 스모크 테스트로 폴백하도록 정리
@@ -30,6 +40,8 @@
 - `make test` 가 정규화 결과의 저장/조회 스모크 검사까지 포함하도록 확장
 - macOS `Bootstrap.sh` 가 GNU `find` 깊이 옵션에 기대지 않도록 추출 루트 탐색을 shell loop로 교체하고, macOS CI에서 local bootstrap + `curl | bash` 둘 다 검증하도록 보강
 - shell installer 가 BSD/GNU `paste -sd` 동작 차이에 기대지 않도록 join 로직을 shell helper로 교체하고 `pipefail` 을 켜서 macOS shell 경로를 더 엄격하게 검증
+- shell/PowerShell installer 와 bootstrap 에 `update-global`, `update-workspace` 경로를 추가해서 기존 설치본을 최신 관리 규칙으로 재적용할 수 있게 함
+- guide 에 profile 시작 decision tree 를 추가하고, macOS CI 에 update flow 재적용 검증을 추가
 
 ## v0.4.0 - 2026-04-09
 

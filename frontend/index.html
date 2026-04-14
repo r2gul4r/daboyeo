@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>다보여</title>
+    <link rel="stylesheet" href="./src/css/base.css" />
+    <link rel="stylesheet" href="./src/css/layout.css" />
+    <link rel="stylesheet" href="./src/css/components.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="search-area" aria-labelledby="page-title">
+        <p class="eyebrow">CGV · 롯데시네마 · 메가박스</p>
+        <h1 id="page-title">영화, 시간, 가격을 한 번에 비교해.</h1>
+        <form class="search-form" data-search-form>
+          <label for="movie-query">영화 제목</label>
+          <div class="search-row">
+            <input id="movie-query" name="q" type="search" placeholder="영화 제목 입력" autocomplete="off" />
+            <button type="submit">검색</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="result-area" aria-live="polite">
+        <h2>오늘 볼 영화</h2>
+        <div class="result-list" data-result-list>
+          <article class="movie-item">
+            <strong>상영 데이터를 기다리는 중</strong>
+            <span>백엔드 API가 연결되면 여기에 비교 결과가 나온다.</span>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./src/js/main.js"></script>
+  </body>
+</html>
