@@ -2,30 +2,30 @@
 
 ## Current Task
 
-- task: `Commit DB schema and ingest foundation`
+- task: `Run CGV signed API live probe`
 - phase: `verified`
-- scope: `Review current DB/TiDB scaffold changes, run local verification, stage the intended DB foundation files, and create one Conventional Commit`
-- verification_target: `passed: DB migrations, ingest helpers, verification scripts, schema contract, and related docs are staged for commit after local verification`
+- scope: `Verify newly configured local CGV_API_SECRET without printing it, run bounded CGV signed API collection, and save raw probe outputs under ignored .local storage for schema review`
+- verification_target: `CGV signed API returned current movies, attributes, regions, sites, dates, schedules, and seat sample data without printing CGV_API_SECRET`
 
 ## Orchestration Profile
 
-- score_total: `4`
-- score_breakdown: `dirty worktree review=1, git staging/commit=1, DB foundation scope=1, verification before commit=1`
-- hard_triggers: `git_history_mutation`
-- selected_rules: `single-session, preserve user changes, no browser checks, local verification commands, Conventional Commit`
+- score_total: `6`
+- score_breakdown: `external CGV API dependency=1, local secret presence verification=1, auth/signature boundary=1, live data fidelity risk=1, output capture for schema review=1, no secret leakage=1`
+- hard_triggers: `external_source_dependency, secret_handling, auth_boundary`
+- selected_rules: `single-session, preserve user changes, no browser checks, do not print secrets, no auth bypass, write raw outputs only under ignored .local path, append ERROR_LOG.md on material failures`
 - selected_skills: `n/a`
 - execution_topology: `single-session`
-- delegation_plan: `no delegation; user did not request subagents and ingest normalization/repository edits are tightly coupled`
+- delegation_plan: `no delegation; user did not request subagents and this is a bounded script execution/probe task`
 - agent_budget: `0 subagents`
 - shared_assets_owner: `main`
-- selection_reason: `score_total 4 with git history mutation but no code changes requested beyond committing existing DB foundation work; keep single-session`
+- selection_reason: `score_total 6 with secret/auth boundary and live CGV dependency; user configured the secret and asked to continue, but no subagents are requested and the probe is bounded`
 
 ## Writer Slot
 
 - owner: `main`
-- write_set: `STATE.md and git index/history for current DB foundation changes`
+- write_set: `STATE.md, ERROR_LOG.md if needed, .local/api-responses/**`
 - write_sets:
-  - `main`: `STATE.md and git index/history for current DB foundation changes`
+  - `main`: `STATE.md, ERROR_LOG.md if needed, .local/api-responses/**`
   - `worker`: `n/a`
   - `reviewer`: `main self-review`
 - note: `writer_slot`, `contract_freeze`, and `write_sets` stay explicit while this scaffold is active.`
@@ -33,8 +33,8 @@
 
 ## Contract Freeze
 
-- contract_freeze: `Completed. Staged the current DB foundation scope only. Did not alter application behavior beyond recorded DB foundation changes. Did not include .env or secrets. Use Conventional Commit message.`
-- note: `Expected commit message: feat: add tidb schema and ingest foundation`
+- contract_freeze: `Use only the user-configured legitimate CGV_API_SECRET, do not print or log the value, do not bypass CGV signature/authentication, and keep this step to bounded raw data capture rather than DB mutation.`
+- note: `If CGV returns 403, log it as key rotation/revalidation risk and stop rather than attempting circumvention.`
 
 ## Seed
 
@@ -46,13 +46,43 @@
 ## Reviewer
 
 - reviewer: `main self-review`
-- reviewer_target: `Git cleanup commit for DB foundation`
-- reviewer_focus: `intended files only, no secrets, migrations/docs/scripts included, verification commands pass`
+- reviewer_target: `CGV signed API live probe and secret handling`
+- reviewer_focus: `no auth bypass, no secret leakage, bounded output capture, explicit 403/key-rotation diagnostics`
 
 ## Last Update
 
-- timestamp: `2026-04-14 14:25:25 +09:00`
-- note: `DB foundation files staged after compileall, TiDB ingest verification, secret-pattern scan, diff check, and repository verification commands passed.`
+- timestamp: `2026-04-14 15:29:00 +09:00`
+- note: `CGV signed API live probe succeeded and saved bounded outputs under .local/api-responses/fresh-cgv-20260414-152645.`
+
+## Retrospective
+
+- task: `Run CGV signed API live probe`
+- score_total: `6`
+- selected_profile: `single-session`
+- actual_topology: `main-only`
+- verification_outcome: `CGV signed API returned movies=54, attributes=16, regions=9, sites=177, dates=6, schedules=2, seats=123 for sample CGV 강남 / 왕과 사는 남자 / 2026-04-14`
+- collisions_or_reclassifications: `reclassified from secret-loading repair to live external data probe after user configured .env`
+- next_rule_change: `When summarizing generated UTF-8 JSON in Windows PowerShell, always use Get-Content -Encoding UTF8 to avoid mojibake and false JSON parse failures`
+
+## Retrospective
+
+- task: `Restore legitimate CGV API probe path`
+- score_total: `6`
+- selected_profile: `single-session`
+- actual_topology: `main-only`
+- verification_outcome: `passed py_compile; cgv_collector_demo.py and cgv_api_probe.py fail cleanly with one-line CGV_API_SECRET missing message because local .env has no CGV_API_SECRET`
+- collisions_or_reclassifications: `reclassified from fresh extraction after CGV secret/auth boundary became the blocker`
+- next_rule_change: `For CGV live collection, require CGV_API_SECRET presence check before treating failed API probes as collector bugs`
+
+## Retrospective
+
+- task: `Run fresh Lotte and CGV data extraction scripts`
+- score_total: `5`
+- selected_profile: `single-session`
+- actual_topology: `main-only`
+- verification_outcome: `Lotte extraction succeeded, CGV failed as expected due missing CGV_API_SECRET, ERROR_LOG appended`
+- collisions_or_reclassifications: `none`
+- next_rule_change: `Before CGV live probes, verify CGV_API_SECRET presence and load strategy because CGV client reads process env directly`
 
 ## Retrospective
 

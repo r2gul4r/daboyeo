@@ -113,3 +113,27 @@ Do not rewrite existing entries; append only.
 - summary: `TiDB multi-column ALTER 순서 참조 실패 해결`
 - details: `003 마이그레이션의 raw_object_* 컬럼 추가를 컬럼별 ALTER TABLE 문으로 분리했고 재실행 결과 schema_migrations 가 001,002,003 상태로 확인됐다.`
 - status: `resolved`
+
+- time: `2026-04-14 15:12:22 +09:00`
+- location: `scripts/cgv_collector_demo.py, scripts/cgv_api_probe.py`
+- summary: `CGV 최신 데이터 추출 보류`
+- details: `롯데시네마 최신 데이터 추출은 성공했지만 CGV 스크립트는 CGV_API_SECRET 환경변수가 없어 RuntimeError 로 중단됐다. 비밀값은 출력하지 않았고 CGV 수집은 secret 설정 후 재실행해야 한다.`
+- status: `deferred`
+
+- time: `2026-04-14 15:21:00 +09:00`
+- location: `collectors/cgv/api.py, scripts/cgv_collector_demo.py, scripts/cgv_api_probe.py`
+- summary: `CGV 서명 API 호출은 secret 부재로 계속 보류`
+- details: `CGV_API_SECRET 를 환경변수 또는 루트 .env 에서 읽도록 보강했고 누락 시 스택트레이스 없이 명확한 오류로 종료하게 했다. 현재 로컬 .env 에 CGV_API_SECRET 값이 없어 실제 CGV API 호출은 아직 실행하지 못했다.`
+- status: `deferred`
+
+- time: `2026-04-14 15:29:00 +09:00`
+- location: `.local/api-responses/fresh-cgv-20260414-152645`
+- summary: `CGV 서명 API 최신 샘플 수집 성공`
+- details: `사용자가 로컬 .env 에 CGV_API_SECRET 을 설정한 뒤 CGV 영화, 속성, 지역, 극장, 날짜, 상영, 좌석 샘플 수집이 성공했다. 비밀값은 출력하지 않았고 raw/normalized JSON 은 ignored .local 경로에 저장했다.`
+- status: `resolved`
+
+- time: `2026-04-14 15:29:00 +09:00`
+- location: `PowerShell ConvertFrom-Json over CGV UTF-8 JSON`
+- summary: `PowerShell 기본 인코딩으로 CGV JSON 파싱 실패`
+- details: `Python 이 UTF-8 JSON 을 정상 저장했지만 Windows PowerShell Get-Content 기본 인코딩으로 읽자 한글 바이트가 깨져 ConvertFrom-Json 이 실패했다. Get-Content -Encoding UTF8 로 재실행해 정상 집계했다.`
+- status: `resolved`
