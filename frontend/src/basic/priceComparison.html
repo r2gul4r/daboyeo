@@ -1,31 +1,32 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>가격 비교 | DABOYEO</title>
-  <!-- favicon -->
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="icon" type="image/png" sizes="45x45" href="/favicon.png">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="45x45" href="../../favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../css/style.css">
   <style>
-    /* 가격비교 전용 스타일 */
-    body {
+    body.basic-page {
       background-color: #121215;
       font-family: 'Pretendard', sans-serif;
-      padding-top: 80px; /* offset fixed-header */
+      padding-top: 80px;
     }
 
-    /* index.css 등에 의해 header가 기본적으로 position: fixed 되어있다고 가정 */
+    .price-comparison-header {
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+    }
 
     .comparison-container {
       max-width: 1000px;
-      margin: 40px auto 100px;
+      margin: var(--basic-page-top-gap) auto 100px;
       padding: 0 20px;
     }
 
-    /* 상단 검색바 복제 (이미지 참조) */
     .search-panel {
       width: 100%;
       margin-bottom: 20px;
@@ -45,6 +46,7 @@
       padding: 16px 20px;
       border-right: 1px solid #4a4a4a;
     }
+
     .search-field:last-child {
       border-right: none;
     }
@@ -53,7 +55,7 @@
       color: #888;
       font-size: 16px;
     }
-    
+
     .search-field input {
       background: transparent;
       border: none;
@@ -66,12 +68,11 @@
     .search-field i.icon-left {
       margin-right: 15px;
     }
-    
+
     .search-field i.icon-right {
       margin-left: auto;
     }
 
-    /* 시간 슬라이더 영역 */
     .filter-row {
       display: flex;
       justify-content: space-between;
@@ -93,6 +94,7 @@
       color: #777;
       min-width: 120px;
     }
+
     .time-values span {
       color: #a29bfe;
       font-weight: 600;
@@ -107,6 +109,7 @@
       border-radius: 2px;
       margin: 0 10px;
     }
+
     .slider-fill {
       position: absolute;
       left: 50%;
@@ -115,6 +118,7 @@
       background: #a29bfe;
       border-radius: 2px;
     }
+
     .slider-thumb {
       position: absolute;
       top: 50%;
@@ -124,8 +128,14 @@
       border-radius: 50%;
       transform: translate(-50%, -50%);
     }
-    .thumb-start { left: 50%; }
-    .thumb-end { left: 100%; }
+
+    .thumb-start {
+      left: 50%;
+    }
+
+    .thumb-end {
+      left: 100%;
+    }
 
     .slider-labels {
       position: absolute;
@@ -148,14 +158,12 @@
       cursor: pointer;
     }
 
-    /* 메인 결과 영역 */
     .main-grid {
       display: flex;
       gap: 30px;
       align-items: flex-start;
     }
 
-    /* 왼쪽 사이드바 (영화관 선택) */
     .sidebar {
       width: 240px;
       flex-shrink: 0;
@@ -207,7 +215,6 @@
       display: inline-block;
     }
 
-    /* 우측 리스트 영역 */
     .content-area {
       flex: 1;
     }
@@ -235,9 +242,11 @@
       cursor: pointer;
       position: relative;
     }
+
     .sort-tab.active {
       color: #eee;
     }
+
     .sort-tab:not(:last-child)::after {
       content: '';
       position: absolute;
@@ -248,7 +257,6 @@
       background: #4a4a4a;
     }
 
-    /* 영화 카드 */
     .result-card {
       display: flex;
       background: transparent;
@@ -262,6 +270,7 @@
       width: 150px;
       position: relative;
     }
+
     .card-poster img {
       width: 100%;
       height: 100%;
@@ -311,6 +320,7 @@
       color: #bbb;
       margin-bottom: 20px;
     }
+
     .card-subtitle span {
       color: #777;
       margin-left: 5px;
@@ -328,6 +338,7 @@
       color: #fff;
       margin-bottom: 20px;
     }
+
     .card-time span {
       font-size: 13px;
       font-weight: 400;
@@ -341,8 +352,15 @@
       font-size: 12px;
       color: #888;
     }
-    .card-stats .score { color: #fff; font-weight: 600; }
-    .card-stats .seats { color: #a29bfe; }
+
+    .card-stats .score {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .card-stats .seats {
+      color: #a29bfe;
+    }
 
     .card-price-section {
       width: 200px;
@@ -352,7 +370,7 @@
       flex-direction: column;
       align-items: flex-end;
       position: relative;
-      background: rgba(255,255,255,0.02);
+      background: rgba(255, 255, 255, 0.02);
     }
 
     .cinema-logo {
@@ -409,33 +427,14 @@
       font-size: 14px;
       cursor: pointer;
     }
-
   </style>
 </head>
-<body>
 
-  <!-- ============================================
-       고정 헤더
-       ============================================ -->
-  <header class="fixed-header" id="fixedHeader" style="background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);">
-    <div class="header-content">
-      <h1 class="header-logo"><a href="/"><img src="/assets/logo.svg" alt="LOGO"></a></h1>
-      <nav class="header-nav">
-        <a href="./src/basic/movieTheaterMap.html">영화관 찾기</a>
-        <a href="./src/basic/screeningImminent.html">상영 임박</a>
-        <a href="./src/basic/movieReview.html">영화 리뷰</a>
-        <a href="./src/basic/seats.html">명당 좌석</a>
-        <a href="./src/basic/priceComparison.html" style="color:var(--white0);">가격 비교</a>
-        <a href="./src/basic/daboyeoAi.html">AI 추천</a>
-      </nav>
-      <button class="header-search-btn" id="headerSearchBtn">빠른 검색</button>
-    </div>
-  </header>
+<body class="basic-page">
+  <div id="header" data-include-class="price-comparison-header"></div>
+  <div id="topButton"></div>
 
-  <!-- 메인 컨텐츠 영역 -->
   <div class="comparison-container">
-    
-    <!-- 사진의 상단 바 -->
     <div class="search-panel">
       <div class="search-input-group">
         <div class="search-field">
@@ -456,7 +455,6 @@
       </div>
     </div>
 
-    <!-- 하단 시간 필터 & 검색 버튼 -->
     <div class="filter-row">
       <div class="time-filter">
         <div class="time-values">
@@ -476,17 +474,13 @@
       <button class="btn-search-lowest">최저가 검색</button>
     </div>
 
-    <!-- 사진의 메인 영역 (사이드바 + 콘텐츠) -->
     <div class="main-grid">
-      <!-- 좌측 사이드바 -->
       <aside class="sidebar">
-        <div class="map-box">
-          지도에서 보기
-        </div>
-        
+        <div class="map-box">지도에서 보기</div>
+
         <div class="cinema-selection">
           <h3>영화관 선택</h3>
-          
+
           <div class="cinema-item">
             <label class="cinema-label">
               <span class="checkbox"></span> CGV
@@ -508,10 +502,9 @@
         </div>
       </aside>
 
-      <!-- 우측 리스트 -->
       <main class="content-area">
         <div class="results-count">11개의 결과</div>
-        
+
         <div class="sort-tabs">
           <div class="sort-tab active">추천순</div>
           <div class="sort-tab">빠른 상영순</div>
@@ -519,36 +512,30 @@
           <div class="sort-tab">가까운 순서대로</div>
         </div>
 
-        <!-- 사진의 영화 카드 -->
         <div class="result-card">
-          <!-- 왼쪽 포스터 -->
           <div class="card-poster">
-             <div class="age-badge">12</div>
-             <img src="/" alt="프로젝트 헤일메리"> 
-             <!-- onerror="this.src='/assets/placeholder.jpg'; this.style.background='#333'" -->
+            <div class="age-badge">12</div>
+            <img src="../assets/image-Photoroom.png" alt="프로젝트 헤일메리 포스터">
           </div>
-          
-          <!-- 중간 정보 영역 -->
+
           <div class="card-info">
             <i class="far fa-heart like-icon"></i>
             <h2 class="card-title">프로젝트 헤일메리</h2>
             <div class="card-subtitle">CGV 성남점 <span>1km</span></div>
             <div class="card-genre">SF/모험</div>
             <div class="card-time">14:30 <span>~16:48</span></div>
-            
+
             <div class="card-stats">
               <span>평점: <span class="score">3.7</span>(312)</span>
               <span class="seats">좌석: 22% 남음</span>
             </div>
           </div>
-          
-          <!-- 오른쪽 가격 및 예매 영역 -->
+
           <div class="card-price-section">
             <div class="cinema-logo">
-              <!-- CGV 로고 이미지 -->
-              <img src="/assets/CGV_logo.svg" alt="CGV" style="width: 100%; border-radius:4px;">
+              <img src="../assets/CGV_logo.svg" alt="CGV" style="width: 100%; border-radius: 4px;">
             </div>
-            
+
             <div class="price-details">
               <div class="old-price-box">
                 <span class="lowest-badge">최저가</span>
@@ -559,66 +546,71 @@
             </div>
           </div>
         </div>
-        
       </main>
     </div>
-
   </div>
 
+  <div id="footer"></div>
+
+  <script src="../js/include.js"></script>
   <script src="../js/pages/common.js"></script>
-  <script src="../js/api/kakaoMap.js"></script>
   <script>
-    // URL 파라미터에서 선택한 값을 가져와서 UI에 반영
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
       const params = new URLSearchParams(window.location.search);
-      
-      const movie = params.get('movie');
-      const region = params.get('region');
-      const date = params.get('date');
-      const personCount = params.get('personCount');
-      const timeStart = params.get('timeStart');
-      const timeEnd = params.get('timeEnd');
-      
-      if (movie && movie !== '전체') document.getElementById('valMovie').value = movie;
-      if (region && region !== '전체') document.getElementById('valRegion').value = region;
-      if (date) document.getElementById('valDate').value = date;
-      if (personCount) document.getElementById('valPerson').value = `성인 ${personCount}명`;
-      
+      const movie = params.get("movie");
+      const region = params.get("region");
+      const date = params.get("date");
+      const personCount = params.get("personCount");
+      const timeStart = params.get("timeStart");
+      const timeEnd = params.get("timeEnd");
+
+      if (movie && movie !== "전체") document.getElementById("valMovie").value = movie;
+      if (region && region !== "전체") document.getElementById("valRegion").value = region;
+      if (date) document.getElementById("valDate").value = date;
+      if (personCount) document.getElementById("valPerson").value = `성인 ${personCount}명`;
+
       if (timeStart && timeEnd) {
-        document.getElementById('valTime').textContent = `${timeStart} ~ ${timeEnd}`;
-        
-        // 간단한 슬라이더 UI 렌더링 조정 (시각적 일치를 위해)
+        document.getElementById("valTime").textContent = `${timeStart} ~ ${timeEnd}`;
+
         try {
-          const parseTime = t => parseInt(t.split(':')[0]) * 60 + parseInt(t.split(':')[1]);
-          let startTotalMin = parseTime(timeStart);
-          let endTotalMin = parseTime(timeEnd);
+          const parseTime = (time) => parseInt(time.split(":")[0], 10) * 60 + parseInt(time.split(":")[1], 10);
           const dayMin = 24 * 60;
-          
-          let startPct = (startTotalMin / dayMin) * 100;
-          let endPct = (endTotalMin / dayMin) * 100;
+          let startPct = (parseTime(timeStart) / dayMin) * 100;
+          let endPct = (parseTime(timeEnd) / dayMin) * 100;
 
           if (startPct < 0) startPct = 0;
           if (endPct > 100) endPct = 100;
-          
-          document.querySelector('.slider-fill').style.left = startPct + '%';
-          document.querySelector('.slider-fill').style.width = (endPct - startPct) + '%';
-          document.querySelector('.thumb-start').style.left = startPct + '%';
-          document.querySelector('.thumb-end').style.left = endPct + '%';
-        } catch(e) {}
+
+          document.querySelector(".slider-fill").style.left = `${startPct}%`;
+          document.querySelector(".slider-fill").style.width = `${endPct - startPct}%`;
+          document.querySelector(".thumb-start").style.left = `${startPct}%`;
+          document.querySelector(".thumb-end").style.left = `${endPct}%`;
+        } catch (error) {
+          console.error("시간 범위 렌더링 실패", error);
+        }
       }
     });
 
-    // 헤더 배경 처리
-    const header = document.getElementById("fixedHeader");
-    if(header) {
-      window.addEventListener('scroll', () => {
+    function initPriceComparisonHeader() {
+      const header = document.getElementById("fixedHeader");
+      if (!header || header.dataset.priceHeaderBound === "true") {
+        return;
+      }
+
+      header.dataset.priceHeaderBound = "true";
+
+      window.addEventListener("scroll", () => {
         if (window.scrollY > 50) {
-          header.classList.add('scrolled');
+          header.classList.add("scrolled");
         } else {
-           header.classList.remove('scrolled');
+          header.classList.remove("scrolled");
         }
       });
     }
+
+    document.addEventListener("DOMContentLoaded", initPriceComparisonHeader);
+    document.addEventListener("daboyeo:components-loaded", initPriceComparisonHeader);
   </script>
 </body>
+
 </html>

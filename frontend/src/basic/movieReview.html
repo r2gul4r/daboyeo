@@ -1,0 +1,283 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>영화 리뷰 | DABOYEO</title>
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="45x45" href="../../favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/movieReview.css">
+</head>
+
+<body class="basic-page">
+  <div id="header"></div>
+  <div id="topButton"></div>
+
+  <main class="main-content">
+
+    <!-- 헤더 -->
+    <header>
+      <div class="container">
+        <h1 class="header-title">다<span class="neon-text">보</span>여 영화 리뷰</h1>
+        <p class="header-subtitle">CGV, 롯데시네마, 메가박스 영화 리뷰 통합</p>
+
+        <!-- 검색창 -->
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="searchInput" placeholder="영화 제목으로 검색...">
+        </div>
+
+        <!-- 필터 및 정렬 -->
+        <div class="filter-section">
+          <div class="genre-filters">
+            <button class="filter-button active" data-genre="전체">전체</button>
+            <button class="filter-button" data-genre="액션">액션</button>
+            <button class="filter-button" data-genre="드라마">드라마</button>
+            <button class="filter-button" data-genre="SF">SF</button>
+            <button class="filter-button" data-genre="코미디">코미디</button>
+            <button class="filter-button" data-genre="스릴러">스릴러</button>
+            <button class="filter-button" data-genre="범죄">범죄</button>
+          </div>
+          <select class="sort-select" id="sortSelect">
+            <option value="rating">평점순</option>
+            <option value="date">최신순</option>
+            <option value="reviews">리뷰순</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main>
+      <div class="container">
+        <div class="movie-grid" id="movieGrid">
+          <!-- 영화 카드가 여기에 동적으로 추가됩니다 -->
+        </div>
+      </div>
+    </main>
+
+  </main>
+
+
+  <div id="footer"></div>
+
+
+  <script>
+    // Mock 데이터
+    const MOCK_MOVIES = [
+      {
+        id: 1,
+        title: "더 글래디에이터 2",
+        releaseDate: "2025-02-14",
+        genre: "액션, 드라마",
+        posterUrl: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=300&h=450&fit=crop",
+        rating: 8.5,
+        reviews: 2543,
+        prices: { cgv: 14000, lotte: 12000, megabox: 13000 }
+      },
+      {
+        id: 2,
+        title: "아바타: 더 웨이 오브 워터",
+        releaseDate: "2024-12-20",
+        genre: "SF, 액션",
+        posterUrl: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=300&h=450&fit=crop",
+        rating: 8.2,
+        reviews: 1892,
+        prices: { cgv: 15000, lotte: 13000, megabox: 14000 }
+      },
+      {
+        id: 3,
+        title: "오펜하이머",
+        releaseDate: "2024-11-15",
+        genre: "전기, 드라마",
+        posterUrl: "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=300&h=450&fit=crop",
+        rating: 8.8,
+        reviews: 3421,
+        prices: { cgv: 14000, lotte: 14000, megabox: 13500 }
+      },
+      {
+        id: 4,
+        title: "킬러의 보디가드",
+        releaseDate: "2024-10-02",
+        genre: "액션, 코미디",
+        posterUrl: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=300&h=450&fit=crop",
+        rating: 7.9,
+        reviews: 1256,
+        prices: { cgv: 13000, lotte: 12500, megabox: 12000 }
+      },
+      {
+        id: 5,
+        title: "인셉션",
+        releaseDate: "2024-09-18",
+        genre: "SF, 스릴러",
+        posterUrl: "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=300&h=450&fit=crop",
+        rating: 8.7,
+        reviews: 4102,
+        prices: { cgv: 14000, lotte: 13000, megabox: 13500 }
+      },
+      {
+        id: 6,
+        title: "더 울프 오브 월 스트릿",
+        releaseDate: "2024-08-22",
+        genre: "드라마, 범죄",
+        posterUrl: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=300&h=450&fit=crop",
+        rating: 8.6,
+        reviews: 2876,
+        prices: { cgv: 14000, lotte: 12000, megabox: 13000 }
+      }
+    ];
+
+    let currentGenre = "전체";
+    let currentSort = "rating";
+    let searchQuery = "";
+
+    const searchInput = document.getElementById("searchInput");
+    const sortSelect = document.getElementById("sortSelect");
+    const genreButtons = document.querySelectorAll(".filter-button");
+    const movieGrid = document.getElementById("movieGrid");
+
+    // 필터링 및 정렬 함수
+    function getFilteredMovies() {
+      let result = MOCK_MOVIES;
+
+      // 검색어 필터링
+      if (searchQuery) {
+        result = result.filter(movie =>
+          movie.title.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+
+      // 장르 필터링
+      if (currentGenre !== "전체") {
+        result = result.filter(movie => movie.genre.includes(currentGenre));
+      }
+
+      // 정렬
+      if (currentSort === "rating") {
+        result.sort((a, b) => b.rating - a.rating);
+      } else if (currentSort === "date") {
+        result.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+      } else if (currentSort === "reviews") {
+        result.sort((a, b) => b.reviews - a.reviews);
+      }
+
+      return result;
+    }
+
+    // 별 렌더링
+    function renderStars(rating) {
+      const fullStars = Math.floor(rating / 2);
+      const hasHalfStar = (rating % 2) >= 1;
+      let stars = "";
+
+      for (let i = 0; i < 5; i++) {
+        if (i < fullStars) {
+          stars += '<span class="star">★</span>';
+        } else if (i === fullStars && hasHalfStar) {
+          stars += '<span class="star" style="opacity: 0.5;">★</span>';
+        } else {
+          stars += '<span class="star" style="color: #333333;">★</span>';
+        }
+      }
+
+      return stars;
+    }
+
+    // 최저가 계산
+    function getMinPrice(movie) {
+      return Math.min(movie.prices.cgv, movie.prices.lotte, movie.prices.megabox);
+    }
+
+    // 영화 카드 렌더링
+    function renderMovies() {
+      const movies = getFilteredMovies();
+      movieGrid.innerHTML = "";
+
+      if (movies.length === 0) {
+        movieGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1;">
+                        <div class="empty-state">
+                            <p class="empty-state-title">검색 결과가 없습니다.</p>
+                            <p class="empty-state-subtitle">다른 검색어로 시도해주세요.</p>
+                        </div>
+                    </div>
+                `;
+        return;
+      }
+
+      movies.forEach(movie => {
+        const minPrice = getMinPrice(movie);
+        const card = document.createElement("div");
+        card.className = "movie-card";
+        card.innerHTML = `
+                    <div class="movie-card-image-container">
+                        <img src="${movie.posterUrl}" alt="${movie.title}" class="movie-card-image">
+                        <div class="movie-badge">상영 임박</div>
+                        <div class="movie-card-overlay">
+                            <div class="overlay-icon">→</div>
+                        </div>
+                    </div>
+                    <div class="movie-card-content">
+                        <h3 class="movie-title">${movie.title}</h3>
+                        <p class="movie-meta">${movie.releaseDate.split("-")[0]}년 개봉</p>
+                        
+                        <div class="movie-prices">
+                            <div class="price-row">
+                                <span class="price-label">CGV</span>
+                                <span class="price-value">₩${movie.prices.cgv.toLocaleString()}</span>
+                            </div>
+                            <div class="price-row">
+                                <span class="price-label">롯데</span>
+                                <span class="price-value">₩${movie.prices.lotte.toLocaleString()}</span>
+                            </div>
+                            <div class="price-row">
+                                <span class="price-label">메가</span>
+                                <span class="price-value">₩${movie.prices.megabox.toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        <div class="movie-rating">
+                            <div class="stars">${renderStars(movie.rating)}</div>
+                            <span class="rating-number">${movie.rating}</span>
+                        </div>
+
+                        <p class="review-count">리뷰 ${movie.reviews.toLocaleString()}개</p>
+
+                        <button class="book-button">₩${minPrice.toLocaleString()} 예매</button>
+                    </div>
+                `;
+        movieGrid.appendChild(card);
+      });
+    }
+
+    // 이벤트 리스너
+    searchInput.addEventListener("input", (e) => {
+      searchQuery = e.target.value;
+      renderMovies();
+    });
+
+    sortSelect.addEventListener("change", (e) => {
+      currentSort = e.target.value;
+      renderMovies();
+    });
+
+    genreButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        genreButtons.forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+        currentGenre = button.dataset.genre;
+        renderMovies();
+      });
+    });
+
+    // 초기 렌더링
+    renderMovies();
+  </script>
+
+  <script src="../js/include.js"></script>
+  <script src="../js/pages/common.js"></script>
+</body>
+
+</html>
