@@ -2,114 +2,89 @@
 
 ## Current Task
 
-- task: `Run CGV signed API live probe`
-- phase: `verified`
-- scope: `Verify newly configured local CGV_API_SECRET without printing it, run bounded CGV signed API collection, and save raw probe outputs under ignored .local storage for schema review`
-- verification_target: `CGV signed API returned current movies, attributes, regions, sites, dates, schedules, and seat sample data without printing CGV_API_SECRET`
+- task: `Implement local Gemma fast/precise AI recommendation v1`
+- phase: `verify`
+- scope: `remove frontend recommendation UI/client changes; keep backend recommendation APIs, local Ollama adapter, anonymous recommendation storage, DB migration, env examples`
+- verification_target: `backend tests when Java/Gradle are available, repository verification commands, code review`
 
 ## Orchestration Profile
 
-- score_total: `6`
-- score_breakdown: `external CGV API dependency=1, local secret presence verification=1, auth/signature boundary=1, live data fidelity risk=1, output capture for schema review=1, no secret leakage=1`
-- hard_triggers: `external_source_dependency, secret_handling, auth_boundary`
-- selected_rules: `single-session, preserve user changes, no browser checks, do not print secrets, no auth bypass, write raw outputs only under ignored .local path, append ERROR_LOG.md on material failures`
-- selected_skills: `n/a`
-- execution_topology: `single-session`
-- delegation_plan: `no delegation; user did not request subagents and this is a bounded script execution/probe task`
-- agent_budget: `0 subagents`
-- shared_assets_owner: `main`
-- selection_reason: `score_total 6 with secret/auth boundary and live CGV dependency; user configured the secret and asked to continue, but no subagents are requested and the probe is bounded`
+- score_total: `7`
+- score_breakdown: `2 local HTTP LLM integration through Ollama, 1 anonymous server-side storage, 1 DB/API contract extension, 1 cleanup after scope correction`
+- hard_triggers: `user input, local HTTP model call, anonymous recommendation data storage, recommendation contract extension`
+- selected_rules: `spec-first, security rules for user input/external request/storage, preserve user changes, no browser checks unless requested`
+- selected_skills: `none`
+- execution_topology: `mixed`
+- orchestration_value: `medium`
+- agent_budget: `2`
+- spawn_decision: `use one read-only explorer for E2B/Ollama discovery while main implements; reserve one reviewer after integration`
+- efficiency_basis: `E2B/Ollama discovery is separable and read-only, implementation write ownership stays with main, reviewer can independently check API/UI/security after patch, rework risk is lower with late review`
+- selection_reason: `score_total 7 from LLM, storage, DB/API, and frontend integration triggers; user granted standing subagent authorization during implementation, so only separable discovery/review work is delegated`
+
+## Evaluation Plan
+
+- evaluation_need: `full`
+- project_invariants:
+  - `CGV, Lotte Cinema, Megabox showtime data remains the core source for current movie recommendation candidates.`
+  - `Collectors preserve provider-specific raw data characteristics.`
+  - `Comparison/recommendation uses minimum common fields and movie_tags without renaming stable provider keys.`
+  - `Do not hardcode secrets, tokens, API keys, or private model credentials.`
+  - `Validate user input at API boundaries and escape rendered frontend content.`
+  - `Default verification is local commands plus code review; no deployed URL smoke check unless requested.`
+  - `Do not touch dist/**, generated/**, vendor/**, or .git/**.`
+- task_acceptance:
+  - `Expose anonymous recommendation session, poster seed, recommendation, feedback, and reset APIs.`
+  - `Support fast and precise modes mapped to local model providers from environment.`
+  - `Use code scoring first, local Gemma JSON reordering/explanation second, deterministic fallback on AI failure.`
+  - `Do not include frontend recommendation UI in this task.`
+  - `Store anonymous profile, recommendation runs, and feedback server-side, with reset support.`
+- non_goals:
+  - `No login implementation.`
+  - `No Oracle Cloud deployment or cloud-to-local AI bridge.`
+  - `No external movie metadata API dependency for v1 poster seed.`
+  - `No public Ollama exposure.`
+- hard_checks:
+  - `git status --short`
+  - `Get-Content -Raw WORKSPACE_CONTEXT.toml`
+  - `Select-String -Path WORKSPACE_CONTEXT.toml -Pattern '^\[workspace\]','^\[architecture\]','^\[editing_rules\]','^\[verification\]'`
+  - `gradle test if Java 21 and Gradle are available on PATH`
+- llm_review_rubric:
+  - `No secrets or model credentials are hardcoded.`
+  - `User input is bounded and validated before storage/model prompt construction.`
+  - `AI response parsing failure cannot break recommendation output.`
+  - `Child audience hard filter is preserved.`
+  - `No frontend implementation remains in this task.`
+- evidence_required:
+  - `Record verification command results, unavailable Java/Gradle gaps, diff review notes, and any material failures.`
+- note: `Hard checks outrank LLM review.`
 
 ## Writer Slot
 
-- owner: `main`
-- write_set: `STATE.md, ERROR_LOG.md if needed, .local/api-responses/**`
+- writer_slot: `main`
+- write_set: `frontend/src/basic/daboyeoAi.html, frontend/src/js/api/client.js, frontend/src/css/daboyeoAi.css, frontend/src/js/pages/daboyeoAi.js, STATE.md`
 - write_sets:
-  - `main`: `STATE.md, ERROR_LOG.md if needed, .local/api-responses/**`
-  - `worker`: `n/a`
-  - `reviewer`: `main self-review`
-- note: `writer_slot`, `contract_freeze`, and `write_sets` stay explicit while this scaffold is active.`
-- concurrent_note: `Keep one shared task board by default. If same-workspace concurrent threads are intentionally enabled, root STATE.md becomes the registry and per-thread execution state moves into states/STATE.<thread_id>.md.`
+  - `main`: `frontend recommendation cleanup files and STATE.md`
+  - `explorer`: `read-only local Ollama/E2B model discovery`
+  - `reviewer`: `read-only final API/UI/security review`
+- shared_assets_owner: `main`
+- note: `One shared task board is active; no concurrent registry mode.`
+- concurrent_note: `No parallel writer is active.`
 
 ## Contract Freeze
 
-- contract_freeze: `Use only the user-configured legitimate CGV_API_SECRET, do not print or log the value, do not bypass CGV signature/authentication, and keep this step to bounded raw data capture rather than DB mutation.`
-- note: `If CGV returns 403, log it as key rotation/revalidation risk and stop rather than attempting circumvention.`
-
-## Seed
-
-- status: `n/a`
-- path: `n/a`
-- revision: `n/a`
-- note: `Tiny follow-up; no new seed required.`
+- contract_freeze: `POST /api/recommendation/sessions, DELETE /api/recommendation/sessions/{anonymousId}, GET /api/recommendation/poster-seed, POST /api/recommendations, POST /api/recommendations/{runId}/feedback; fast and precise modes both use local Ollama provider with env-selected model names; frontend implementation is out of scope for this task`
+- note: `Implement the plan exactly as pinned by the user unless a verification blocker requires reclassification.`
+- contract_source: `user-provided implementation plan`
+- contract_revision: `2026-04-15-local-gemma-recommendation-v1`
+- verification_target: `backend tests when available plus repository verification commands and self-review`
 
 ## Reviewer
 
-- reviewer: `main self-review`
-- reviewer_target: `CGV signed API live probe and secret handling`
-- reviewer_focus: `no auth bypass, no secret leakage, bounded output capture, explicit 403/key-rotation diagnostics`
+- reviewer: `reserved subagent reviewer plus main self-review`
+- reviewer_target: `recommendation API contracts, LLM fallback behavior, input validation, anonymous data reset`
+- reviewer_focus: `security, verification gaps, data contract preservation, recommendation fallback correctness`
 
 ## Last Update
 
-- timestamp: `2026-04-14 15:29:00 +09:00`
-- note: `CGV signed API live probe succeeded and saved bounded outputs under .local/api-responses/fresh-cgv-20260414-152645.`
-
-## Retrospective
-
-- task: `Run CGV signed API live probe`
-- score_total: `6`
-- selected_profile: `single-session`
-- actual_topology: `main-only`
-- verification_outcome: `CGV signed API returned movies=54, attributes=16, regions=9, sites=177, dates=6, schedules=2, seats=123 for sample CGV 강남 / 왕과 사는 남자 / 2026-04-14`
-- collisions_or_reclassifications: `reclassified from secret-loading repair to live external data probe after user configured .env`
-- next_rule_change: `When summarizing generated UTF-8 JSON in Windows PowerShell, always use Get-Content -Encoding UTF8 to avoid mojibake and false JSON parse failures`
-
-## Retrospective
-
-- task: `Restore legitimate CGV API probe path`
-- score_total: `6`
-- selected_profile: `single-session`
-- actual_topology: `main-only`
-- verification_outcome: `passed py_compile; cgv_collector_demo.py and cgv_api_probe.py fail cleanly with one-line CGV_API_SECRET missing message because local .env has no CGV_API_SECRET`
-- collisions_or_reclassifications: `reclassified from fresh extraction after CGV secret/auth boundary became the blocker`
-- next_rule_change: `For CGV live collection, require CGV_API_SECRET presence check before treating failed API probes as collector bugs`
-
-## Retrospective
-
-- task: `Run fresh Lotte and CGV data extraction scripts`
-- score_total: `5`
-- selected_profile: `single-session`
-- actual_topology: `main-only`
-- verification_outcome: `Lotte extraction succeeded, CGV failed as expected due missing CGV_API_SECRET, ERROR_LOG appended`
-- collisions_or_reclassifications: `none`
-- next_rule_change: `Before CGV live probes, verify CGV_API_SECRET presence and load strategy because CGV client reads process env directly`
-
-## Retrospective
-
-- task: `Commit DB schema and ingest foundation`
-- score_total: `4`
-- selected_profile: `single-session`
-- actual_topology: `main-only`
-- verification_outcome: `passed compileall, verify_tidb_ingest, secret-pattern scan, git diff check, WORKSPACE_CONTEXT read, and required section Select-String checks`
-- collisions_or_reclassifications: `none`
-- next_rule_change: `Commit DB foundation changes before starting API/search work to avoid scope mixing`
-
-## Retrospective
-
-- task: `Add DB schema naming contract document`
-- score_total: `3`
-- selected_profile: `single-session`
-- actual_topology: `main-only`
-- verification_outcome: `passed git status, WORKSPACE_CONTEXT read, and required section Select-String checks`
-- collisions_or_reclassifications: `none`
-- next_rule_change: `Read db/SCHEMA_CONTRACT.md before future DB/API/ingest naming changes`
-
-## Retrospective
-
-- task: `Apply TiDB 003 migration and implement Lotte/Megabox ingest`
-- score_total: `7`
-- selected_profile: `single-session`
-- actual_topology: `main-only`
-- verification_outcome: `passed compileall, dry-run, 003 schema inspect, repeated bounded ingest, duplicate showtime check, and repository verification commands`
-- collisions_or_reclassifications: `write set expanded for scripts/db and db/migrations after migration runner and TiDB ALTER ordering failures`
-- next_rule_change: `Keep migration runner comment stripping and prefer one-column ALTER statements for TiDB column-order-sensitive migrations`
+- timestamp: `2026-04-15 18:03:00 +09:00`
+- note: `Frontend changes removed; backend recommendation work and database/model configuration remain.`

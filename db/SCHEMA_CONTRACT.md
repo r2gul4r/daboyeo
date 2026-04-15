@@ -239,3 +239,16 @@ R2 연결 전까지 이 컬럼들은 NULL이어도 정상이다.
 - `seat_snapshots`
 - `seat_snapshot_items`
 - `movie_tags`
+
+## Anonymous Recommendation Tables
+
+Migration `004_anonymous_recommendations.sql` adds login-free AI recommendation state.
+These tables must not store names, emails, phone numbers, auth tokens, cookies, or provider account data.
+
+| table | role | retention |
+|---|---|---|
+| `recommendation_profiles` | anonymous survey, poster choices, and learned tag weights | until user reset |
+| `recommendation_runs` | recommendation request/result audit for one anonymous ID | until user reset |
+| `recommendation_feedback` | `like`, `dislike`, `booking_view` feedback | until user reset |
+
+Stable API-facing key is `anonymous_id`. It is an opaque random ID, not a login identity.

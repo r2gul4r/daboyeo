@@ -137,3 +137,9 @@ Do not rewrite existing entries; append only.
 - summary: `PowerShell 기본 인코딩으로 CGV JSON 파싱 실패`
 - details: `Python 이 UTF-8 JSON 을 정상 저장했지만 Windows PowerShell Get-Content 기본 인코딩으로 읽자 한글 바이트가 깨져 ConvertFrom-Json 이 실패했다. Get-Content -Encoding UTF8 로 재실행해 정상 집계했다.`
 - status: `resolved`
+
+- time: `2026-04-15 17:35:00 +09:00`
+- location: `backend verification`
+- summary: `Java/Gradle PATH 부재로 백엔드 테스트 실행 보류`
+- details: `로컬 Gemma 추천 API 구현 후 java -version 과 gradle test 를 실행했지만 둘 다 PATH 에서 명령을 찾지 못해 테스트를 실행하지 못했다. JDK 21 과 Gradle 경로 설정 후 gradle test 를 재실행해야 한다.`
+- status: `deferred`

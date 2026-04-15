@@ -21,3 +21,10 @@ spring:
 logging:
   level:
     kr.daboyeo: INFO
+
+daboyeo:
+  recommendation:
+    ollama-base-url: ${DABOYEO_OLLAMA_BASE_URL:http://127.0.0.1:11434}
+    fast-model: ${DABOYEO_RECOMMEND_FAST_MODEL:}
+    precise-model: ${DABOYEO_RECOMMEND_PRECISE_MODEL:gemma4:e4b-it-q4_K_M}
+    frontend-origins: ${DABOYEO_FRONTEND_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,http://*:5173}
