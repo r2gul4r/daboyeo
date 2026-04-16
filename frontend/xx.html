@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다보여 | DABOYEO</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* 공통 CSS 변수 */
+    :root {
+      --white0: #fff;
+      --white50: #F8F8FA;
+      --gray0: #111;
+      --gray50: #444;
+      --gray100: #999;
+      --card-bg: rgba(30, 30, 30, 0.8);
+      --purple0: #7264E9;
+      --purple50: #9B92FA;
+      --purple60: #BDB9E4;
+      --pink50: #faa8c4;
+      --red50: #FF4444;
+      --fixed-header-height: 88px;
+      --basic-page-top-gap: 32px;
+      scroll-behavior: smooth;
+    }
+
+    /* 기본 스타일 */
+    body {
+      font: 16px/1.7 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--white0);
+      /* 텍스트 가독성을 위해 흰색 계열로 변경 */
+      background-color: #000;
+      background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070&auto=format&fit=crop');
+      /* 배경 이미지 예시 */
+      background-size: cover;
+      background-position: center top;
+      background-attachment: fixed;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: var(--basic-page-top-gap) 20px;
+    }
+
+    .main-content {
+      width: 100%;
+      max-width: 800px;
+      text-align: center;
+    }
+
+    .logo-top img {
+      height: 40px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    h1 span {
+      color: var(--purple50);
+    }
+
+    .subtitle {
+      color: var(--gray100);
+      margin-bottom: 40px;
+    }
+
+    /* 검색 카드 */
+    .search-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .form-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 24px;
+      align-items: flex-end;
+    }
+
+    .form-group {
+      flex: 1;
+      text-align: left;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--purple60);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .input-wrapper {
+      position: relative;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 0 15px;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: var(--purple50);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .input-wrapper i {
+      color: var(--purple60);
+      margin-right: 10px;
+    }
+
+    .input-wrapper input {
+      background: none;
+      border: none;
+      color: var(--white0);
+      height: 48px;
+      width: 100%;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    /* 시간 선택 (라디오 버튼 스타일의 Input) */
+    .time-selection-group {
+      display: flex;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 5px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .time-option {
+      flex: 1;
+      position: relative;
+    }
+
+    .time-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .time-option label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 5px;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      margin-bottom: 0;
+      color: var(--gray100);
+      font-weight: 500;
+    }
+
+    .time-option label .time-name {
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+
+    .time-option label .time-range {
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    .time-option input[type="radio"]:checked+label {
+      background: var(--purple0);
+      color: var(--white0);
+      box-shadow: 0 4px 12px rgba(114, 100, 233, 0.3);
+    }
+
+    .time-option label:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* 인원 선택 */
+    .person-counter {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 5px 15px;
+      height: 48px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .counter-btn {
+      background: none;
+      border: none;
+      color: var(--purple50);
+      font-size: 1.2rem;
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .counter-btn:hover {
+      transform: scale(1.2);
+    }
+
+    .counter-value {
+      margin: 0 15px;
+      font-weight: 600;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    /* 버튼 스타일 */
+    .action-row {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    .btn-search {
+      flex: 2;
+      background: linear-gradient(135deg, var(--purple0), var(--purple50));
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px rgba(114, 100, 233, 0.3);
+    }
+
+    .btn-search:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(114, 100, 233, 0.4);
+    }
+
+    /* 직접 비교하기 링크 (a 태그) */
+    .btn-compare {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--white0);
+      text-decoration: none;
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-compare:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-nearby {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--white0);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0 20px;
+      height: 50px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-nearby:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* 하단 통계 */
+    .footer-stats {
+      margin-top: 40px;
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: var(--gray100);
+    }
+
+    .footer-stats b.blue {
+      color: var(--purple50);
+    }
+
+    /* 반응형 */
+    @media (max-width: 768px) {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .action-row {
+        flex-direction: column;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="main-content">
+    <h1 class="logo-top"><a href="#"><img src="./src/assets/logo.svg" alt="LOGO"></a></h1>
+
+    <h1>지금, 가장 <span>싸게</span> 볼 수 있는 영화 찾기</h1>
+    <p class="subtitle">CGV, 롯데시네마, 메가박스 — 한 번에 비교하고 최저가로 예매하세요</p>
+
+    <!-- Search Card -->
+    <div class="search-card">
+      <div class="form-row">
+        <div class="form-group">
+          <label>지역</label>
+          <div class="input-wrapper">
+            <i class="fas fa-map-marker-alt"></i>
+            <input type="text" id="regionInput" placeholder="지역 검색(전체)">
+          </div>
+        </div>
+        <button class="btn-nearby" id="nearbyBtn"><i class="fas fa-location-dot"></i> 내 위치</button>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>날짜</label>
+          <div class="input-wrapper">
+            <i class="fas fa-calendar"></i>
+            <input type="text" id="dateInput" readonly placeholder="날짜 선택" value="2024.05.20">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>시간대 선택</label>
+          <div class="time-selection-group">
+            <div class="time-option">
+              <input type="radio" name="timeRange" id="time-morning" value="morning" checked>
+              <label for="time-morning">
+                <span class="time-name">조조</span>
+                <span class="time-range">(06:00~10:00)</span>
+              </label>
+            </div>
+            <div class="time-option">
+              <input type="radio" name="timeRange" id="time-brunch" value="brunch">
+              <label for="time-brunch">
+                <span class="time-name">브런치</span>
+                <span class="time-range">(10:00~16:00)</span>
+              </label>
+            </div>
+            <div class="time-option">
+              <input type="radio" name="timeRange" id="time-night" value="night">
+              <label for="time-night">
+                <span class="time-name">야간</span>
+                <span class="time-range">(22:00~02:00)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="flex: 0.5;">
+          <label>인원</label>
+          <div class="person-counter">
+            <button class="counter-btn" id="decreaseBtn">−</button>
+            <div class="counter-value" id="personCount">1</div>
+            <button class="counter-btn" id="increaseBtn">+</button>
+            <span>명</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-search" id="searchBtn"><i class="fas fa-wand-magic-sparkles"></i> AI 추천받기</button>
+        <a href="compare.html" class="btn-compare">직접 비교하기</a>
+      </div>
+    </div>
+
+    <div class="footer-stats">
+      <span>현재 <b class="blue" id="movieCount">1,234</b>개 영화 상영 중</span>
+      <span>최저가 절감액 <b class="blue" id="savingsAmount">₩2,456,789</b></span>
+    </div>
+  </div>
+</body>
+
+</html>
