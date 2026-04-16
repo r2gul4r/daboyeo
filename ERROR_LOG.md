@@ -143,3 +143,21 @@ Do not rewrite existing entries; append only.
 - summary: `Java/Gradle PATH 부재로 백엔드 테스트 실행 보류`
 - details: `로컬 Gemma 추천 API 구현 후 java -version 과 gradle test 를 실행했지만 둘 다 PATH 에서 명령을 찾지 못해 테스트를 실행하지 못했다. JDK 21 과 Gradle 경로 설정 후 gradle test 를 재실행해야 한다.`
 - status: `deferred`
+
+- time: `2026-04-16 10:43:22 +09:00`
+- location: `backend gradle test after JDK/Gradle install`
+- summary: `백엔드 컴파일 실패`
+- details: `JDK 21, Gradle 8.14.4 설치 후 backend 에서 gradle test 를 재실행했으나 RecommendationService.java:103 의 lambda 캡처 변수가 effectively final 이 아니어서 compileJava 단계에서 실패했다. 설치 검증은 통과했고, 코드 수정 후 gradle test 재실행이 필요하다.`
+- status: `open`
+
+- time: `2026-04-16 14:50:44 +09:00`
+- location: `repository root gradle verification`
+- summary: `Gradle 테스트를 레포 루트에서 실행해 빌드 루트를 찾지 못함`
+- details: `gradle test --tests kr.daboyeo.backend.service.recommendation.PreferenceProfileBuilderTests 를 C:\lsh\git\daboyeo 에서 실행해 settings.gradle/build.gradle 을 찾지 못했다. 같은 명령을 C:\lsh\git\daboyeo\backend 에서 재실행해 성공했다.`
+- status: `resolved`
+
+- time: `2026-04-16 17:23:52 +09:00`
+- location: `backend Gradle verification`
+- summary: `동일 Gradle build 디렉터리를 대상으로 테스트를 병렬 실행해 test-results 삭제 충돌 발생`
+- details: `PreferenceProfileBuilderTests 와 recommendation 패키지 테스트를 동시에 실행하면서 C:\lsh\git\daboyeo\backend\build\test-results\test\binary\output.bin 삭제가 실패했다. 코드 실패가 아니라 검증 명령 병렬화 문제이므로 테스트를 직렬로 재실행한다.`
+- status: `resolved`

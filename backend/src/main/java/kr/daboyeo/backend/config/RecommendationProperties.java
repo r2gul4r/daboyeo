@@ -14,7 +14,7 @@ public record RecommendationProperties(
 
     public RecommendationProperties {
         ollamaBaseUrl = defaultString(ollamaBaseUrl, "http://127.0.0.1:11434");
-        fastModel = fastModel == null ? "" : fastModel.trim();
+        fastModel = defaultString(fastModel, "gemma4:e2b-it-q4_K_M");
         preciseModel = defaultString(preciseModel, "gemma4:e4b-it-q4_K_M");
         if (frontendOrigins == null || frontendOrigins.isEmpty()) {
             frontendOrigins = List.of("http://localhost:5173", "http://127.0.0.1:5173", "http://*:5173");

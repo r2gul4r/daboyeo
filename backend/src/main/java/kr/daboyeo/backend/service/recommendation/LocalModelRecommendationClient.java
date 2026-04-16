@@ -66,6 +66,7 @@ public class LocalModelRecommendationClient {
         Map<String, Object> request = Map.of(
             "model", model,
             "stream", false,
+            "think", false,
             "format", "json",
             "messages", messages(mode, profile, candidates),
             "options", Map.of(

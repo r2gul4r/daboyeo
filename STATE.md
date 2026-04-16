@@ -2,89 +2,117 @@
 
 ## Current Task
 
-- task: `Implement local Gemma fast/precise AI recommendation v1`
-- phase: `verify`
-- scope: `remove frontend recommendation UI/client changes; keep backend recommendation APIs, local Ollama adapter, anonymous recommendation storage, DB migration, env examples`
-- verification_target: `backend tests when Java/Gradle are available, repository verification commands, code review`
+- task: `Bring up local Ollama Gemma4 fast and precise recommendation models`
+- phase: `completed`
+- scope: `use only gemma4:e2b-it-q4_K_M for fast mode and gemma4:e4b-it-q4_K_M for precise mode, diagnose empty Ollama responses, clean up the throwaway alias, and update backend defaults/request body`
+- verification_target: `direct Ollama JSON responses, backend gradle test, repository context checks`
+- previous_task_note: `Frontend liked-only journey work is complete. The new blocker was local Ollama Gemma4 returning empty content unless thinking was disabled.`
 
 ## Orchestration Profile
 
-- score_total: `7`
-- score_breakdown: `2 local HTTP LLM integration through Ollama, 1 anonymous server-side storage, 1 DB/API contract extension, 1 cleanup after scope correction`
-- hard_triggers: `user input, local HTTP model call, anonymous recommendation data storage, recommendation contract extension`
-- selected_rules: `spec-first, security rules for user input/external request/storage, preserve user changes, no browser checks unless requested`
+- score_total: `5`
+- score_breakdown: `2 local HTTP model invocation, 1 backend recommendation quality blocker, 1 local environment/model configuration, 1 verification uncertainty`
+- hard_triggers: `local HTTP model call, external request boundary to localhost Ollama, recommendation contract depends on model output`
+- selected_rules: `spec-first lightweight, security rules for local HTTP/model config, preserve user changes, no browser checks unless requested`
 - selected_skills: `none`
-- execution_topology: `mixed`
-- orchestration_value: `medium`
-- agent_budget: `2`
-- spawn_decision: `use one read-only explorer for E2B/Ollama discovery while main implements; reserve one reviewer after integration`
-- efficiency_basis: `E2B/Ollama discovery is separable and read-only, implementation write ownership stays with main, reviewer can independently check API/UI/security after patch, rework risk is lower with late review`
-- selection_reason: `score_total 7 from LLM, storage, DB/API, and frontend integration triggers; user granted standing subagent authorization during implementation, so only separable discovery/review work is delegated`
+- execution_topology: `single-session`
+- orchestration_value: `low`
+- agent_budget: `0`
+- spawn_decision: `no spawn; the immediate blocker was a single local Ollama behavior that had to be reproduced and fixed serially`
+- efficiency_basis: `handoff cost was higher than gain because diagnosis depended on local process state, model names, and immediate command outputs`
+- selection_reason: `user corrected model scope to the two installed Ollama Q4 models and asked to proceed`
 
 ## Evaluation Plan
 
 - evaluation_need: `full`
 - project_invariants:
-  - `CGV, Lotte Cinema, Megabox showtime data remains the core source for current movie recommendation candidates.`
-  - `Collectors preserve provider-specific raw data characteristics.`
-  - `Comparison/recommendation uses minimum common fields and movie_tags without renaming stable provider keys.`
-  - `Do not hardcode secrets, tokens, API keys, or private model credentials.`
-  - `Validate user input at API boundaries and escape rendered frontend content.`
-  - `Default verification is local commands plus code review; no deployed URL smoke check unless requested.`
-  - `Do not touch dist/**, generated/**, vendor/**, or .git/**.`
+  - `Use only gemma4:e2b-it-q4_K_M for fast mode and gemma4:e4b-it-q4_K_M for precise mode.`
+  - `Do not search for or depend on E2B Q6.`
+  - `Do not edit .env secrets; only update tracked defaults/examples.`
+  - `Keep Ollama local at http://127.0.0.1:11434.`
+  - `No browser automation or deployed URL checks unless requested.`
 - task_acceptance:
-  - `Expose anonymous recommendation session, poster seed, recommendation, feedback, and reset APIs.`
-  - `Support fast and precise modes mapped to local model providers from environment.`
-  - `Use code scoring first, local Gemma JSON reordering/explanation second, deterministic fallback on AI failure.`
-  - `Do not include frontend recommendation UI in this task.`
-  - `Store anonymous profile, recommendation runs, and feedback server-side, with reset support.`
+  - `Both configured Ollama models return non-empty text through /api/chat.`
+  - `Ollama request disables thinking so gemma4 parser does not return empty content.`
+  - `Fast mode has a default model name and no longer silently disables AI when env is absent.`
+  - `.env.example and application.yml document the two actual Q4 models.`
+  - `Throwaway test model alias is removed.`
 - non_goals:
-  - `No login implementation.`
-  - `No Oracle Cloud deployment or cloud-to-local AI bridge.`
-  - `No external movie metadata API dependency for v1 poster seed.`
-  - `No public Ollama exposure.`
+  - `No LM Studio migration work.`
+  - `No Q6 model search or install.`
+  - `No deployment or cloud integration.`
+  - `No destructive cleanup of user data.`
 - hard_checks:
+  - `Direct Ollama /api/chat request for gemma4:e2b-it-q4_K_M with think=false and format=json`
+  - `Direct Ollama /api/chat request for gemma4:e4b-it-q4_K_M with think=false and format=json`
+  - `gradle test`
   - `git status --short`
   - `Get-Content -Raw WORKSPACE_CONTEXT.toml`
   - `Select-String -Path WORKSPACE_CONTEXT.toml -Pattern '^\[workspace\]','^\[architecture\]','^\[editing_rules\]','^\[verification\]'`
-  - `gradle test if Java 21 and Gradle are available on PATH`
 - llm_review_rubric:
-  - `No secrets or model credentials are hardcoded.`
-  - `User input is bounded and validated before storage/model prompt construction.`
-  - `AI response parsing failure cannot break recommendation output.`
-  - `Child audience hard filter is preserved.`
-  - `No frontend implementation remains in this task.`
+  - `Request body matches the local Ollama behavior observed at runtime.`
+  - `Defaults do not contradict the agreed Q4 model plan.`
+  - `No secret values are exposed or changed.`
 - evidence_required:
-  - `Record verification command results, unavailable Java/Gradle gaps, diff review notes, and any material failures.`
-- note: `Hard checks outrank LLM review.`
+  - `Record direct model response results and backend verification.`
 
 ## Writer Slot
 
 - writer_slot: `main`
-- write_set: `frontend/src/basic/daboyeoAi.html, frontend/src/js/api/client.js, frontend/src/css/daboyeoAi.css, frontend/src/js/pages/daboyeoAi.js, STATE.md`
+- write_set: `STATE.md, ERROR_LOG.md, .env.example, .gitignore, backend/src/main/java/kr/daboyeo/backend/config/RecommendationProperties.java, backend/src/main/java/kr/daboyeo/backend/service/recommendation/LocalModelRecommendationClient.java, backend/src/main/resources/application.yml`
 - write_sets:
-  - `main`: `frontend recommendation cleanup files and STATE.md`
-  - `explorer`: `read-only local Ollama/E2B model discovery`
-  - `reviewer`: `read-only final API/UI/security review`
+  - `main`: `Ollama request config, model defaults, verification notes`
 - shared_assets_owner: `main`
 - note: `One shared task board is active; no concurrent registry mode.`
 - concurrent_note: `No parallel writer is active.`
 
 ## Contract Freeze
 
-- contract_freeze: `POST /api/recommendation/sessions, DELETE /api/recommendation/sessions/{anonymousId}, GET /api/recommendation/poster-seed, POST /api/recommendations, POST /api/recommendations/{runId}/feedback; fast and precise modes both use local Ollama provider with env-selected model names; frontend implementation is out of scope for this task`
-- note: `Implement the plan exactly as pinned by the user unless a verification blocker requires reclassification.`
-- contract_source: `user-provided implementation plan`
-- contract_revision: `2026-04-15-local-gemma-recommendation-v1`
-- verification_target: `backend tests when available plus repository verification commands and self-review`
+- contract_freeze: `Fast recommendation uses gemma4:e2b-it-q4_K_M and precise recommendation uses gemma4:e4b-it-q4_K_M. Backend Ollama calls must include think=false because the default gemma4 parser path returned empty content despite eval_count increasing.`
+- note: `Direct HTTP checks proved both models return JSON text with /api/chat, format=json, stream=false, and think=false.`
+- contract_source: `user request`
+- contract_revision: `2026-04-16-gemma4-q4-ollama`
+- verification_target: `direct Ollama JSON checks plus backend gradle test and repository verification commands`
 
 ## Reviewer
 
-- reviewer: `reserved subagent reviewer plus main self-review`
-- reviewer_target: `recommendation API contracts, LLM fallback behavior, input validation, anonymous data reset`
-- reviewer_focus: `security, verification gaps, data contract preservation, recommendation fallback correctness`
+- reviewer: `main self-review`
+- reviewer_target: `Ollama request body and backend model defaults`
+- reviewer_focus: `think=false inclusion, agreed model names, no secret exposure, no Q6 fallback`
 
 ## Last Update
 
-- timestamp: `2026-04-15 18:03:00 +09:00`
-- note: `Frontend changes removed; backend recommendation work and database/model configuration remain.`
+- timestamp: `2026-04-16 17:23:52 +09:00`
+- note: `Completed local Ollama Gemma4 bring-up: both Q4 models returned JSON when think=false was used, backend defaults were updated, and tests passed.`
+
+## Verification Result
+
+- ollama_models: `passed: ollama list shows gemma4:e2b-it-q4_K_M and gemma4:e4b-it-q4_K_M only after removing throwaway alias`
+- e2b_chat_json: `passed: /api/chat with think=false and format=json returned non-empty recommendations JSON content`
+- e4b_chat_json: `passed: /api/chat with think=false and format=json returned non-empty recommendations JSON content`
+- backend_request_body: `implemented: LocalModelRecommendationClient sends think=false to Ollama /api/chat`
+- model_defaults: `implemented: fast default is gemma4:e2b-it-q4_K_M and precise default is gemma4:e4b-it-q4_K_M`
+- env_example: `updated: .env.example now names the two agreed Q4 models`
+- env_actual: `checked: .env did not contain DABOYEO_OLLAMA_BASE_URL or DABOYEO_RECOMMEND_* overrides in Select-String output`
+- alias_cleanup: `passed: ollama rm daboyeo-gemma4-e4b:q4-plain`
+- gradle_recommendation_tests: `passed: gradle test --tests kr.daboyeo.backend.service.recommendation.*`
+- gradle_full: `passed: gradle test`
+- gradle_parallel_error: `resolved: a parallel Gradle verification run caused a test-results delete conflict; rerun serially passed and ERROR_LOG.md was appended`
+- git_diff_check: `passed with line-ending normalization warnings only`
+- workspace_context: `read and section checks passed`
+- generated_output: `backend/bin/ is generated compiler output; added backend/bin/ to .gitignore instead of deleting it`
+- browser_check: `not run; user did not request browser automation`
+
+## Retrospective
+
+- task: `Local Ollama Gemma4 fast/precise model bring-up`
+- score_total: `5`
+- evaluation_fit: `full local verification fit because direct model behavior and backend request shape were both involved`
+- orchestration_fit: `single-session was appropriate; model state and command feedback were tightly coupled`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `corrected earlier Q6 assumption and locked the task to the two installed Q4 models`
+- reviewer_findings: `the empty response was caused by default gemma4 thinking/parser behavior; adding think=false fixes the backend call path`
+- verification_outcome: `direct Ollama JSON calls passed for both models, recommendation package tests passed, full backend tests passed, repository checks passed`
+- next_gate_adjustment: `do not parallelize Gradle commands in the same backend build directory`

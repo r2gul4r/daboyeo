@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class PreferenceProfileBuilder {
 
+    private static final int MIN_LIKED_POSTERS = 3;
+    private static final int MAX_LIKED_POSTERS = 5;
     private static final Set<String> AUDIENCES = Set.of("alone", "friends", "date", "family", "child");
     private static final Set<String> MOODS = Set.of("light", "immersive", "exciting", "calm", "tense");
 
@@ -41,12 +43,7 @@ public class PreferenceProfileBuilder {
         choices.likedSeedMovieIds().stream()
             .map(posterSeedService::findById)
             .flatMap(OptionalUtils::stream)
-            .forEach(seed -> applySeed(profile, seed, 3));
-
-        choices.dislikedSeedMovieIds().stream()
-            .map(posterSeedService::findById)
-            .flatMap(OptionalUtils::stream)
-            .forEach(seed -> applySeed(profile, seed, -3));
+            .forEach(seed -> applyLikedSeed(profile, seed));
 
         return profile;
     }
@@ -70,11 +67,12 @@ public class PreferenceProfileBuilder {
         if (choices == null) {
             throw new IllegalArgumentException("포스터 선택이 필요해.");
         }
-        if (choices.likedSeedMovieIds().size() != 5) {
-            throw new IllegalArgumentException("끌리는 포스터 5개를 골라줘.");
+        int likedCount = choices.likedSeedMovieIds().size();
+        if (likedCount < MIN_LIKED_POSTERS) {
+            throw new IllegalArgumentException("끌리는 포스터를 3개 이상 골라줘.");
         }
-        if (choices.dislikedSeedMovieIds().size() != 3) {
-            throw new IllegalArgumentException("안 끌리는 포스터 3개를 골라줘.");
+        if (likedCount > MAX_LIKED_POSTERS) {
+            throw new IllegalArgumentException("끌리는 포스터는 5개까지만 골라줘.");
         }
     }
 
@@ -140,11 +138,13 @@ public class PreferenceProfileBuilder {
         }
     }
 
-    private void applySeed(TagProfile profile, PosterSeedMovie seed, int direction) {
-        seed.preferenceTags().forEach(tag -> profile.addWeight(tag, direction));
-        if (direction < 0) {
-            seed.contentTags().forEach(tag -> profile.addWeight(tag, direction));
+    private void applyLikedSeed(TagProfile profile, PosterSeedMovie seed) {
+        seed.genres().forEach(value -> profile.addWeight("genre:" + value, 5));
+        seed.moods().forEach(value -> profile.addWeight("mood:" + value, 5));
+        if (!seed.pace().isBlank()) {
+            profile.addWeight("pace:" + seed.pace(), 3);
         }
+        seed.audiences().forEach(value -> profile.addWeight("audience:" + value, 2));
     }
 
     private static final class OptionalUtils {

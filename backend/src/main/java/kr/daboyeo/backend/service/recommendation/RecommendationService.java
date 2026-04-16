@@ -83,7 +83,7 @@ public class RecommendationService {
     }
 
     public List<PosterSeedMovie> posterSeed(int limit) {
-        return posterSeedService.randomSeed(limit <= 0 ? 16 : limit);
+        return posterSeedService.randomSeed(limit <= 0 ? 10 : limit);
     }
 
     public RecommendationResponse recommend(RecommendationRequest request) {
@@ -99,20 +99,21 @@ public class RecommendationService {
             profileRepository.ensureProfile(anonymousId);
         }
 
-        RecommendationProfile storedProfile = profileRepository.findProfile(anonymousId)
-            .orElseGet(() -> new RecommendationProfile(anonymousId, Map.of()));
+        final String resolvedAnonymousId = anonymousId;
+        RecommendationProfile storedProfile = profileRepository.findProfile(resolvedAnonymousId)
+            .orElseGet(() -> new RecommendationProfile(resolvedAnonymousId, Map.of()));
         TagProfile tagProfile = preferenceProfileBuilder.build(
             request.survey(),
             request.posterChoices(),
             storedProfile.tagWeights()
         );
         RecommendationRequest normalizedRequest = new RecommendationRequest(
-            anonymousId,
+            resolvedAnonymousId,
             mode.wireValue(),
             request.survey(),
             request.posterChoices()
         );
-        profileRepository.upsertSurvey(anonymousId, normalizedRequest);
+        profileRepository.upsertSurvey(resolvedAnonymousId, normalizedRequest);
 
         String runId = newRunId();
         List<ShowtimeCandidate> candidates = showtimeRepository.findUpcomingCandidates(CANDIDATE_LIMIT);
@@ -130,7 +131,7 @@ public class RecommendationService {
             );
             profileRepository.saveRun(
                 runId,
-                anonymousId,
+                resolvedAnonymousId,
                 mode.wireValue(),
                 modelName,
                 normalizedRequest,
@@ -161,7 +162,7 @@ public class RecommendationService {
         );
         profileRepository.saveRun(
             runId,
-            anonymousId,
+            resolvedAnonymousId,
             mode.wireValue(),
             response.model(),
             normalizedRequest,

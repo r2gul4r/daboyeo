@@ -262,5 +262,71 @@
     "audiences": ["friends", "family"],
     "avoid": ["loud"],
     "ageRating": "15"
+  },
+  {
+    "id": "black_panther",
+    "title": "블랙 팬서",
+    "posterUrl": "https://image.tmdb.org/t/p/w342/uxzzxijgPIY7slzFvMotPv8wjKA.jpg",
+    "genres": ["action", "sf", "adventure"],
+    "moods": ["exciting", "heroic", "visual"],
+    "pace": "fast",
+    "audiences": ["friends", "family"],
+    "avoid": ["violence", "loud"],
+    "ageRating": "12"
+  },
+  {
+    "id": "oppenheimer",
+    "title": "오펜하이머",
+    "posterUrl": "https://image.tmdb.org/t/p/w342/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
+    "genres": ["drama", "history"],
+    "moods": ["immersive", "serious", "tense"],
+    "pace": "slow",
+    "audiences": ["alone", "friends"],
+    "avoid": ["too_long", "complex", "loud"],
+    "ageRating": "15"
+  },
+  {
+    "id": "beauty_and_beast_2017",
+    "title": "미녀와 야수",
+    "posterUrl": "https://image.tmdb.org/t/p/w342/tWqifoYuwLETmmasnGHO7xBjEtt.jpg",
+    "genres": ["musical", "fantasy", "romance"],
+    "moods": ["warm", "visual", "comfort"],
+    "pace": "medium",
+    "audiences": ["family", "date", "child"],
+    "avoid": [],
+    "ageRating": "all"
+  },
+  {
+    "id": "toy_story_4",
+    "title": "토이 스토리 4",
+    "posterUrl": "https://image.tmdb.org/t/p/w342/w9kR8qbmQ01HwnvK4alvnQ2ca0L.jpg",
+    "genres": ["animation", "comedy", "family"],
+    "moods": ["warm", "funny", "comfort"],
+    "pace": "medium",
+    "audiences": ["family", "child", "friends"],
+    "avoid": ["sad_ending"],
+    "ageRating": "all"
+  },
+  {
+    "id": "minions",
+    "title": "미니언즈",
+    "posterUrl": "https://image.tmdb.org/t/p/w342/q0R4crx2SehcEEQEkYObktdeFy.jpg",
+    "genres": ["animation", "comedy", "family"],
+    "moods": ["funny", "light", "bright"],
+    "pace": "fast",
+    "audiences": ["family", "child", "friends"],
+    "avoid": ["loud"],
+    "ageRating": "all"
+  },
+  {
+    "id": "mission_impossible_fallout",
+    "title": "미션 임파서블: 폴아웃",
+    "posterUrl": "https://image.tmdb.org/t/p/w342/AkJQpZp9WoNdj7pLYSj1L0RcMMN.jpg",
+    "genres": ["action", "thriller", "adventure"],
+    "moods": ["exciting", "tense", "visual"],
+    "pace": "fast",
+    "audiences": ["friends", "alone"],
+    "avoid": ["violence", "loud"],
+    "ageRating": "15"
   }
 ]

@@ -20,8 +20,8 @@ class PreferenceProfileBuilderTests {
         var profile = builder.build(
             new RecommendationSurvey("friends", "exciting", List.of("too_long")),
             new PosterChoices(
-                List.of("avatar", "avengers_endgame", "spiderman_no_way_home", "top_gun_maverick", "super_mario_bros"),
-                List.of("joker", "parasite", "titanic")
+                List.of("avatar", "avengers_endgame", "spiderman_no_way_home"),
+                List.of()
             ),
             Map.of("genre:action", 2)
         );
@@ -29,17 +29,44 @@ class PreferenceProfileBuilderTests {
         assertThat(profile.audience()).isEqualTo("friends");
         assertThat(profile.mood()).isEqualTo("exciting");
         assertThat(profile.avoids("too_long")).isTrue();
-        assertThat(profile.weight("genre:action")).isGreaterThan(2);
-        assertThat(profile.weight("mood:dark")).isLessThan(0);
+        assertThat(profile.weight("genre:action")).isEqualTo(14);
+        assertThat(profile.weight("mood:visual")).isEqualTo(5);
     }
 
     @Test
-    void requiresFiveLikedAndThreeDislikedPosters() {
+    void requiresAtLeastThreeLikedPosters() {
         assertThatThrownBy(() -> builder.build(
             new RecommendationSurvey("friends", "exciting", List.of()),
-            new PosterChoices(List.of("avatar"), List.of("joker")),
+            new PosterChoices(List.of("avatar", "joker"), List.of()),
             Map.of()
         )).isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("끌리는 포스터 5개");
+            .hasMessageContaining("끌리는 포스터를 3개 이상");
+    }
+
+    @Test
+    void rejectsMoreThanFiveLikedPosters() {
+        assertThatThrownBy(() -> builder.build(
+            new RecommendationSurvey("friends", "exciting", List.of()),
+            new PosterChoices(
+                List.of("avatar", "avengers_endgame", "spiderman_no_way_home", "top_gun_maverick", "super_mario_bros", "barbie"),
+                List.of()
+            ),
+            Map.of()
+        )).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("끌리는 포스터는 5개까지만");
+    }
+
+    @Test
+    void ignoresDislikedPostersForPosterDiagnosis() {
+        var profile = builder.build(
+            new RecommendationSurvey("friends", "exciting", List.of()),
+            new PosterChoices(
+                List.of("avatar", "avengers_endgame", "spiderman_no_way_home"),
+                List.of("joker", "parasite", "titanic")
+            ),
+            Map.of()
+        );
+
+        assertThat(profile.weight("mood:dark")).isZero();
     }
 }
