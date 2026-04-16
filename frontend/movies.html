@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>실시간 통합 상영 정보 - 다보여(Daboyeo)</title>
+  
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap" rel="stylesheet">
+  
+  <!-- CSS Link (Shared & Specific) -->
+  <link rel="stylesheet" href="./src/css/main.css">
+  <link rel="stylesheet" href="./src/css/kakaoMap.css">
+  <link rel="stylesheet" href="./src/css/movies.css">
+</head>
+<body>
+
+  <!-- Global Header (Loaded by include.js) -->
+  <div id="header"></div>
+
+  <div class="content-wrapper">
+    <header class="page-title-section">
+        <div class="container">
+            <a href="index.html" class="btn-back">
+                <i class="fas fa-chevron-left"></i> 메인으로 이동
+            </a>
+            <h1>지금 바로 볼 수 있는 영화</h1>
+            <p>3대 영화사(CGV, 롯데시네마, 메가박스) 실시간 상영 정보 통합 대시보드</p>
+        </div>
+    </header>
+
+    <main class="container">
+      <div class="filter-bar">
+        <div class="search-info">
+            통합 상영 결과 <span id="result-count">0</span>건
+        </div>
+        <div class="view-options">
+            <i class="fas fa-th-large"></i>
+        </div>
+      </div>
+
+      <div id="movie-grid" class="movie-grid">
+        <!-- liveMovies.js 가 카드를 주입합니다 -->
+        <div class="loading-spinner">최신 상영 정보를 엔진에서 가져오는 중...</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Global Footer -->
+  <div id="footer"></div>
+
+  <!-- Scripts -->
+  <script src="./src/js/include.js"></script>
+  <script src="./src/js/pages/common.js"></script>
+  <script src="./src/js/liveMovies.js"></script>
+  <script>
+    // 페이지 전용 초기화 (결과 개수 업데이트 등)
+    document.addEventListener('DOMContentLoaded', () => {
+        const observer = new MutationObserver(() => {
+            const count = document.querySelectorAll('.movie-card').length;
+            document.getElementById('result-count').innerText = count;
+        });
+        observer.observe(document.getElementById('movie-grid'), { childList: true });
+    });
+  </script>
+</body>
+</html>

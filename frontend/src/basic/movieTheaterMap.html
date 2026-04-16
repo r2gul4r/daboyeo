@@ -1,0 +1,235 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다보여 | DABOYEO</title>
+  <!-- favicon -->
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="45x45" href="../../favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/movieTheaterMap.css">
+
+</head>
+
+<body class="basic-page">
+    <div id="header"></div>
+    <div id="topButton"></div>
+  <!-- main -->
+  <div class="nearby-theater-container">
+    <div class="nearby-header">
+      <h2 class="nearby-title">내 주변 영화관 찾기</h2>
+      <p class="nearby-subtitle">현재 위치를 기반으로 CGV, 롯데시네마, 메가박스를 찾아드립니다.</p>
+    </div>
+
+    <div class="map-section">
+      <div id="map" class="map-canvas">
+        <!-- 지도가 로드되는 영역 -->
+        <div class="map-loading">
+          <div class="loading-spinner"></div>
+          <span>지도를 불러오는 중...</span>
+        </div>
+      </div>
+      <button class="btn-relocate">
+        <i class="fas fa-crosshairs"></i> 내 위치로 이동
+      </button>
+    </div>
+
+    <div class="info-section">
+      <div class="info-header">
+        <div class="count-info">
+          <span class="dot"></span> 현재 주변 영화관 <span class="count-num">0</span>개
+        </div>
+        <div class="brand-filters">
+          <button class="filter-btn cgv">CGV</button>
+          <button class="filter-btn lotte">롯데시네마</button>
+          <button class="filter-btn mega">메가박스</button>
+        </div>
+      </div>
+
+      <div class="theater-list-empty">
+        위치를 허용하면 주변 영화관 목록이 여기에 표시됩니다.
+      </div>
+    </div>
+  </div>
+    <div id="footer"></div>
+
+
+  <script>
+    // DABOYEO Movie Theater Search Logic
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // 초기 위치 설정 (서울 시청 기준)
+      const defaultPosition = { lat: 37.5665, lng: 126.9780 };
+      let currentMap = null;
+      let markers = [];
+      let infowindow = null;
+
+      // 카카오맵 API 로드 확인 및 초기화
+      if (typeof kakao !== 'undefined' && kakao.maps) {
+        initMap();
+      } else {
+        console.error('카카오맵 API를 불러오지 못했습니다. API 키를 확인해주세요.');
+        // 테스트용 더미 데이터 표시
+        showDummyResults('all');
+      }
+
+      // 지도 초기화 함수
+      function initMap() {
+        const container = document.getElementById('map');
+        const options = {
+          center: new kakao.maps.LatLng(defaultPosition.lat, defaultPosition.lng),
+          level: 4
+        };
+        currentMap = new kakao.maps.Map(container, options);
+        infowindow = new kakao.maps.InfoWindow({ zIndex: 1 });
+
+        // 현재 위치 가져오기
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const locPosition = new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
+              currentMap.setCenter(locPosition);
+              searchPlaces('영화관', locPosition);
+            },
+            () => {
+              searchPlaces('영화관', new kakao.maps.LatLng(defaultPosition.lat, defaultPosition.lng));
+            }
+          );
+        } else {
+          searchPlaces('영화관', new kakao.maps.LatLng(defaultPosition.lat, defaultPosition.lng));
+        }
+      }
+
+      // 장소 검색 함수
+      function searchPlaces(keyword, location) {
+        const ps = new kakao.maps.services.Places();
+        const options = {
+          location: location,
+          radius: 5000, // 5km 이내
+          sort: kakao.maps.services.SortBy.DISTANCE
+        };
+
+        ps.keywordSearch(keyword, (data, status) => {
+          if (status === kakao.maps.services.Status.OK) {
+            // CGV, 롯데시네마, 메가박스만 필터링
+            const filteredData = data.filter(place =>
+              place.place_name.includes('CGV') ||
+              place.place_name.includes('롯데시네마') ||
+              place.place_name.includes('메가박스')
+            );
+            displayPlaces(filteredData);
+          }
+        }, options);
+      }
+
+      // 검색 결과 표시 함수
+      function displayPlaces(places) {
+        const listEl = document.getElementById('placesList');
+        listEl.innerHTML = '';
+
+        places.forEach((place, index) => {
+          const brand = getBrand(place.place_name);
+          const brandClass = getBrandClass(brand);
+
+          const itemEl = document.createElement('div');
+          itemEl.className = 'place-item';
+          itemEl.innerHTML = `
+                <span class="place-brand ${brandClass}">${brand}</span>
+                <h3 class="place-name">${place.place_name}</h3>
+                <p class="place-address">${place.address_name}</p>
+                <p class="place-distance">${(place.distance / 1000).toFixed(1)}km</p>
+                <button class="btn-booking" onclick="window.open('${place.place_url}', '_blank')">예매하기</button>
+            `;
+          listEl.appendChild(itemEl);
+
+          // 마커 추가 (지도가 초기화된 경우)
+          if (currentMap) {
+            addMarker(new kakao.maps.LatLng(place.y, place.x), place.place_name);
+          }
+        });
+      }
+
+      // 브랜드 추출 함수
+      function getBrand(name) {
+        if (name.includes('CGV')) return 'CGV';
+        if (name.includes('롯데시네마')) return '롯데시네마';
+        if (name.includes('메가박스')) return '메가박스';
+        return '기타';
+      }
+
+      // 브랜드 클래스 추출 함수
+      function getBrandClass(brand) {
+        switch (brand) {
+          case 'CGV': return 'brand-cgv';
+          case '롯데시네마': return 'brand-lotte';
+          case '메가박스': return 'brand-mega';
+          default: return '';
+        }
+      }
+
+      // 마커 추가 함수
+      function addMarker(position, title) {
+        const marker = new kakao.maps.Marker({
+          position: position,
+          map: currentMap
+        });
+
+        kakao.maps.event.addListener(marker, 'click', () => {
+          infowindow.setContent(`<div style="padding:5px;font-size:12px;color:#000;">${title}</div>`);
+          infowindow.open(currentMap, marker);
+        });
+
+        markers.push(marker);
+      }
+
+      // 필터 버튼 이벤트
+      const filterBtns = document.querySelectorAll('.brand-chip');
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          btn.classList.toggle('active');
+          // active된 브랜드들만 필터 (추가 로직 필요, 여기서는 단순 토글만)
+        });
+      });
+
+      // API 키가 없을 때를 대비한 더미 데이터 표시 함수 (테스트용)
+      function showDummyResults(filterBrand) {
+        const listEl = document.getElementById('placesList');
+        const dummyData = [
+          { name: 'CGV 강남', address: '서울특별시 강남구 역삼동 814-6', brand: 'CGV', distance: '0.5km' },
+          { name: '롯데시네마 건대입구', address: '서울특별시 광진구 자양동 227-7', brand: '롯데시네마', distance: '1.2km' },
+          { name: '메가박스 코엑스', address: '서울특별시 강남구 삼성동 159', brand: '메가박스', distance: '2.5km' },
+          { name: 'CGV 압구정', address: '서울특별시 강남구 신사동 602', brand: 'CGV', distance: '3.1km' }
+        ];
+
+        listEl.innerHTML = '';
+        const filtered = filterBrand === 'all' ? dummyData : dummyData.filter(d => d.brand === filterBrand);
+
+        filtered.forEach(data => {
+          const brandClass = getBrandClass(data.brand);
+          const itemEl = document.createElement('div');
+          itemEl.className = 'place-item';
+          itemEl.innerHTML = `
+                <span class="place-brand ${brandClass}">${data.brand}</span>
+                <h3 class="place-name">${data.name}</h3>
+                <p class="place-address">${data.address}</p>
+                <p class="place-distance">${data.distance}</p>
+                <button class="btn-booking">예매하기</button>
+            `;
+          listEl.appendChild(itemEl);
+        });
+      }
+    });
+  </script>
+
+  <!-- Kakao SDK -->
+  <script
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0520b1a822c33d45a0a7075152d340fa&libraries=services"></script>
+    <script src="../js/include.js"></script>
+  <script src="../js/pages/common.js"></script>
+  <script src="../js/api/kakaoMap.js"></script>
+</body>
+
+</html>
+
