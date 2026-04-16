@@ -46,7 +46,7 @@ h1 {
 label {
   display: block;
   font-size: 12px;
-  color: var(--gray100);
+  color: var(--purple60);
   margin-bottom: 10px;
 }
 
@@ -122,15 +122,18 @@ label {
   z-index: 999;
 }
 
-.region-dropdown li {
-  padding: 10px;
-  cursor: pointer;
-  font-size: 13px;
+.aa {
+  display: flex;
+  gap: 15px;
 }
 
-.region-dropdown li:hover {
-  background: #6c5ce7;
-  color: #fff;
+.btn-map {
+  width: 120px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--gray50);
+  border-radius: 8px;
+  color: var(--white0);
+  font-size: 14px;
 }
 
 /* 달력 */
@@ -198,97 +201,68 @@ label {
 }
 
 .today {
-  background-color: #222;
+  background-color: var(--purple0);
   color: #fff;
   border-radius: 50%;
 }
 
-.slider-container {
-  position: relative;
-  height: 40px;
+/* 시간 */
+.time-selection-group {
   display: flex;
-  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 5px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.slider-track {
-  width: 100%;
-  height: 4px;
-  background: var(--gray50);
-  border-radius: 2px;
+.time-option {
+  flex: 1;
   position: relative;
 }
 
-.slider-progress {
+.time-option input[type="radio"] {
   position: absolute;
-  height: 100%;
-  background: var(--purple0);
-  border-radius: 2px;
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
-.slider-handle {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  background: var(--white50);
-  border-radius: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  cursor: grab;
-  z-index: 5;
-  transition: background 0.2s ease;
-}
-
-.slider-handle:hover {
-  background: var(--purple50);
-}
-
-.slider-handle:active {
-  cursor: grabbing;
-}
-
-.slider-labels {
-  position: relative;
-  top: 0;
+.time-option label {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  font-size: 11px;
+  justify-content: center;
+  padding: 10px 5px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  margin-bottom: 0;
   color: var(--gray100);
+  font-weight: 500;
 }
 
-/* 눈금 컨테이너 */
-.slider-ticks {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  pointer-events: none;
+.time-option label .time-name {
+  font-size: 0.95rem;
+  margin-bottom: 2px;
 }
 
-/* 개별 틱 */
-.tick {
-  position: absolute;
-  top: 50%;
-  width: 2px;
-  height: 10px;
-  background: var(--gray30);
-  transform: translate(-50%, -50%);
+.time-option label .time-range {
+  font-size: 0.75rem;
+  opacity: 0.7;
 }
 
-/* 위치 */
-.tick.start {
-  left: 0%;
+.time-option input[type="radio"]:checked+label {
+  background: var(--purple0);
+  color: var(--white0);
+  box-shadow: 0 4px 12px rgba(114, 100, 233, 0.3);
 }
 
-.tick.middle {
-  left: 50%;
+.time-option label:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.tick.end {
-  left: 100%;
-}
-
+/* 인원 */
 .person-counter {
   display: flex;
   align-items: center;
@@ -330,6 +304,7 @@ label {
   font-weight: 600;
 }
 
+/* 버튼 */
 .action-row {
   display: flex;
   align-items: center;

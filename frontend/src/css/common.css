@@ -12,7 +12,8 @@
   --purple60: #BDB9E4;
   --pink50: #faa8c4;
   --red50: #FF4444;
-  --fixed-header-height: 88px;
+  /* --fixed-header-height: 88px; */
+  --fixed-header-height: 60px;
   --basic-page-top-gap: 32px;
   scroll-behavior: smooth;
   /* background: linear-gradient(135deg, #6c5ce7, #a29bfe, #fd79a8); */

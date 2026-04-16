@@ -25,23 +25,15 @@
       <div class="form-row">
         <div class="form-group">
           <label>지역</label>
-          <div class="input-wrapper">
-            <i class="fas fa-map-marker-alt"></i>
-            <input type="text" id="regionInput" placeholder="지역 검색(전체)">
+          <div class="aa">
+            <div class="input-wrapper">
+              <i class="fas fa-map-marker-alt"></i>
+              <input type="text" id="regionInput" placeholder="지역 검색(전체)">
+            </div>
+            <button class="btn-map" id=""><i class="fas fa-location-dot"></i> 내 위치</button>
           </div>
         </div>
-        <button class="btn-nearby" id="nearbyBtn"><i class="fas fa-location-dot"></i> 내 위치</button>
       </div>
-      <!-- <div class="form-row">
-        <div class="form-group">
-          <label>지역</label>
-          <div class="input-wrapper no-icon">
-            <input type="text" id="regionInput" placeholder="지역 검색(전체)">
-            <ul id="regionDropdown" class="region-dropdown"></ul>
-          </div>
-        </div>
-        <button class="btn-nearby" id="nearbyBtn"><i class="fas fa-location-dot"></i> 내 위치</button>
-      </div> -->
 
       <div class="form-row">
         <!-- ============================================
@@ -80,22 +72,30 @@
         <!-- ============================================
              4. 시간 선택 슬라이더 (핵심)
              ============================================ -->
-        <div class="time-range-container">
-          <div class="time-header">
-            <label>시간</label>
-            <span class="time-value" id="timeValue">10:00 - 22:00</span>
-          </div>
-          <div class="slider-container">
-            <div class="slider-track">
-              <div class="slider-progress" id="sliderProgress"></div>
+        <div class="form-group">
+          <label>시간대 선택</label>
+          <div class="time-selection-group">
+            <div class="time-option">
+              <input type="radio" name="timeRange" id="time-morning" value="morning" checked>
+              <label for="time-morning">
+                <span class="time-name">조조</span>
+                <span class="time-range">(06:00~10:00)</span>
+              </label>
             </div>
-            <div class="slider-handle" id="sliderStart" data-index="0"></div>
-            <div class="slider-handle" id="sliderEnd" data-index="44"></div>
-          </div>
-          <div class="slider-labels">
-            <span class="slider-label start">00:00</span>
-            <span class="slider-label middle">12:00</span>
-            <span class="slider-label end">23:59</span>
+            <div class="time-option">
+              <input type="radio" name="timeRange" id="time-brunch" value="brunch">
+              <label for="time-brunch">
+                <span class="time-name">브런치</span>
+                <span class="time-range">(10:00~16:00)</span>
+              </label>
+            </div>
+            <div class="time-option">
+              <input type="radio" name="timeRange" id="time-night" value="night">
+              <label for="time-night">
+                <span class="time-name">야간</span>
+                <span class="time-range">(22:00~02:00)</span>
+              </label>
+            </div>
           </div>
         </div>
 

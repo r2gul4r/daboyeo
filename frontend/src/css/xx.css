@@ -1,0 +1,240 @@
+@charset "utf-8";
+@import url(./common.css);
+
+header {
+  position: fixed;
+  top: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  /* height: var(--fixed-header-height); */
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+.logo {
+  width: 200px;
+}
+
+main {
+  margin-top: calc(var(--fixed-header-height) + var(--basic-page-top-gap));
+  width: 100%;
+  max-width: 600px;
+  padding: 0 20px 80px;
+  text-align: center;
+  /* border: 1px solid; */
+}
+
+.hero-section h1 {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  letter-spacing: -1px;
+  color: var(--white0);
+}
+
+.hero-section p {
+  color: var(--gray100);
+  font-size: 14px;
+  margin-bottom: 40px;
+}
+
+.search-card {
+  background: var(--card-bg);
+  border-radius: 24px;
+  padding: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  color: var(--purple60);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.input-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.input-box {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: var(--white0);
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.btn-location {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--purple50);
+  border: none;
+  border-radius: 12px;
+  transition: .5s;
+  padding: 14px;
+  color: white;
+  cursor: pointer;
+}
+
+.btn-location:hover {
+  background: var(--purple0);
+
+}
+
+.time-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 10px 16px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--gray100);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.chip.active {
+  background: var(--purple0);
+  color: white;
+  border-color: var(--purple0);
+}
+
+/* 인원 조절 스타일 */
+.personnel-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.personnel-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.personnel-info span {
+  font-size: 16px;
+  color: var(--white0);
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-counter {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--purple50);
+  background: transparent;
+  color: var(--purple50);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-counter:hover {
+  background: var(--purple0);
+  color: white;
+}
+
+.count-value {
+  font-size: 18px;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.btn-primary {
+  background: linear-gradient(to right, var(--purple0), var(--purple50), var(--pink50));
+  /* background: var(--purple0); */
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 18px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--white0);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 18px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary:hover,
+.btn-secondary:hover {
+  transition: .5s;
+  border-color: var(--purple0);
+}
+
+.footer-stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  font-size: 14px;
+  color: var(--gray100);
+  margin-bottom: 80px;
+}
+
+.footer-stats b {
+  color: var(--white0);
+}
+
+.footer-stats b.blue {
+  color: var(--purple50);
+}
+
+svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
