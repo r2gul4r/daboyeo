@@ -1350,4 +1350,64 @@ label {
   .price-amount {
     font-size: 13px;
   }
+}
+
+/* ============================================
+   Global Responsive Styles (Enhanced)
+   ============================================ */
+
+/* 타블렛 & 중형 화면 (1024px 이하) */
+@media screen and (max-width: 1024px) {
+    .movie-cards-grid, .review-cards-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    .best-seat-content {
+        grid-template-columns: 1fr !important;
+        gap: 40px;
+    }
+}
+
+/* 모바일 전용 (768px 이하) */
+@media screen and (max-width: 768px) {
+    h1 {
+        font-size: 28px !important;
+    }
+    .main-content {
+        padding-top: 80px !important;
+    }
+    .search-card {
+        padding: 20px !important;
+    }
+    .form-row {
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+    .action-row {
+        flex-direction: column !important;
+    }
+    .footer-stats {
+        flex-direction: column !important;
+        gap: 10px !important;
+        align-items: center !important;
+        margin-bottom: 50px !important;
+    }
+    .movie-cards-grid, .review-cards-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .now-playing-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 15px !important;
+    }
+}
+
+/* 초소형 스마트폰 (480px 이하) */
+@media screen and (max-width: 480px) {
+    h1 {
+        font-size: 24px !important;
+    }
+    .btn-search {
+        padding: 15px !important;
+        font-size: 16px !important;
+    }
 }
