@@ -45,7 +45,7 @@ const modeOptions = [
   {
     value: "fast",
     label: "빠른 추천",
-    model: "E2B Q6",
+    model: "E2B Q4",
     description: "짧은 이유와 바로 볼 후보가 필요할 때. 응답 속도를 우선한다.",
     tags: ["빠름", "간단한 이유", "상위 후보"],
   },
@@ -711,7 +711,7 @@ function renderModeStep() {
     titleParts: [
       { text: "어떤 방식으로\n추천할까?" },
     ],
-    description: "빠른 추천은 E2B Q6, 정밀 추천은 E4B Q4를 쓰는 계약으로 백엔드에 요청한다.",
+    description: "빠른 추천은 E2B Q4, 정밀 추천은 E4B Q4를 쓰는 계약으로 백엔드에 요청한다.",
     content: grid,
   });
 }
@@ -807,7 +807,7 @@ function createPreviewRecommendationResponse(mode) {
   return {
     runId: `${LOCAL_PREVIEW_ID_PREFIX}run`,
     mode,
-    model: mode === "fast" ? "E2B Q6 preview" : "E4B Q4 preview",
+    model: mode === "fast" ? "E2B Q4 preview" : "E4B Q4 preview",
     status: "preview",
     message: "로컬 프리뷰 결과야. Spring API가 켜지면 실제 추천 응답으로 대체된다.",
     fallback: true,

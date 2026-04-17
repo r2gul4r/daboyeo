@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -69,7 +69,37 @@ def db_date(value: Any) -> str | None:
 
 def db_datetime(date_value: Any, time_value: Any) -> str | None:
     date_text = db_date(date_value)
-    return combine_datetime(date_text, time_value) if date_text else None
+    if not date_text:
+        return None
+
+    text = str(time_value or "").strip()
+    if not text:
+        return None
+
+    try:
+        if ":" in text:
+            parts = text.split(":")
+            if len(parts) < 2:
+                return None
+            hour = int(parts[0])
+            minute = int(parts[1])
+            second = int(parts[2]) if len(parts) >= 3 and parts[2] else 0
+        else:
+            digits = "".join(ch for ch in text if ch.isdigit())
+            if len(digits) < 4:
+                return None
+            hour = int(digits[:-2])
+            minute = int(digits[-2:])
+            second = 0
+    except ValueError:
+        return combine_datetime(date_text, time_value)
+
+    if minute > 59 or second > 59:
+        return None
+
+    day_offset, hour = divmod(hour, 24)
+    dt = datetime.strptime(date_text, "%Y-%m-%d") + timedelta(days=day_offset)
+    return f"{dt.strftime('%Y-%m-%d')} {hour:02d}:{minute:02d}:{second:02d}"
 
 
 def db_rate(total: Any, remaining: Any) -> Decimal | None:
@@ -675,7 +705,7 @@ def run(argv: list[str] | None = None) -> int:
         return 0
 
     config = load_tidb_config()
-    result: dict[str, Any] = {"mode": "write", "target": config.safe_summary(), "providers": []}
+    result: dict[str, Any] = {"mode": "write", "target": "configured_tidb", "providers": []}
     with connect_tidb(config) as conn:
         with conn.cursor() as cursor:
             if args.provider in {"lotte", "all"}:

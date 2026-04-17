@@ -15,6 +15,9 @@ import kr.daboyeo.backend.domain.recommendation.RecommendationModels.Recommendat
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ScoredCandidate;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.TagProfile;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -22,8 +25,12 @@ import org.springframework.web.client.RestClientException;
 @Component
 public class LocalModelRecommendationClient {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalModelRecommendationClient.class);
     private static final TypeReference<Map<String, List<AiPick>>> AI_RESPONSE_TYPE = new TypeReference<>() {
     };
+    private static final int CONNECT_TIMEOUT_MS = 5_000;
+    private static final int FAST_READ_TIMEOUT_MS = 45_000;
+    private static final int PRECISE_READ_TIMEOUT_MS = 90_000;
 
     private final RecommendationProperties properties;
     private final ObjectMapper objectMapper;
@@ -42,7 +49,8 @@ public class LocalModelRecommendationClient {
             return Optional.empty();
         }
         RestClient restClient = RestClient.builder()
-            .baseUrl(properties.ollamaBaseUrl())
+            .baseUrl(properties.lmStudioBaseUrl())
+            .requestFactory(requestFactory(mode))
             .build();
         String model = properties.modelFor(mode);
         if (model.isBlank()) {
@@ -50,13 +58,21 @@ public class LocalModelRecommendationClient {
         }
 
         try {
-            return callOllama(restClient, mode, profile, candidates, model);
+            return callLmStudio(restClient, mode, profile, candidates, model);
         } catch (RestClientException | JsonProcessingException e) {
+            log.warn("Local recommendation model call failed. mode={}, model={}, cause={}", mode.wireValue(), model, e.toString());
             return Optional.empty();
         }
     }
 
-    private Optional<AiResult> callOllama(
+    private SimpleClientHttpRequestFactory requestFactory(RecommendationMode mode) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(CONNECT_TIMEOUT_MS);
+        factory.setReadTimeout(mode == RecommendationMode.FAST ? FAST_READ_TIMEOUT_MS : PRECISE_READ_TIMEOUT_MS);
+        return factory;
+    }
+
+    private Optional<AiResult> callLmStudio(
         RestClient restClient,
         RecommendationMode mode,
         TagProfile profile,
@@ -66,21 +82,20 @@ public class LocalModelRecommendationClient {
         Map<String, Object> request = Map.of(
             "model", model,
             "stream", false,
-            "think", false,
-            "format", "json",
+            "temperature", mode == RecommendationMode.FAST ? 0.1 : 0.2,
+            "max_tokens", 260,
             "messages", messages(mode, profile, candidates),
-            "options", Map.of(
-                "temperature", mode == RecommendationMode.FAST ? 0.1 : 0.2,
-                "num_predict", mode == RecommendationMode.FAST ? 220 : 420
-            )
+            "response_format", recommendationResponseFormat()
         );
         JsonNode response = restClient.post()
-            .uri("/api/chat")
+            .uri("/chat/completions")
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .retrieve()
             .body(JsonNode.class);
-        String content = response == null ? "" : response.path("message").path("content").asText("");
+        String content = response == null
+            ? ""
+            : response.path("choices").path(0).path("message").path("content").asText("");
         return parseResult(content, model);
     }
 
@@ -92,7 +107,7 @@ public class LocalModelRecommendationClient {
         return List.of(
             Map.of(
                 "role", "system",
-                "content", "너는 DABOYEO 영화 추천 보조 엔진이다. 후보 밖 영화는 절대 추천하지 말고 JSON만 반환한다."
+                "content", "You are DABOYEO's movie recommendation assistant. Never invent candidates or showtimes."
             ),
             Map.of("role", "user", "content", buildPrompt(mode, profile, candidates))
         );
@@ -110,33 +125,22 @@ public class LocalModelRecommendationClient {
     private String buildPrompt(RecommendationMode mode, TagProfile profile, List<ScoredCandidate> candidates) {
         try {
             return """
-                사용자 조건:
+                User conditions:
                 - audience: %s
                 - mood: %s
                 - avoid: %s
                 - mode: %s
 
-                후보 JSON:
+                Candidate JSON:
                 %s
 
-                작업:
-                - 후보 중 최대 3개만 골라라.
-                - showtimeId는 후보에 있는 값만 써라.
-                - reason, caution, valuePoint는 각각 한국어 한 문장으로 짧게 써라.
-                - 빠른 추천이면 더 짧게, 정밀 추천이면 조건 반영 이유를 조금 더 분명히 써라.
-                - JSON 형식만 반환해라.
-
-                반환 형식:
-                {
-                  "recommendations": [
-                    {
-                      "showtimeId": 123,
-                      "reason": "친구와 보기 좋고 빠른 전개 취향에 맞아요.",
-                      "caution": "잔인한 장면이 부담되면 예고편을 먼저 확인해요.",
-                      "valuePoint": "저녁 시간대와 가격 조건이 좋아요."
-                    }
-                  ]
-                }
+                Task:
+                - Choose up to 3 candidates.
+                - Use only showtimeId values that exist in the candidate JSON.
+                - Write reason, caution, and valuePoint in Korean.
+                - Keep each reason, caution, and valuePoint as one short sentence.
+                - For fast mode, keep wording very short.
+                - For precise mode, mention the reflected user condition more clearly.
                 """.formatted(
                 profile.audience(),
                 profile.mood(),
@@ -145,8 +149,48 @@ public class LocalModelRecommendationClient {
                 objectMapper.writeValueAsString(candidates.stream().map(this::candidateForPrompt).toList())
             );
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("추천 프롬프트를 만들지 못했어.", e);
+            throw new IllegalStateException("Failed to build recommendation prompt.", e);
         }
+    }
+
+    private Map<String, Object> recommendationResponseFormat() {
+        return Map.of(
+            "type", "json_schema",
+            "json_schema", Map.of(
+                "name", "daboyeo_recommendation_response",
+                "strict", true,
+                "schema", recommendationResponseSchema()
+            )
+        );
+    }
+
+    private Map<String, Object> recommendationResponseSchema() {
+        return Map.of(
+            "type", "object",
+            "additionalProperties", false,
+            "required", List.of("recommendations"),
+            "properties", Map.of(
+                "recommendations", Map.of(
+                    "type", "array",
+                    "maxItems", 3,
+                    "items", recommendationItemSchema()
+                )
+            )
+        );
+    }
+
+    private Map<String, Object> recommendationItemSchema() {
+        return Map.of(
+            "type", "object",
+            "additionalProperties", false,
+            "required", List.of("showtimeId", "reason", "caution", "valuePoint"),
+            "properties", Map.of(
+                "showtimeId", Map.of("type", "integer"),
+                "reason", Map.of("type", "string", "maxLength", 80),
+                "caution", Map.of("type", "string", "maxLength", 80),
+                "valuePoint", Map.of("type", "string", "maxLength", 80)
+            )
+        );
     }
 
     private Map<String, Object> candidateForPrompt(ScoredCandidate scored) {

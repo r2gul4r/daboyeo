@@ -161,3 +161,39 @@ Do not rewrite existing entries; append only.
 - summary: `동일 Gradle build 디렉터리를 대상으로 테스트를 병렬 실행해 test-results 삭제 충돌 발생`
 - details: `PreferenceProfileBuilderTests 와 recommendation 패키지 테스트를 동시에 실행하면서 C:\lsh\git\daboyeo\backend\build\test-results\test\binary\output.bin 삭제가 실패했다. 코드 실패가 아니라 검증 명령 병렬화 문제이므로 테스트를 직렬로 재실행한다.`
 - status: `resolved`
+
+- time: `2026-04-17 09:51:51 +09:00`
+- location: `LM Studio direct chat completion verification`
+- summary: `LM Studio가 OpenAI json_object response_format 값을 거부함`
+- details: `POST http://127.0.0.1:1234/v1/chat/completions 에 response_format.type=json_object 를 보내자 'response_format.type' must be 'json_schema' or 'text' 오류가 반환됐다. 백엔드 구현은 response_format.type=text 와 기존 JSON-only 프롬프트/파서 fallback 조합으로 고정했고, 직접 호출 및 Gradle 테스트를 재실행해 통과했다.`
+- status: `resolved`
+
+- time: `2026-04-17 14:47:29 +09:00`
+- location: `local recommendation E2E verification`
+- summary: `세션 API가 DB 준비와 JDBC URL 보간 문제로 503 반환`
+- details: `초기 /api/recommendation/sessions 호출은 추천 저장 테이블이 없어 503을 반환했다. 기존 V004 anonymous recommendation migration만 적용해 테이블을 생성했다. 이후 Java/Spring 실행용 JDBC URL을 PowerShell에서 만들 때 $database?serverTimezone 형태가 잘못 보간되어 DB명이 깨졌고 Java 연결 테스트에서 Unknown database 오류가 확인됐다. ${database}?serverTimezone 형태로 보간을 수정해 java -jar 백엔드를 재시작한 뒤 세션 생성과 추천 no_candidates 응답이 200으로 통과했다.`
+- status: `resolved`
+
+- time: `2026-04-17 15:17:55 +09:00`
+- location: `scripts/ingest/collect_all_to_tidb.py lotte ingest`
+- summary: `롯데 실제 수집 데이터의 24시 이후 종료 시간이 DB datetime 입력을 막음`
+- details: `롯데 실제 ingest 실행 중 원본 종료 시간이 24:22 형태로 들어와 showtimes.ends_at 입력에서 Incorrect datetime value 오류가 발생했다. fake seed 대신 실제 수집 데이터를 쓰기 위해 수집 스크립트의 시간 정규화가 필요하다.`
+- status: `open`
+
+- time: `2026-04-17 15:44:23 +09:00`
+- location: `scripts/ingest/collect_all_to_tidb.py lotte ingest`
+- summary: `롯데 24시 이후 종료 시간 정규화 해결`
+- details: `DB datetime 변환에서 24:22, 2515 같은 시간을 다음날 00:22:00, 01:15:00으로 정규화하도록 수정했다. 롯데 실제 ingest를 재실행해 실제 상영 20건이 upsert됐다.`
+- status: `resolved`
+
+- time: `2026-04-17 15:31:03 +09:00`
+- location: `backend recommendation API to LM Studio`
+- summary: `LM Studio 호출이 무기한 대기해 추천 API가 응답하지 않음`
+- details: `실제 수집 후보가 있는 fast 추천 요청에서 Spring RestClient가 LM Studio /chat/completions 응답을 기다리며 180초 이상 반환하지 않았다. Java thread dump에서 LocalModelRecommendationClient.callLmStudio 내부 HTTP 요청 대기가 확인됐고, 추천 API가 fallback으로도 빠지지 못했다.`
+- status: `open`
+
+- time: `2026-04-17 15:44:23 +09:00`
+- location: `backend recommendation API to LM Studio`
+- summary: `LM Studio 호출 대기 및 JSON 잘림 해결`
+- details: `LM Studio 호출에 connect/read timeout을 추가하고 JSON schema 문자열 maxLength 및 max_tokens 260을 적용했다. E2B fast와 E4B precise 모두 실제 수집 후보로 status=ok, recommendation_count=3 응답을 확인했다.`
+- status: `resolved`

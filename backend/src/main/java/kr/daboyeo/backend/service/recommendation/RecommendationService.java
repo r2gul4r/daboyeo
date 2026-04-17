@@ -2,6 +2,7 @@ package kr.daboyeo.backend.service.recommendation;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -116,31 +117,41 @@ public class RecommendationService {
         profileRepository.upsertSurvey(resolvedAnonymousId, normalizedRequest);
 
         String runId = newRunId();
-        List<ShowtimeCandidate> candidates = showtimeRepository.findUpcomingCandidates(CANDIDATE_LIMIT);
-        List<ScoredCandidate> scored = scorer.score(tagProfile, candidates);
+        int startBufferMinutes = properties.minStartBufferMinutes();
+        LocalDateTime minStartsAt = LocalDateTime.now().plusMinutes(startBufferMinutes);
+        List<ShowtimeCandidate> candidates = showtimeRepository.findUpcomingCandidates(CANDIDATE_LIMIT, minStartsAt);
         String modelName = properties.modelFor(mode);
 
-        if (scored.isEmpty()) {
-            RecommendationResponse response = new RecommendationResponse(
-                runId,
-                mode.wireValue(),
-                modelName,
-                "no_candidates",
-                "현재 조건으로 추천할 수 있는 상영 후보가 없어. 수집 데이터나 날짜 조건을 확인해줘.",
-                List.of()
-            );
-            profileRepository.saveRun(
+        if (candidates.isEmpty()) {
+            boolean hasStoredShowtimes = showtimeRepository.countStoredShowtimes() > 0;
+            String status = hasStoredShowtimes ? "no_usable_showtimes" : "no_showtime_data";
+            String message = hasStoredShowtimes
+                ? "수집된 상영 정보는 있지만 지금 예매하기에 충분히 여유 있는 후보가 없어."
+                : "수집된 상영 정보가 아직 없어. 수집 스크립트를 먼저 실행해줘.";
+            return noCandidateResponse(
+                startedAt,
                 runId,
                 resolvedAnonymousId,
-                mode.wireValue(),
+                mode,
                 modelName,
                 normalizedRequest,
-                List.of(),
-                null,
-                response,
-                elapsedMs(startedAt)
+                status,
+                message
             );
-            return response;
+        }
+
+        List<ScoredCandidate> scored = scorer.score(tagProfile, candidates);
+        if (scored.isEmpty()) {
+            return noCandidateResponse(
+                startedAt,
+                runId,
+                resolvedAnonymousId,
+                mode,
+                modelName,
+                normalizedRequest,
+                "no_matching_candidates",
+                "조건에 맞는 상영 정보가 부족해. 피하고 싶은 요소를 조금 줄이면 후보가 늘어날 수 있어."
+            );
         }
 
         List<ScoredCandidate> aiCandidates = scored.stream().limit(AI_CANDIDATE_LIMIT).toList();
@@ -168,6 +179,38 @@ public class RecommendationService {
             normalizedRequest,
             aiCandidates,
             aiResult.map(result -> result.rawJson()).orElse(null),
+            response,
+            elapsedMs(startedAt)
+        );
+        return response;
+    }
+
+    private RecommendationResponse noCandidateResponse(
+        Instant startedAt,
+        String runId,
+        String anonymousId,
+        RecommendationMode mode,
+        String modelName,
+        RecommendationRequest normalizedRequest,
+        String status,
+        String message
+    ) {
+        RecommendationResponse response = new RecommendationResponse(
+            runId,
+            mode.wireValue(),
+            modelName,
+            status,
+            message,
+            List.of()
+        );
+        profileRepository.saveRun(
+            runId,
+            anonymousId,
+            mode.wireValue(),
+            modelName,
+            normalizedRequest,
+            List.of(),
+            null,
             response,
             elapsedMs(startedAt)
         );

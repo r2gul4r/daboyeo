@@ -42,6 +42,7 @@ public class RecommendationScorer {
 
         score += priceBonus(candidate);
         score += seatBonus(candidate);
+        score += timeBonus(profile, candidate);
         score -= avoidPenalty(profile, candidate, penalties);
 
         if (candidate.runtimeMinutes() != null && candidate.runtimeMinutes() <= 110) {
@@ -116,6 +117,32 @@ public class RecommendationScorer {
             return 2;
         }
         return -3;
+    }
+
+    private int timeBonus(TagProfile profile, ShowtimeCandidate candidate) {
+        if (candidate.startsAt() == null) {
+            return 0;
+        }
+        int hour = candidate.startsAt().getHour();
+        int value = 0;
+        if (hour >= 1 && hour < 6) {
+            value -= 6;
+        }
+        if ("child".equals(profile.audience()) && hour >= 20) {
+            value -= 10;
+        } else if ("family".equals(profile.audience()) && hour >= 21) {
+            value -= 6;
+        }
+        if ("light".equals(profile.mood()) && hour >= 10 && hour <= 22) {
+            value += 2;
+        }
+        if ("exciting".equals(profile.mood()) && hour >= 17 && hour <= 23) {
+            value += 2;
+        }
+        if ("calm".equals(profile.mood()) && hour >= 9 && hour <= 18) {
+            value += 2;
+        }
+        return value;
     }
 
     private int avoidPenalty(TagProfile profile, ShowtimeCandidate candidate, List<String> penalties) {

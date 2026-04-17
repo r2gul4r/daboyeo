@@ -22,7 +22,7 @@ public class ShowtimeRecommendationRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<ShowtimeCandidate> findUpcomingCandidates(int limit) {
+    public List<ShowtimeCandidate> findUpcomingCandidates(int limit, LocalDateTime minStartsAt) {
         String sql = """
             SELECT
               s.id AS showtime_id,
@@ -54,8 +54,9 @@ public class ShowtimeRecommendationRepository {
             LEFT JOIN movie_tags mt
               ON mt.provider_code = s.provider_code
              AND mt.external_movie_id = COALESCE(s.external_movie_id, m.external_movie_id)
-            WHERE s.show_date >= CURRENT_DATE()
-            ORDER BY s.show_date ASC, s.starts_at ASC, s.id ASC
+            WHERE s.starts_at IS NOT NULL
+              AND s.starts_at >= ?
+            ORDER BY s.starts_at ASC, s.show_date ASC, s.id ASC
             LIMIT ?
             """;
         return jdbcTemplate.query(sql, rs -> {
@@ -91,7 +92,12 @@ public class ShowtimeRecommendationRepository {
                 }
             }
             return builders.values().stream().map(CandidateBuilder::build).toList();
-        }, Math.max(1, limit));
+        }, Timestamp.valueOf(minStartsAt), Math.max(1, limit));
+    }
+
+    public int countStoredShowtimes() {
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM showtimes", Integer.class);
+        return count == null ? 0 : count;
     }
 
     public Optional<ShowtimeCandidate> findByShowtimeId(Long showtimeId) {

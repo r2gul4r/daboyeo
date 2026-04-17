@@ -2,117 +2,117 @@
 
 ## Current Task
 
-- task: `Bring up local Ollama Gemma4 fast and precise recommendation models`
-- phase: `completed`
-- scope: `use only gemma4:e2b-it-q4_K_M for fast mode and gemma4:e4b-it-q4_K_M for precise mode, diagnose empty Ollama responses, clean up the throwaway alias, and update backend defaults/request body`
-- verification_target: `direct Ollama JSON responses, backend gradle test, repository context checks`
-- previous_task_note: `Frontend liked-only journey work is complete. The new blocker was local Ollama Gemma4 returning empty content unless thinking was disabled.`
+- task: `Filter recommendation candidates by usable start time`
+- phase: `verified`
+- scope: `Keep collection broad, but make the recommendation API exclude already-started or too-soon showtimes using a configurable start buffer, split no-candidate reasons, and add time-aware scoring where appropriate`
+- verification_target: `unit tests for candidate filtering/status behavior plus backend Gradle tests`
+- previous_task_note: `Real Lotte/Megabox ingest already produced actual showtimes. The new goal is to filter at recommendation usage time, not during collection.`
 
 ## Orchestration Profile
 
-- score_total: `5`
-- score_breakdown: `2 local HTTP model invocation, 1 backend recommendation quality blocker, 1 local environment/model configuration, 1 verification uncertainty`
-- hard_triggers: `local HTTP model call, external request boundary to localhost Ollama, recommendation contract depends on model output`
-- selected_rules: `spec-first lightweight, security rules for local HTTP/model config, preserve user changes, no browser checks unless requested`
+- score_total: `6`
+- score_breakdown: `2 recommendation contract change, 1 DB query time filter, 1 config surface, 1 no-candidate status behavior, 1 tests`
+- hard_triggers: `recommendation contract extension, database query behavior, user-facing API status/message`
+- selected_rules: `spec-first lightweight, security rules for DB/API behavior, preserve user changes, no collector narrowing`
 - selected_skills: `none`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
-- spawn_decision: `no spawn; the immediate blocker was a single local Ollama behavior that had to be reproduced and fixed serially`
-- efficiency_basis: `handoff cost was higher than gain because diagnosis depended on local process state, model names, and immediate command outputs`
-- selection_reason: `user corrected model scope to the two installed Ollama Q4 models and asked to proceed`
+- spawn_decision: `no spawn; the change is a tightly coupled backend query/service/test slice`
+- efficiency_basis: `handoff cost is higher than gain because repository query, service status, config binding, and tests must evolve together`
+- selection_reason: `user approved the plan to collect broadly and filter in recommendation usage`
 
 ## Evaluation Plan
 
 - evaluation_need: `full`
 - project_invariants:
-  - `Use only gemma4:e2b-it-q4_K_M for fast mode and gemma4:e4b-it-q4_K_M for precise mode.`
-  - `Do not search for or depend on E2B Q6.`
-  - `Do not edit .env secrets; only update tracked defaults/examples.`
-  - `Keep Ollama local at http://127.0.0.1:11434.`
-  - `No browser automation or deployed URL checks unless requested.`
+  - `Collection scripts should keep storing broad real showtime data.`
+  - `Do not delete or discard past showtimes from DB.`
+  - `Recommendation candidates should be filtered by actual starts_at, not only show_date.`
+  - `Recommendation buffer must be configurable.`
+  - `Do not expose .env secrets in output.`
 - task_acceptance:
-  - `Both configured Ollama models return non-empty text through /api/chat.`
-  - `Ollama request disables thinking so gemma4 parser does not return empty content.`
-  - `Fast mode has a default model name and no longer silently disables AI when env is absent.`
-  - `.env.example and application.yml document the two actual Q4 models.`
-  - `Throwaway test model alias is removed.`
+  - `Recommendation config has min-start-buffer-minutes with a sane default.`
+  - `Upcoming candidate query excludes starts_at before now + buffer.`
+  - `Recommendation service distinguishes no stored showtimes from no usable future candidates.`
+  - `Time-of-day scoring can adjust recommendations without changing collection.`
+  - `Tests cover past, within-buffer, and after-buffer showtimes.`
 - non_goals:
-  - `No LM Studio migration work.`
-  - `No Q6 model search or install.`
-  - `No deployment or cloud integration.`
-  - `No destructive cleanup of user data.`
+  - `No change to periodic collection breadth.`
+  - `No fake/demo data insertion.`
+  - `No frontend redesign.`
+  - `No deployment or external smoke URL check.`
 - hard_checks:
-  - `Direct Ollama /api/chat request for gemma4:e2b-it-q4_K_M with think=false and format=json`
-  - `Direct Ollama /api/chat request for gemma4:e4b-it-q4_K_M with think=false and format=json`
+  - `Inspect ShowtimeRecommendationRepository and RecommendationService.`
+  - `Add/update recommendation package tests.`
+  - `gradle test --tests kr.daboyeo.backend.service.recommendation.*`
   - `gradle test`
+  - `git diff --check`
   - `git status --short`
-  - `Get-Content -Raw WORKSPACE_CONTEXT.toml`
-  - `Select-String -Path WORKSPACE_CONTEXT.toml -Pattern '^\[workspace\]','^\[architecture\]','^\[editing_rules\]','^\[verification\]'`
 - llm_review_rubric:
-  - `Request body matches the local Ollama behavior observed at runtime.`
-  - `Defaults do not contradict the agreed Q4 model plan.`
-  - `No secret values are exposed or changed.`
+  - `Filtering happens in usage query, not collection.`
+  - `No-candidate status explains the data condition clearly.`
+  - `Config default is useful for local demo and can be overridden.`
+  - `Tests prove already-started showtimes are not recommended.`
 - evidence_required:
-  - `Record direct model response results and backend verification.`
+  - `Record changed files and verification outputs.`
+
+## Verification Results
+
+- unit_tests:
+  - `gradle test --tests kr.daboyeo.backend.service.recommendation.* --tests kr.daboyeo.backend.repository.recommendation.*`: `passed`
+  - `gradle test`: `passed`
+  - `gradle bootJar`: `passed`
+- local_api:
+  - `DABOYEO_RECOMMEND_MIN_START_BUFFER_MINUTES=20`
+  - `cutoff_local`: `2026-04-17T16:54:48`
+  - `POST /api/recommendations fast`: `status=ok, model=gemma-4-e2b-it, recommendation_count=3`
+  - `returned_starts_at`: `2026-04-17T18:10:00, 2026-04-17T18:20:00, 2026-04-17T18:40:00`
+  - `recommendation_profiles_after_cleanup`: `0`
+  - `recommendation_runs_after_cleanup`: `0`
+- repository_checks:
+  - `findUpcomingCandidates now uses starts_at >= cutoff`
+  - `stored showtime count is only used to distinguish no_showtime_data from no_usable_showtimes`
+
+## Retrospective
+
+- task: `Filter recommendation candidates by usable start time`
+- score_total: `6`
+- evaluation_fit: `full fit; this changed API behavior and DB query semantics`
+- orchestration_fit: `single-session fit; query, config, service statuses, and tests were tightly coupled`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `new task replacing verified real-ingest task`
+- reviewer_findings: `collection remains broad; filtering moved to recommendation usage query`
+- verification_outcome: `tests passed and live fast recommendation returned only showtimes after the 20-minute buffer`
+- next_gate_adjustment: `next scheduling work should treat collection cadence separately from recommendation visibility`
 
 ## Writer Slot
 
 - writer_slot: `main`
-- write_set: `STATE.md, ERROR_LOG.md, .env.example, .gitignore, backend/src/main/java/kr/daboyeo/backend/config/RecommendationProperties.java, backend/src/main/java/kr/daboyeo/backend/service/recommendation/LocalModelRecommendationClient.java, backend/src/main/resources/application.yml`
+- write_set: `STATE.md, backend/src/main/java/** recommendation/config files, backend/src/test/java/** recommendation tests, backend/src/main/resources/application.yml, .env.example, ERROR_LOG.md if needed`
 - write_sets:
-  - `main`: `Ollama request config, model defaults, verification notes`
+  - `main`: `backend recommendation filtering/config/status/tests`
 - shared_assets_owner: `main`
 - note: `One shared task board is active; no concurrent registry mode.`
 - concurrent_note: `No parallel writer is active.`
 
 ## Contract Freeze
 
-- contract_freeze: `Fast recommendation uses gemma4:e2b-it-q4_K_M and precise recommendation uses gemma4:e4b-it-q4_K_M. Backend Ollama calls must include think=false because the default gemma4 parser path returned empty content despite eval_count increasing.`
-- note: `Direct HTTP checks proved both models return JSON text with /api/chat, format=json, stream=false, and think=false.`
+- contract_freeze: `Do not narrow or delete collected showtime data. Add a recommendation-only usable-start filter based on starts_at >= now + min-start-buffer-minutes, expose the buffer in config/env defaults, distinguish empty database from filtered-out candidate state, and keep fallback behavior when LM fails.`
+- note: `This task intentionally touches recommendation usage, not collectors.`
 - contract_source: `user request`
-- contract_revision: `2026-04-16-gemma4-q4-ollama`
-- verification_target: `direct Ollama JSON checks plus backend gradle test and repository verification commands`
+- contract_revision: `2026-04-17-recommendation-time-filter`
+- verification_target: `recommendation tests and full backend tests`
 
 ## Reviewer
 
 - reviewer: `main self-review`
-- reviewer_target: `Ollama request body and backend model defaults`
-- reviewer_focus: `think=false inclusion, agreed model names, no secret exposure, no Q6 fallback`
+- reviewer_target: `recommendation candidate filtering and no-candidate behavior`
+- reviewer_focus: `real data preservation, time filter correctness, config override, regression coverage`
 
 ## Last Update
 
-- timestamp: `2026-04-16 17:23:52 +09:00`
-- note: `Completed local Ollama Gemma4 bring-up: both Q4 models returned JSON when think=false was used, backend defaults were updated, and tests passed.`
-
-## Verification Result
-
-- ollama_models: `passed: ollama list shows gemma4:e2b-it-q4_K_M and gemma4:e4b-it-q4_K_M only after removing throwaway alias`
-- e2b_chat_json: `passed: /api/chat with think=false and format=json returned non-empty recommendations JSON content`
-- e4b_chat_json: `passed: /api/chat with think=false and format=json returned non-empty recommendations JSON content`
-- backend_request_body: `implemented: LocalModelRecommendationClient sends think=false to Ollama /api/chat`
-- model_defaults: `implemented: fast default is gemma4:e2b-it-q4_K_M and precise default is gemma4:e4b-it-q4_K_M`
-- env_example: `updated: .env.example now names the two agreed Q4 models`
-- env_actual: `checked: .env did not contain DABOYEO_OLLAMA_BASE_URL or DABOYEO_RECOMMEND_* overrides in Select-String output`
-- alias_cleanup: `passed: ollama rm daboyeo-gemma4-e4b:q4-plain`
-- gradle_recommendation_tests: `passed: gradle test --tests kr.daboyeo.backend.service.recommendation.*`
-- gradle_full: `passed: gradle test`
-- gradle_parallel_error: `resolved: a parallel Gradle verification run caused a test-results delete conflict; rerun serially passed and ERROR_LOG.md was appended`
-- git_diff_check: `passed with line-ending normalization warnings only`
-- workspace_context: `read and section checks passed`
-- generated_output: `backend/bin/ is generated compiler output; added backend/bin/ to .gitignore instead of deleting it`
-- browser_check: `not run; user did not request browser automation`
-
-## Retrospective
-
-- task: `Local Ollama Gemma4 fast/precise model bring-up`
-- score_total: `5`
-- evaluation_fit: `full local verification fit because direct model behavior and backend request shape were both involved`
-- orchestration_fit: `single-session was appropriate; model state and command feedback were tightly coupled`
-- predicted_topology: `single-session`
-- actual_topology: `single-session`
-- spawn_count: `0`
-- rework_or_reclassification: `corrected earlier Q6 assumption and locked the task to the two installed Q4 models`
-- reviewer_findings: `the empty response was caused by default gemma4 thinking/parser behavior; adding think=false fixes the backend call path`
-- verification_outcome: `direct Ollama JSON calls passed for both models, recommendation package tests passed, full backend tests passed, repository checks passed`
-- next_gate_adjustment: `do not parallelize Gradle commands in the same backend build directory`
+- timestamp: `2026-04-17 16:43:54 +09:00`
+- note: `Verified recommendation-only time filtering with tests, rebuilt the jar, and restarted the local backend on the updated code.`
