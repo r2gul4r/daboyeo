@@ -137,3 +137,111 @@ Do not rewrite existing entries; append only.
 - summary: `PowerShell 기본 인코딩으로 CGV JSON 파싱 실패`
 - details: `Python 이 UTF-8 JSON 을 정상 저장했지만 Windows PowerShell Get-Content 기본 인코딩으로 읽자 한글 바이트가 깨져 ConvertFrom-Json 이 실패했다. Get-Content -Encoding UTF8 로 재실행해 정상 집계했다.`
 - status: `resolved`
+
+- time: `2026-04-15 17:35:00 +09:00`
+- location: `backend verification`
+- summary: `Java/Gradle PATH 부재로 백엔드 테스트 실행 보류`
+- details: `로컬 Gemma 추천 API 구현 후 java -version 과 gradle test 를 실행했지만 둘 다 PATH 에서 명령을 찾지 못해 테스트를 실행하지 못했다. JDK 21 과 Gradle 경로 설정 후 gradle test 를 재실행해야 한다.`
+- status: `deferred`
+
+- time: `2026-04-16 10:43:22 +09:00`
+- location: `backend gradle test after JDK/Gradle install`
+- summary: `백엔드 컴파일 실패`
+- details: `JDK 21, Gradle 8.14.4 설치 후 backend 에서 gradle test 를 재실행했으나 RecommendationService.java:103 의 lambda 캡처 변수가 effectively final 이 아니어서 compileJava 단계에서 실패했다. 설치 검증은 통과했고, 코드 수정 후 gradle test 재실행이 필요하다.`
+- status: `open`
+
+- time: `2026-04-16 14:50:44 +09:00`
+- location: `repository root gradle verification`
+- summary: `Gradle 테스트를 레포 루트에서 실행해 빌드 루트를 찾지 못함`
+- details: `gradle test --tests kr.daboyeo.backend.service.recommendation.PreferenceProfileBuilderTests 를 C:\lsh\git\daboyeo 에서 실행해 settings.gradle/build.gradle 을 찾지 못했다. 같은 명령을 C:\lsh\git\daboyeo\backend 에서 재실행해 성공했다.`
+- status: `resolved`
+
+- time: `2026-04-16 17:23:52 +09:00`
+- location: `backend Gradle verification`
+- summary: `동일 Gradle build 디렉터리를 대상으로 테스트를 병렬 실행해 test-results 삭제 충돌 발생`
+- details: `PreferenceProfileBuilderTests 와 recommendation 패키지 테스트를 동시에 실행하면서 C:\lsh\git\daboyeo\backend\build\test-results\test\binary\output.bin 삭제가 실패했다. 코드 실패가 아니라 검증 명령 병렬화 문제이므로 테스트를 직렬로 재실행한다.`
+- status: `resolved`
+
+- time: `2026-04-17 09:51:51 +09:00`
+- location: `LM Studio direct chat completion verification`
+- summary: `LM Studio가 OpenAI json_object response_format 값을 거부함`
+- details: `POST http://127.0.0.1:1234/v1/chat/completions 에 response_format.type=json_object 를 보내자 'response_format.type' must be 'json_schema' or 'text' 오류가 반환됐다. 백엔드 구현은 response_format.type=text 와 기존 JSON-only 프롬프트/파서 fallback 조합으로 고정했고, 직접 호출 및 Gradle 테스트를 재실행해 통과했다.`
+- status: `resolved`
+
+- time: `2026-04-17 14:47:29 +09:00`
+- location: `local recommendation E2E verification`
+- summary: `세션 API가 DB 준비와 JDBC URL 보간 문제로 503 반환`
+- details: `초기 /api/recommendation/sessions 호출은 추천 저장 테이블이 없어 503을 반환했다. 기존 V004 anonymous recommendation migration만 적용해 테이블을 생성했다. 이후 Java/Spring 실행용 JDBC URL을 PowerShell에서 만들 때 $database?serverTimezone 형태가 잘못 보간되어 DB명이 깨졌고 Java 연결 테스트에서 Unknown database 오류가 확인됐다. ${database}?serverTimezone 형태로 보간을 수정해 java -jar 백엔드를 재시작한 뒤 세션 생성과 추천 no_candidates 응답이 200으로 통과했다.`
+- status: `resolved`
+
+- time: `2026-04-17 15:17:55 +09:00`
+- location: `scripts/ingest/collect_all_to_tidb.py lotte ingest`
+- summary: `롯데 실제 수집 데이터의 24시 이후 종료 시간이 DB datetime 입력을 막음`
+- details: `롯데 실제 ingest 실행 중 원본 종료 시간이 24:22 형태로 들어와 showtimes.ends_at 입력에서 Incorrect datetime value 오류가 발생했다. fake seed 대신 실제 수집 데이터를 쓰기 위해 수집 스크립트의 시간 정규화가 필요하다.`
+- status: `open`
+
+- time: `2026-04-17 15:44:23 +09:00`
+- location: `scripts/ingest/collect_all_to_tidb.py lotte ingest`
+- summary: `롯데 24시 이후 종료 시간 정규화 해결`
+- details: `DB datetime 변환에서 24:22, 2515 같은 시간을 다음날 00:22:00, 01:15:00으로 정규화하도록 수정했다. 롯데 실제 ingest를 재실행해 실제 상영 20건이 upsert됐다.`
+- status: `resolved`
+
+- time: `2026-04-17 15:31:03 +09:00`
+- location: `backend recommendation API to LM Studio`
+- summary: `LM Studio 호출이 무기한 대기해 추천 API가 응답하지 않음`
+- details: `실제 수집 후보가 있는 fast 추천 요청에서 Spring RestClient가 LM Studio /chat/completions 응답을 기다리며 180초 이상 반환하지 않았다. Java thread dump에서 LocalModelRecommendationClient.callLmStudio 내부 HTTP 요청 대기가 확인됐고, 추천 API가 fallback으로도 빠지지 못했다.`
+- status: `open`
+
+- time: `2026-04-17 15:44:23 +09:00`
+- location: `backend recommendation API to LM Studio`
+- summary: `LM Studio 호출 대기 및 JSON 잘림 해결`
+- details: `LM Studio 호출에 connect/read timeout을 추가하고 JSON schema 문자열 maxLength 및 max_tokens 260을 적용했다. E2B fast와 E4B precise 모두 실제 수집 후보로 status=ok, recommendation_count=3 응답을 확인했다.`
+- status: `resolved`
+
+- time: `2026-04-20 09:54:16 +09:00`
+- location: `backend recommendation API to LM Studio`
+- summary: `최적화 중 토큰 예산 과축소로 AI 응답 JSON 잘림`
+- details: `fast 200, precise 240 max_tokens 설정에서 두 모델 모두 3번째 추천 JSON이 잘려 API가 fallback으로 응답했다. 후보/프롬프트 축소는 유지하고 fast 280, precise 320으로 토큰 예산을 올려 fast와 precise 모두 status=ok를 확인했다.`
+- status: `resolved`
+
+- time: `2026-04-20 10:05:16 +09:00`
+- location: `scripts/ingest/collect_all_to_tidb.py, showtimes.movie_id`
+- summary: `메가박스 수집 데이터에서 showtimes.movie_title 과 movies.title_ko 불일치 발견`
+- details: `대량 수집 후 검증 쿼리에서 showtimes.movie_title <> movies.title_ko 인 행이 139개 확인됐다. 특히 하나의 movie_id가 여러 메가박스 상영 제목에 연결되어 추천 응답의 movieId와 피드백 대상 정합성이 흔들릴 수 있다.`
+- status: `open`
+
+- time: `2026-04-20 10:24:00 +09:00`
+- location: `backend recommendation focused tests`
+- summary: `영화 다양성 테스트 기대값 불일치`
+- details: `제목 우선 중복 제거 정책으로 고정한 뒤 기존 테스트가 서로 다른 제목이 같은 movie_id 를 가진 경우까지 중복으로 기대해 실패했다. 메가박스 과거 매핑 오류를 고려해 같은 제목의 다른 시간표를 중복으로 보는 테스트로 수정했고 추천 패키지 테스트를 재실행해 통과했다.`
+- status: `resolved`
+
+- time: `2026-04-20 10:55:00 +09:00`
+- location: `scripts/ingest/collect_all_to_tidb.py, showtimes.movie_id`
+- summary: `메가박스 movie_id 매핑 오류 해결`
+- details: `메가박스 상영 row의 movieNo 를 우선 사용해 영화 row를 upsert하고, showtimes에는 있으나 movies에는 없는 external_movie_id 를 raw showtime 기반으로 backfill한 뒤 showtimes.external_movie_id 와 movies.external_movie_id 기준으로 기존 연결을 보정하도록 수정했다. 검증 결과 오늘 메가박스 title mismatch 0, multi-title movie_id 그룹 0, 전체 external link mismatch 0을 확인했다.`
+- status: `resolved`
+
+- time: `2026-04-20 12:45:00 +09:00`
+- location: `frontend benchmark via Chrome CDP`
+- summary: `프론트 벤치마크 초기 CDP 타임아웃`
+- details: `Chrome /json/list 의 첫 target 이 page가 아니라 extension background_page 여서 벤치 DOM 완료 신호를 읽지 못하고 두 차례 타임아웃됐다. 이후 type=page target만 선택하도록 벤치 드라이버를 수정해 fast/precise 5회 측정을 완료했다.`
+- status: `resolved`
+
+- time: `2026-04-20 14:10:33 +09:00`
+- location: `frontend benchmark via Chrome CDP`
+- summary: `벤치 드라이버 WebSocket 경로와 소켓 타임아웃 문제`
+- details: `수동 CDP WebSocket 연결에서 query가 없는 target path 뒤에 불필요한 ?를 붙여 Chrome이 target id를 찾지 못했고, 수정 후에는 기본 socket timeout 30초가 추론 중 먼저 만료됐다. 요청 측정값으로 쓰지 않고 request path 처리와 socket timeout을 수정한 뒤 fast/precise 5회 벤치를 완료했다.`
+- status: `resolved`
+
+- time: `2026-04-20 14:50:59 +09:00`
+- location: `backend restart for compact JSON frontend benchmark`
+- summary: `백엔드 재시작 시 Spring DB 환경변수 매핑 누락으로 세션 API 503`
+- details: `.env`에는 TIDB_HOST/TIDB_PORT/TIDB_USER/TIDB_PASSWORD/TIDB_DATABASE가 있었지만 Spring은 DABOYEO_DB_URL/DABOYEO_DB_USERNAME/DABOYEO_DB_PASSWORD를 사용한다. 첫 재시작은 이 매핑 없이 기본 datasource로 떠서 /api/recommendation/sessions가 503을 반환했다. 값은 출력하지 않고 TiDB env에서 Spring datasource env를 구성해 재시작한 뒤 health와 session create/delete를 확인하고 벤치를 재실행했다.`
+- status: `resolved`
+
+- time: `2026-04-20 16:12:39 +09:00`
+- location: `backend recommendation focused tests`
+- summary: `analysisPoint를 precise 전용으로 바꾸면서 fast 기대값 테스트가 실패`
+- details: `기존 품질 테스트 3개가 fast/E2B 응답에도 analysisPoint=#애니메이션취향 이 있다고 기대해 실패했다. 새 계약에 맞춰 fast는 blank analysisPoint, precise/E4B는 selected-poster genre analysisPoint를 기대하도록 테스트를 수정했고 focused/package/full Gradle 테스트를 재실행해 통과했다.`
+- status: `resolved`

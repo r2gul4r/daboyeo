@@ -23,6 +23,7 @@ collectors/*/__pycache__/
 build/
 backend/.gradle/
 backend/build/
+backend/bin/
 
 # Frontend
 node_modules/
