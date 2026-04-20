@@ -164,9 +164,7 @@ public class RecommendationService {
             );
         }
 
-        List<ScoredCandidate> aiCandidates = scored.stream()
-            .limit(properties.aiCandidateLimitFor(mode))
-            .toList();
+        List<ScoredCandidate> aiCandidates = selectDistinctMovieItems(scored, properties.aiCandidateLimitFor(mode));
         var aiResult = localModelClient.rankAndExplain(mode, tagProfile, aiCandidates);
         List<RecommendationItem> items = aiResult
             .map(result -> itemsFromAi(scored, result.picks(), tagProfile, mode))
@@ -559,11 +557,15 @@ public class RecommendationService {
     }
 
     private List<ScoredCandidate> selectDistinctMovieItems(List<ScoredCandidate> rankedCandidates) {
+        return selectDistinctMovieItems(rankedCandidates, RESULT_LIMIT);
+    }
+
+    private List<ScoredCandidate> selectDistinctMovieItems(List<ScoredCandidate> rankedCandidates, int limit) {
         List<ScoredCandidate> selected = new ArrayList<>();
         List<ScoredCandidate> deferred = new ArrayList<>();
         Set<String> seenMovies = new LinkedHashSet<>();
         for (ScoredCandidate scored : rankedCandidates) {
-            if (selected.size() >= RESULT_LIMIT) {
+            if (selected.size() >= limit) {
                 break;
             }
             String movieKey = movieKey(scored);
@@ -573,9 +575,9 @@ public class RecommendationService {
                 deferred.add(scored);
             }
         }
-        if (selected.size() < RESULT_LIMIT) {
+        if (selected.size() < limit) {
             for (ScoredCandidate scored : deferred) {
-                if (selected.size() >= RESULT_LIMIT) {
+                if (selected.size() >= limit) {
                     break;
                 }
                 selected.add(scored);

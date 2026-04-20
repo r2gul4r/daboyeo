@@ -85,7 +85,7 @@ public class LocalModelRecommendationClient {
             "top_p", 0.85,
             "max_tokens", properties.maxTokensFor(mode),
             "messages", messages(mode, profile, candidates),
-            "response_format", recommendationResponseFormat(mode, properties.responseTextMaxLength())
+            "response_format", recommendationResponseFormat(mode, properties.responseTextMaxLength(), candidates.size())
         );
         JsonNode response = restClient.post()
             .uri("/chat/completions")
@@ -145,12 +145,15 @@ public class LocalModelRecommendationClient {
         try {
             String candidateJson = objectMapper.writeValueAsString(candidates.stream().map(this::candidateForPrompt).toList());
             if (mode == RecommendationMode.PRECISE) {
+                String pickInstruction = candidates.size() >= 3
+                    ? "Pick exactly 3 objects from JSON."
+                    : "Pick all " + candidates.size() + " objects from JSON.";
                 return """
                     C aud=%s mood=%s avoid=%s liked=%s
                     %s
 
                     Return only {"r":[{"id":1,"a":"#SF취향"}]}.
-                    Pick max 3 ids from JSON. Use b first, vp as tie-break.
+                    %s Use b first, vp as tie-break.
                     a=copy one hashtag from liked when liked is not empty; otherwise one short hashtag from b.
                     No underscores, combined tags, title, prose, field names, raw tokens, or score. Max %d chars.
                     """.formatted(
@@ -159,6 +162,7 @@ public class LocalModelRecommendationClient {
                     profile.avoid(),
                     analysisHints(profile),
                     candidateJson,
+                    pickInstruction,
                     properties.responseTextMaxLength()
                 );
             }
@@ -182,18 +186,19 @@ public class LocalModelRecommendationClient {
         }
     }
 
-    private Map<String, Object> recommendationResponseFormat(RecommendationMode mode, int maxTextLength) {
+    private Map<String, Object> recommendationResponseFormat(RecommendationMode mode, int maxTextLength, int candidateCount) {
         return Map.of(
             "type", "json_schema",
             "json_schema", Map.of(
                 "name", "daboyeo_recommendation_response",
                 "strict", true,
-                "schema", recommendationResponseSchema(mode, maxTextLength)
+                "schema", recommendationResponseSchema(mode, maxTextLength, candidateCount)
             )
         );
     }
 
-    private Map<String, Object> recommendationResponseSchema(RecommendationMode mode, int maxTextLength) {
+    private Map<String, Object> recommendationResponseSchema(RecommendationMode mode, int maxTextLength, int candidateCount) {
+        int minItems = mode == RecommendationMode.PRECISE ? Math.min(3, Math.max(1, candidateCount)) : 0;
         return Map.of(
             "type", "object",
             "additionalProperties", false,
@@ -201,6 +206,7 @@ public class LocalModelRecommendationClient {
             "properties", Map.of(
                 "r", Map.of(
                     "type", "array",
+                    "minItems", minItems,
                     "maxItems", 3,
                     "items", mode == RecommendationMode.PRECISE
                         ? preciseRecommendationItemSchema(maxTextLength)

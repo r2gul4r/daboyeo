@@ -2,25 +2,25 @@
 
 ## Current Task
 
-- task: `Make precise analysisPoint AI-generated`
-- phase: `implementation`
-- scope: `Have E4B/precise generate one compact analysisPoint per recommendation while fast/E2B stays simple and blank`
-- verification_target: `backend recommendation tests, frontend syntax check, bootJar, diff check, and local API benchmark`
-- previous_task_note: `Precise analysisPoint was server-generated after id-only rerank; user correctly objected that this weakens the AI analysis claim and accepts around 10s latency.`
+- task: `Refresh backend README stack and direction`
+- phase: `completed`
+- scope: `Update backend README so it matches the current Java 21, Spring Boot, JDBC, TiDB/MySQL, and LM Studio backend direction`
+- verification_target: `README content review, git diff --check, git status --short`
+- previous_task_note: `User cancelled the parent harness file request and asked to update backend README instead.`
 
 ## Orchestration Profile
 
-- score_total: `6`
-- score_breakdown: `1 LM response contract adjustment, 1 backend parser/model change, 1 response mapping change, 1 token budget change, 1 focused regression tests, 1 local API benchmark`
-- hard_triggers: `recommendation contract adjustment, local HTTP model calls`
-- selected_rules: `spec-first lightweight, preserve existing public fields, add compatible field, preserve model files, preserve user changes`
+- score_total: `2`
+- score_breakdown: `1 one-file documentation update, 1 stale backend stack/direction correction`
+- hard_triggers: `none`
+- selected_rules: `tiny one-file doc update, preserve existing source changes, no runtime or browser checks`
 - selected_skills: `none`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
-- spawn_decision: `no spawn; LM schema, parser, service fallback, and tests are tightly coupled and small`
-- efficiency_basis: `handoff cost is higher than locally updating the compact precise contract and verifying with focused tests plus API benchmark`
-- selection_reason: `user pointed out id-only rerank is not enough to honestly call the displayed analysis AI-generated, and said around 10 seconds is acceptable`
+- spawn_decision: `no spawn; one README file with no independent slices`
+- efficiency_basis: `handoff cost is higher than directly correcting the stale backend documentation`
+- selection_reason: `user explicitly redirected from parent harness creation to backend README modification`
 
 ## Evaluation Plan
 
@@ -64,6 +64,33 @@
   - `Record changed files, tests, ingest replay totals, mismatch/tag counts, API matrix status/timing, quality observations, and verification outputs.`
 
 ## Verification Results
+
+- backend_readme_refresh_task:
+  - `backend README`: `updated stale Java 17 note to Java 21 and documented current Spring Boot 3.5.13, Gradle, JDBC, TiDB/MySQL, Flyway, JUnit, and LM Studio stack`
+  - `backend direction`: `clarified that backend does not replace collectors and focuses on DB-backed API/service/recommendation behavior`
+  - `local run and verification`: `documented gradle bootRun, gradle test, gradle bootJar, and focused recommendation tests`
+  - `git diff --check`: `passed with CRLF warnings only`
+  - `git status --short`: `reviewed; existing Java source changes remain unrelated to this README edit`
+
+- ai_generated_precise_analysis_point_task:
+  - `LocalModelRecommendationClient`: `precise/E4B response contract changed from id-only to compact {"r":[{"id":showtimeId,"a":"#SF취향"}]}`
+  - `LocalModelRecommendationClient`: `precise prompt now includes selected-poster analysis hints and asks for exactly 3 objects when 3+ candidates are available`
+  - `LocalModelRecommendationClient`: `precise JSON schema now requires id+a objects and minItems matches available candidate count up to 3`
+  - `RecommendationModels`: `AiPick now carries optional analysisPoint while preserving the existing 4-argument constructor`
+  - `RecommendationService`: `precise uses valid AI-generated analysisPoint, rejects too-long/underscore/caution/value tags, and falls back to deterministic genre analysis only when needed`
+  - `RecommendationService`: `AI candidate payload is movie-distinct before calling LM Studio so E4B analysis maps to the same 3 recommendations shown to the user`
+  - `RecommendationProperties/application.yml/.env.example`: `precise max tokens raised from 96 to 160 because user accepts around 10s latency for real AI analysis`
+  - `focused tests`: `LocalModelRecommendationClientTests and RecommendationServiceQualityTests passed`
+  - `recommendation package tests`: `passed`
+  - `gradle test`: `passed`
+  - `gradle bootJar`: `passed`
+  - `node --check frontend\src\js\pages\daboyeoAi.js`: `passed`
+  - `backend log scan after benchmark`: `no WARN/ERROR/Exception/fail lines found`
+  - `git diff --check`: `passed with CRLF warnings only`
+  - `local API benchmark on fresh port 18080`: `fast/E2B 5 runs avg=4.84s min=4.60s max=5.78s, all status=ok count=3 analysisCount=0`
+  - `local API benchmark on fresh port 18080 precise`: `precise/E4B 5 runs avg=9.23s min=8.47s max=10.11s, all status=ok count=3 analysisCount=3`
+  - `raw precise evidence`: `every precise run stored 3 raw AI picks with id+a, and response showtimeIds/analysisPoints matched those raw picks`
+  - `benchmark cleanup`: `temporary backend process on port 18080 stopped after measurement`
 
 - precise_only_analysis_point_task:
   - `RecommendationService`: `passes RecommendationMode through item mapping and returns analysisPoint only when mode == PRECISE`
@@ -207,6 +234,18 @@
 
 ## Retrospective
 
+- task: `Make precise analysisPoint AI-generated`
+- score_total: `6`
+- evaluation_fit: `full fit; prompt/schema, service mapping, fallback validation, raw DB evidence, and latency all mattered because the user challenged the AI-analysis claim`
+- orchestration_fit: `single-session fit; LM schema, parser, response mapping, distinct-candidate prefilter, and tests were tightly coupled`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `first AI-analysis pass returned 3 raw objects but duplicate showtime choices meant only one mapped to displayed results; fixed by sending movie-distinct candidates to LM Studio`
+- reviewer_findings: `precise/E4B now genuinely generates the displayed analysisPoint tags, while fast/E2B remains simple and blank`
+- verification_outcome: `focused tests, recommendation package tests, full gradle test, bootJar, frontend syntax check, backend log scan, diff check, and 5x fast/5x precise local API benchmark passed`
+- next_gate_adjustment: `future precision improvements should preserve raw-id-to-response-id evidence when claiming AI-generated user-facing analysis`
+
 - task: `Limit selected-poster genre analysis point to precise mode`
 - score_total: `4`
 - evaluation_fit: `light-to-full fit; small mode gate still needed focused tests because public response compatibility and frontend preview behavior changed`
@@ -306,7 +345,7 @@
 ## Writer Slot
 
 - writer_slot: `main`
-- write_set: `STATE.md, ERROR_LOG.md, backend/src/main/java/kr/daboyeo/backend/service/recommendation/RecommendationService.java, backend/src/test/java/kr/daboyeo/backend/service/recommendation/RecommendationServiceQualityTests.java, frontend/src/js/pages/daboyeoAi.js`
+- write_set: `STATE.md, backend/README.md`
 - write_sets:
   - `worker_ingest`: `scripts/ingest/collect_all_to_tidb.py and related ingest tests/helpers if needed`
   - `worker_backend`: `backend/src/main/java/kr/daboyeo/backend/service/recommendation/** and backend/src/test/java/kr/daboyeo/backend/service/recommendation/**`
@@ -317,19 +356,19 @@
 
 ## Contract Freeze
 
-- contract_freeze: `Preserve existing reason/caution/valuePoint fields and keep analysisPoint compatible; precise/E4B returns compact LM JSON objects with id plus AI-generated analysis tag, while fast/E2B returns blank analysisPoint.`
-- note: `This task intentionally touches recommendation response mapping, tests, and result-card rendering only; no model file, ingest, deployment, or broad redesign.`
+- contract_freeze: `Update backend README only to reflect the current backend stack and direction; do not change runtime code, collectors, frontend, DB schema, or deployment settings.`
+- note: `This task intentionally touches documentation state plus backend README only. Existing Java source changes are preserved and unrelated.`
 - contract_source: `user request`
-- contract_revision: `2026-04-20-ai-generated-precise-analysis-point`
-- verification_target: `backend recommendation tests, frontend syntax check, bootJar, diff check, and local API benchmark`
+- contract_revision: `2026-04-20-backend-readme-stack-direction`
+- verification_target: `README content review, git diff --check, git status --short`
 
 ## Reviewer
 
 - reviewer: `main self-review`
-- reviewer_target: `AI-generated precise recommendation analysis point`
-- reviewer_focus: `existing API compatibility, fast blank analysisPoint, precise AI-generated analysisPoint validation, fallback safety, latency under acceptable demo range`
+- reviewer_target: `backend README stack and direction refresh`
+- reviewer_focus: `current build settings, backend responsibility boundaries, secrets/environment guidance, and no accidental runtime scope change`
 
 ## Last Update
 
-- timestamp: `2026-04-20 16:23:00 +09:00`
-- note: `Reclassified precise analysisPoint to be generated by E4B rather than server-only because user accepts around 10s latency for honest AI analysis.`
+- timestamp: `2026-04-20 16:48:00 +09:00`
+- note: `Completed backend README refresh after user cancelled parent harness file request.`
