@@ -748,6 +748,7 @@ button:hover {
   width: fit-content;
   cursor: pointer;
   transition: transform 0.2s ease;
+  border: none;
 }
 
 .best-seat-cta-btn:hover {
