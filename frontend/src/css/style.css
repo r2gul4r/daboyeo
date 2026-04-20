@@ -349,7 +349,7 @@ label {
 }
 
 .btn-search {
-  flex: 2.5;
+  flex: 1.5;
   background: linear-gradient(
     90deg,
     var(--purple0),
@@ -383,7 +383,7 @@ label {
   border: 1px solid var(--gray50);
   border-radius: 12px;
   color: var(--white0);
-  padding: 16px;
+  padding: 16px 100px;
   font-size: 14px;
   transition: all 0.2s ease;
 }
