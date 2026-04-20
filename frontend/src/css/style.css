@@ -350,13 +350,11 @@ label {
 
 .btn-search {
   flex: 1.5;
-  background: linear-gradient(
-    90deg,
-    var(--purple0),
-    var(--purple50),
-    var(--pink50),
-    var(--purple0)
-  );
+  background: linear-gradient(90deg,
+      var(--purple0),
+      var(--purple50),
+      var(--pink50),
+      var(--purple0));
   background-size: 200% auto;
 
   color: var(--white0);
@@ -627,7 +625,8 @@ button:hover {
   position: absolute;
   top: 15px;
   right: 15px;
-  background: var(--purple50); /* 기존 보라색 포인트 컬러 사용 */
+  background: var(--purple50);
+  /* 기존 보라색 포인트 컬러 사용 */
   color: var(--white0);
   width: 30px;
   height: 30px;
@@ -640,77 +639,103 @@ button:hover {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-
-
-
-
-
-
-/* Best Seat Section */
-.best-seat-section {
+/* AI Recommendation Section */
+.ai-recommendation-section {
   width: 100%;
   margin-bottom: 100px;
 }
 
-.best-seat-content {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
+.ai-section-label {
+  font-size: 12px;
+  color: var(--purple0);
+  margin-bottom: 30px;
+  letter-spacing: 1px;
+}
+
+.ai-content-wrapper {
+  display: flex;
   gap: 60px;
-  align-items: flex-start;
-}
-
-.best-seat-info {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-}
-
-.best-seat-description {
-  font-size: 14px;
-  color: var(--gray100);
-  line-height: 1.8;
-}
-
-.best-seat-features {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.feature-item {
-  display: flex;
-  gap: 15px;
-  align-items: flex-start;
-}
-
-.feature-icon {
-  width: 40px;
-  height: 40px;
-  background: rgba(114, 100, 233, 0.2);
-  border: 1px solid var(--purple50);
-  border-radius: 8px;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  color: var(--purple50);
-  font-size: 18px;
-  flex-shrink: 0;
 }
 
-.feature-content {
+.ai-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
   flex: 1;
 }
 
-.feature-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--white0);
-  margin-bottom: 5px;
+.ai-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--gray50);
+  border-radius: 16px;
+  padding: 30px 20px;
+  text-align: center;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
 }
 
-.feature-description {
-  font-size: 12px;
+/* ============================================
+       7. AI 추천 카드 애니메이션
+       ============================================ */
+.ai-card.featured {
+  background: linear-gradient(135deg, rgba(114, 100, 233, 0.3), rgba(155, 146, 250, 0.2));
+  border: 2px solid var(--purple50);
+  box-shadow: 0 0 20px rgba(114, 100, 233, 0.4);
+  animation: aiCardGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes aiCardGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(114, 100, 233, 0.4);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(114, 100, 233, 0.6);
+    transform: scale(1.02);
+  }
+}
+
+.ai-card-emoji {
+  font-size: 60px;
+  margin-bottom: 15px;
+}
+
+.ai-card-title {
+  font-size: 14px;
+  color: var(--white0);
+  font-weight: 600;
+}
+
+.ai-description {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.ai-description-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--white0);
+  line-height: 1.4;
+}
+
+.ai-description-title span {
+  color: var(--purple50);
+}
+
+.ai-description-text {
+  font-size: 13px;
   color: var(--gray100);
+  line-height: 1.6;
 }
 
 .best-seat-cta-btn {
@@ -735,102 +760,6 @@ button:hover {
   gap: 20px;
   align-items: center;
 }
-
-.theater-screen {
-  width: 100%;
-  background: linear-gradient(to bottom, rgba(114, 100, 233, 0.3), rgba(114, 100, 233, 0.1));
-  border: 2px solid var(--purple50);
-  border-radius: 50%;
-  padding: 15px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--purple50);
-}
-
-.seats-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 8px;
-  margin-bottom: 20px;
-  width: 300px;
-}
-
-.seat {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  aspect-ratio: 1;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--gray50);
-  border-radius: 6px;
-  font-size: 10px;
-  color: var(--gray100);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.seat:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--purple50);
-}
-
-.seat.best {
-  background: rgba(114, 100, 233, 0.3);
-  border-color: var(--purple50);
-  color: var(--purple50);
-  font-weight: 600;
-}
-
-.seat.sold {
-  background: rgba(255, 107, 107, 0.2);
-  border-color: #FF6B6B;
-  color: #FF6B6B;
-  cursor: not-allowed;
-}
-
-.seat-legend {
-  display: flex;
-  gap: 30px;
-  justify-content: center;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--gray100);
-}
-
-.legend-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1px solid var(--gray50);
-}
-
-.legend-color.best {
-  background: rgba(114, 100, 233, 0.3);
-  border-color: var(--purple50);
-}
-
-.legend-color.available {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--gray50);
-}
-
-.legend-color.sold {
-  background: rgba(255, 107, 107, 0.2);
-  border-color: #FF6B6B;
-}
-
-
-
-
-
-
 
 /* 4-Step Section */
 .three-step-section {
