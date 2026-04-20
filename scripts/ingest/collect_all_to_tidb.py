@@ -24,7 +24,7 @@ from collectors.common.normalize import (
     to_decimal,
     to_int,
 )
-from collectors.common.repository import insert_dict, insert_many_dicts, upsert_and_select_id
+from collectors.common.repository import insert_dict, insert_many_dicts, upsert_and_select_id, upsert_dict
 from collectors.common.tidb import connect_tidb, load_tidb_config
 from collectors.lotte import LotteCinemaCollector
 from collectors.megabox import MegaboxCollector
@@ -33,6 +33,19 @@ from collectors.megabox import MegaboxCollector
 LOTTE = "LOTTE_CINEMA"
 MEGABOX = "MEGABOX"
 LOTTE_BOOKING_URL = "https://www.lottecinema.co.kr/NLCHS/Ticketing"
+TAG_SOURCE_INGEST = "ingest"
+FORMAT_TAG_PATTERNS: list[tuple[str, str]] = [
+    ("imax", "imax"),
+    ("4dx", "4dx"),
+    ("screenx", "screenx"),
+    ("dolby", "dolby"),
+    ("atmos", "atmos"),
+    ("mx4d", "mx4d"),
+    ("2d", "2d"),
+    ("3d", "3d"),
+    ("vip", "vip"),
+    ("boutique", "boutique"),
+]
 
 
 def now_db() -> str:
@@ -139,6 +152,171 @@ def status_counts(provider: str, seats: list[dict[str, Any]]) -> dict[str, int]:
     return counts
 
 
+def _clean_tag_value(value: Any) -> str:
+    text = safe_text(value)
+    if not text:
+        return ""
+    text = " ".join(text.split())
+    text = text.strip(" ,/|+()[]{}<>")
+    return text.lower()
+
+
+def _split_genre_values(value: Any) -> list[str]:
+    text = safe_text(value)
+    if not text:
+        return []
+    parts = []
+    for chunk in text.replace("／", "/").replace("·", "/").split("/"):
+        for item in chunk.split(","):
+            normalized = _clean_tag_value(item)
+            if normalized:
+                parts.append(normalized)
+    return parts
+
+
+def _raw_json_dict(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if not value:
+        return {}
+    try:
+        loaded = json.loads(value)
+    except (TypeError, ValueError):
+        return {}
+    return loaded if isinstance(loaded, dict) else {}
+
+
+def _normalize_age_tag(value: Any) -> str | None:
+    text = safe_text(value).lower()
+    if not text:
+        return None
+    if "전체" in text or "all" in text or "전연령" in text:
+        return "all"
+    if any(token in text for token in ["청불", "관람불가", "불가"]):
+        return "19"
+    if "12" in text:
+        return "12"
+    if "15" in text:
+        return "15"
+    if "18" in text:
+        return "18"
+    if "19" in text:
+        return "19"
+    return None
+
+
+def _normalize_format_tags(value: Any) -> list[str]:
+    text = safe_text(value).lower()
+    if not text:
+        return []
+    compact = "".join(ch for ch in text if ch.isalnum())
+    tags: list[str] = []
+    for needle, normalized in FORMAT_TAG_PATTERNS:
+        if needle in compact or needle in text:
+            tags.append(normalized)
+    return tags
+
+
+def _append_tag(
+    tags: list[dict[str, Any]],
+    seen: set[tuple[str, str]],
+    tag_type: str,
+    tag_value: str,
+    confidence: Decimal,
+) -> None:
+    if not tag_value:
+        return
+    key = (tag_type, tag_value)
+    if key in seen:
+        return
+    seen.add(key)
+    tags.append(
+        {
+            "tag_type": tag_type,
+            "tag_value": tag_value,
+            "confidence": confidence,
+        }
+    )
+
+
+def collect_movie_tags(provider: str, row: dict[str, Any]) -> list[dict[str, Any]]:
+    tags: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    raw = row.get("raw") if isinstance(row.get("raw"), dict) else {}
+
+    genre_fields = [
+        row.get("genre_name"),
+        row.get("genre"),
+        raw.get("MovieGenreNameKR"),
+        raw.get("cttsTyDivCdNm"),
+        raw.get("cttsTyDivCdEngNm"),
+        raw.get("movieCttsNm"),
+    ]
+    for field_value in genre_fields:
+        for genre in _split_genre_values(field_value):
+            _append_tag(tags, seen, "genre", genre, Decimal("1.0000"))
+
+    age_fields = [
+        row.get("age_rating"),
+        row.get("admisClassCdNm"),
+        raw.get("ViewGradeNameKR"),
+        raw.get("admisClassCdNm"),
+    ]
+    for field_value in age_fields:
+        age_tag = _normalize_age_tag(field_value)
+        if age_tag:
+            _append_tag(tags, seen, "age_rating", age_tag, Decimal("1.0000"))
+
+    format_fields = [
+        row.get("screening_type"),
+        row.get("screen_type"),
+        row.get("screen_division_name"),
+        row.get("film_name"),
+        row.get("sound_type_name"),
+        raw.get("screenType"),
+        raw.get("playKindNm"),
+        raw.get("theabExpoNm"),
+    ]
+    for field_value in format_fields:
+        for format_tag in _normalize_format_tags(field_value):
+            _append_tag(tags, seen, "format", format_tag, Decimal("0.9000"))
+
+    return tags
+
+
+def upsert_movie_tags(
+    cursor: Any,
+    provider: str,
+    movie_id: int,
+    external_movie_id: str,
+    row: dict[str, Any],
+    seen_tags: set[tuple[str, str, str, str]],
+) -> int:
+    if not external_movie_id:
+        return 0
+    upserted = 0
+    for tag in collect_movie_tags(provider, row):
+        cache_key = (provider, external_movie_id, tag["tag_type"], tag["tag_value"])
+        if cache_key in seen_tags:
+            continue
+        seen_tags.add(cache_key)
+        upsert_dict(
+            cursor,
+            "movie_tags",
+            {
+                "movie_id": movie_id,
+                "provider_code": provider,
+                "external_movie_id": external_movie_id,
+                "tag_type": tag["tag_type"],
+                "tag_value": tag["tag_value"],
+                "source": TAG_SOURCE_INGEST,
+                "confidence": tag["confidence"],
+            },
+        )
+        upserted += 1
+    return upserted
+
+
 def movie_payload(provider: str, row: dict[str, Any], collected_at: str) -> dict[str, Any]:
     if provider == LOTTE:
         external_id = safe_text(row.get("movie_no"))
@@ -158,7 +336,7 @@ def movie_payload(provider: str, row: dict[str, Any], collected_at: str) -> dict
             "last_collected_at": collected_at,
         }
 
-    external_id = safe_text(row.get("movie_no"))
+    external_id = safe_text(row.get("movie_no"), safe_text(row.get("representative_movie_no")))
     return {
         "provider_code": MEGABOX,
         "external_movie_id": external_id,
@@ -257,6 +435,123 @@ def upsert_movie(cursor: Any, provider: str, row: dict[str, Any], collected_at: 
     )
 
 
+def upsert_movie_from_schedule(
+    cursor: Any,
+    provider: str,
+    schedule_row: dict[str, Any],
+    collected_at: str,
+) -> int:
+    payload = movie_payload(provider, schedule_row, collected_at)
+    if not payload["external_movie_id"]:
+        raise ValueError(f"{provider} external_movie_id is empty")
+    return upsert_and_select_id(
+        cursor,
+        "movies",
+        payload,
+        {"provider_code": provider, "external_movie_id": payload["external_movie_id"]},
+    )
+
+
+def showtime_movie_row(
+    provider: str,
+    external_movie_id: str,
+    movie_title: str,
+    raw_json: Any,
+) -> dict[str, Any]:
+    raw = _raw_json_dict(raw_json)
+    if provider == MEGABOX:
+        return {
+            "provider": MEGABOX,
+            "movie_no": external_movie_id,
+            "representative_movie_no": raw.get("rpstMovieNo"),
+            "movie_name": movie_title or raw.get("movieNm") or raw.get("rpstMovieNm"),
+            "movie_name_en": raw.get("movieEngNm"),
+            "age_rating": raw.get("admisClassCdNm"),
+            "runtime_minutes": raw.get("playTime"),
+            "booking_rate": raw.get("boxoBokdRt"),
+            "box_office_rank": raw.get("boxoRank"),
+            "release_date": raw.get("openDt"),
+            "screening_type": raw.get("screenType"),
+            "screen_type": raw.get("playKindNm"),
+            "poster_url": MegaboxCollector._build_poster_url(raw.get("moviePosterImg") or raw.get("movieImgPath")),
+            "raw": raw,
+        }
+    return {
+        "provider": LOTTE,
+        "movie_no": external_movie_id,
+        "movie_name": movie_title,
+        "age_rating": raw.get("ViewGradeNameKR") or raw.get("age_rating"),
+        "runtime_minutes": raw.get("playTime") or raw.get("runtime_minutes"),
+        "release_date": raw.get("releaseDate") or raw.get("release_date"),
+        "raw": raw,
+    }
+
+
+def backfill_missing_movies_from_showtimes(
+    cursor: Any,
+    provider: str,
+    collected_at: str,
+    seen_tags: set[tuple[str, str, str, str]],
+) -> tuple[int, int]:
+    cursor.execute(
+        """
+        SELECT s.external_movie_id, s.movie_title, s.raw_json
+        FROM showtimes s
+        LEFT JOIN movies m
+          ON m.provider_code = s.provider_code
+         AND m.external_movie_id = s.external_movie_id
+        WHERE s.provider_code = %s
+          AND s.external_movie_id IS NOT NULL
+          AND m.id IS NULL
+        ORDER BY s.last_collected_at DESC
+        """,
+        [provider],
+    )
+    seen_external_ids: set[str] = set()
+    backfilled = 0
+    tags_upserted = 0
+    for external_movie_id, movie_title, raw_json in cursor.fetchall():
+        external_id = safe_text(external_movie_id)
+        if not external_id or external_id in seen_external_ids:
+            continue
+        seen_external_ids.add(external_id)
+        row = showtime_movie_row(provider, external_id, safe_text(movie_title), raw_json)
+        movie_id = upsert_movie_from_schedule(cursor, provider, row, collected_at)
+        tags_upserted += upsert_movie_tags(cursor, provider, movie_id, external_id, row, seen_tags)
+        backfilled += 1
+    return backfilled, tags_upserted
+
+
+def resolve_megabox_movie_id(
+    cursor: Any,
+    schedule_row: dict[str, Any],
+    movie_ids: dict[str, int],
+    collected_at: str,
+) -> tuple[int | None, str, bool]:
+    schedule_movie_no = safe_text(schedule_row.get("movie_no"))
+    schedule_representative_movie_no = safe_text(schedule_row.get("representative_movie_no"))
+    movie_key = schedule_movie_no or schedule_representative_movie_no
+    created = False
+    if schedule_movie_no:
+        movie_id = movie_ids.get(schedule_movie_no)
+        if movie_id is None:
+            movie_id = upsert_movie_from_schedule(cursor, MEGABOX, schedule_row, collected_at)
+            created = True
+    elif schedule_representative_movie_no:
+        movie_id = movie_ids.get(schedule_representative_movie_no)
+        if movie_id is None:
+            movie_id = upsert_movie_from_schedule(cursor, MEGABOX, schedule_row, collected_at)
+            created = True
+    else:
+        return None, movie_key, created
+    movie_ids[movie_key] = movie_id
+    if schedule_movie_no:
+        movie_ids[schedule_movie_no] = movie_id
+    if schedule_representative_movie_no:
+        movie_ids[schedule_representative_movie_no] = movie_id
+    return movie_id, movie_key, created
+
+
 def upsert_theater(cursor: Any, provider: str, row: dict[str, Any], collected_at: str) -> int:
     payload = theater_payload(provider, row, collected_at)
     if not payload["external_theater_id"]:
@@ -339,7 +634,7 @@ def showtime_payload(
         "movie_id": movie_id,
         "theater_id": theater_id,
         "screen_id": screen_id,
-        "external_movie_id": blank_to_none(row.get("movie_no")),
+        "external_movie_id": blank_to_none(row.get("movie_no") or row.get("representative_movie_no")),
         "external_theater_id": blank_to_none(row.get("branch_no")),
         "external_screen_id": blank_to_none(row.get("theater_no")),
         "movie_title": safe_text(row.get("movie_name"), "Untitled"),
@@ -390,6 +685,23 @@ def upsert_showtime(
         payload,
         {"provider_code": provider, "external_showtime_key": payload["external_showtime_key"]},
     )
+
+
+def repair_showtime_movie_links(cursor: Any, provider: str) -> int:
+    cursor.execute(
+        """
+        UPDATE showtimes s
+        JOIN movies m
+          ON m.provider_code = s.provider_code
+         AND m.external_movie_id = s.external_movie_id
+        SET s.movie_id = m.id
+        WHERE s.provider_code = %s
+          AND s.external_movie_id IS NOT NULL
+          AND (s.movie_id IS NULL OR s.movie_id <> m.id)
+        """,
+        [provider],
+    )
+    return cursor.rowcount
 
 
 def insert_seat_snapshot(
@@ -492,6 +804,9 @@ def ingest_lotte(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
         "screens_upserted": 0,
         "schedule_queries": 0,
         "showtimes_upserted": 0,
+        "movie_tags_upserted": 0,
+        "movies_backfilled_from_showtimes": 0,
+        "showtime_movie_links_repaired": 0,
         "seat_snapshots_inserted": 0,
         "seat_items_inserted": 0,
     }
@@ -499,9 +814,20 @@ def ingest_lotte(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
     movie_ids: dict[str, int] = {}
     theater_ids: dict[str, int] = {}
     theater_by_id: dict[str, dict[str, Any]] = {}
+    movie_tag_keys: set[tuple[str, str, str, str]] = set()
     for movie in movies:
         movie_id = upsert_movie(cursor, LOTTE, movie, collected_at)
-        movie_ids[safe_text(movie.get("movie_no"))] = movie_id
+        movie_no = safe_text(movie.get("movie_no"))
+        if movie_no:
+            movie_ids[movie_no] = movie_id
+        result["movie_tags_upserted"] += upsert_movie_tags(
+            cursor,
+            LOTTE,
+            movie_id,
+            movie_no,
+            movie,
+            movie_tag_keys,
+        )
         result["movies_upserted"] += 1
     for theater in theaters:
         theater_id = upsert_theater(cursor, LOTTE, theater, collected_at)
@@ -544,6 +870,16 @@ def ingest_lotte(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
                 )
                 result["screens_upserted"] += 1
                 result["showtimes_upserted"] += 1
+                schedule_movie_no = safe_text(schedule.get("movie_no")) or movie_no
+                if schedule_movie_no:
+                    result["movie_tags_upserted"] += upsert_movie_tags(
+                        cursor,
+                        LOTTE,
+                        movie_id,
+                        schedule_movie_no,
+                        schedule,
+                        movie_tag_keys,
+                    )
 
                 if args.include_seats and result["seat_snapshots_inserted"] < args.max_seat_snapshots:
                     booking_key = schedule.get("booking_key") or {}
@@ -564,6 +900,15 @@ def ingest_lotte(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
                     )
                     result["seat_snapshots_inserted"] += 1
                     result["seat_items_inserted"] += item_count
+    backfilled, backfill_tags = backfill_missing_movies_from_showtimes(
+        cursor,
+        LOTTE,
+        collected_at,
+        movie_tag_keys,
+    )
+    result["movies_backfilled_from_showtimes"] = backfilled
+    result["movie_tags_upserted"] += backfill_tags
+    result["showtime_movie_links_repaired"] = repair_showtime_movie_links(cursor, LOTTE)
     return result
 
 
@@ -601,15 +946,32 @@ def ingest_megabox(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
         "screens_upserted": 0,
         "schedule_queries": 0,
         "showtimes_upserted": 0,
+        "movie_tags_upserted": 0,
+        "movies_backfilled_from_showtimes": 0,
+        "showtime_movie_links_repaired": 0,
         "seat_snapshots_inserted": 0,
         "seat_items_inserted": 0,
     }
 
     movie_ids: dict[str, int] = {}
     theater_ids: dict[str, int] = {}
+    movie_tag_keys: set[tuple[str, str, str, str]] = set()
     for movie in movies:
         movie_id = upsert_movie(cursor, MEGABOX, movie, collected_at)
-        movie_ids[safe_text(movie.get("movie_no"))] = movie_id
+        movie_no = safe_text(movie.get("movie_no"))
+        representative_movie_no = safe_text(movie.get("representative_movie_no"))
+        if movie_no:
+            movie_ids[movie_no] = movie_id
+        if representative_movie_no:
+            movie_ids[representative_movie_no] = movie_id
+        result["movie_tags_upserted"] += upsert_movie_tags(
+            cursor,
+            MEGABOX,
+            movie_id,
+            movie_no,
+            movie,
+            movie_tag_keys,
+        )
         result["movies_upserted"] += 1
     for branch in branches:
         theater_id = upsert_theater(cursor, MEGABOX, branch, collected_at)
@@ -636,11 +998,24 @@ def ingest_megabox(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
                     theater_id = upsert_theater(cursor, MEGABOX, megabox_theater_from_schedule(schedule), collected_at)
                     theater_ids[theater_key] = theater_id
                     result["theaters_upserted"] += 1
-                movie_id = movie_ids.get(safe_text(schedule.get("movie_no"))) or movie_ids[movie_no]
+                movie_id, movie_key, movie_created = resolve_megabox_movie_id(cursor, schedule, movie_ids, collected_at)
+                if movie_id is None:
+                    continue
+                if movie_created:
+                    result["movies_upserted"] += 1
                 screen_id = upsert_screen(cursor, MEGABOX, schedule, theater_id, collected_at)
                 showtime_id = upsert_showtime(cursor, MEGABOX, schedule, movie_id, theater_id, screen_id, collected_at)
                 result["screens_upserted"] += 1
                 result["showtimes_upserted"] += 1
+                if movie_key:
+                    result["movie_tags_upserted"] += upsert_movie_tags(
+                        cursor,
+                        MEGABOX,
+                        movie_id,
+                        movie_key,
+                        schedule,
+                        movie_tag_keys,
+                    )
 
                 if args.include_seats and result["seat_snapshots_inserted"] < args.max_seat_snapshots:
                     seats = collector.build_seat_records(
@@ -657,6 +1032,15 @@ def ingest_megabox(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
                     )
                     result["seat_snapshots_inserted"] += 1
                     result["seat_items_inserted"] += item_count
+    backfilled, backfill_tags = backfill_missing_movies_from_showtimes(
+        cursor,
+        MEGABOX,
+        collected_at,
+        movie_tag_keys,
+    )
+    result["movies_backfilled_from_showtimes"] = backfilled
+    result["movie_tags_upserted"] += backfill_tags
+    result["showtime_movie_links_repaired"] = repair_showtime_movie_links(cursor, MEGABOX)
     return result
 
 

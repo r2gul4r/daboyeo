@@ -139,7 +139,10 @@ public class PreferenceProfileBuilder {
     }
 
     private void applyLikedSeed(TagProfile profile, PosterSeedMovie seed) {
-        seed.genres().forEach(value -> profile.addWeight("genre:" + value, 5));
+        seed.genres().forEach(value -> {
+            profile.addWeight("genre:" + value, 5);
+            profile.addLikedGenre(value);
+        });
         seed.moods().forEach(value -> profile.addWeight("mood:" + value, 5));
         if (!seed.pace().isBlank()) {
             profile.addWeight("pace:" + seed.pace(), 3);

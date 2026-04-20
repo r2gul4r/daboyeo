@@ -751,8 +751,14 @@ body.ai-guide-page a {
   word-break: keep-all;
 }
 
-.ai-caution {
-  color: #ffd6de;
+.ai-analysis-point {
+  color: var(--ai-text);
+}
+
+.ai-analysis-point strong {
+  color: var(--ai-primary);
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .ai-showtime-grid {

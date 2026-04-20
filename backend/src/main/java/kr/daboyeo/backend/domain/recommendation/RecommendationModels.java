@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -223,6 +224,7 @@ public final class RecommendationModels {
         String title,
         int score,
         String reason,
+        String analysisPoint,
         String caution,
         String valuePoint,
         String providerCode,
@@ -251,7 +253,10 @@ public final class RecommendationModels {
         }
     }
 
-    public record AiPick(Long showtimeId, String reason, String caution, String valuePoint) {
+    public record AiPick(Long showtimeId, String reason, String caution, String valuePoint, String analysisPoint) {
+        public AiPick(Long showtimeId, String reason, String caution, String valuePoint) {
+            this(showtimeId, reason, caution, valuePoint, "");
+        }
     }
 
     public record AiResult(String rawJson, String modelName, List<AiPick> picks) {
@@ -272,6 +277,7 @@ public final class RecommendationModels {
     public static final class TagProfile {
         private final Map<String, Integer> weights = new LinkedHashMap<>();
         private final Set<String> avoid = new LinkedHashSet<>();
+        private final Set<String> likedGenres = new LinkedHashSet<>();
         private String audience = "";
         private String mood = "";
 
@@ -324,6 +330,17 @@ public final class RecommendationModels {
 
         public Map<String, Integer> weights() {
             return Map.copyOf(weights);
+        }
+
+        public void addLikedGenre(String value) {
+            String normalized = normalizeTagKey(value);
+            if (!normalized.isBlank()) {
+                likedGenres.add("genre:" + normalized.replaceFirst("^genre:", ""));
+            }
+        }
+
+        public Set<String> likedGenres() {
+            return Collections.unmodifiableSet(likedGenres);
         }
     }
 

@@ -53,8 +53,8 @@ const modeOptions = [
     value: "precise",
     label: "정밀 추천",
     model: "E4B Q4",
-    description: "후보를 더 꼼꼼히 재정렬하고 주의점까지 보고 싶을 때.",
-    tags: ["정밀", "주의점", "재정렬"],
+    description: "후보를 더 꼼꼼히 재정렬하고 포스터 취향 분석까지 보고 싶을 때.",
+    tags: ["정밀", "취향 분석", "재정렬"],
   },
 ];
 
@@ -789,9 +789,10 @@ function createPreviewRecommendationResponse(mode) {
     showtimeId: 19000 + index,
     title: movie.title.replace("프리뷰 포스터", "프리뷰 추천"),
     score: 91 - index * 4,
-    reason: "로컬 프론트 작업용 샘플 추천이야. 선택 흐름과 결과 카드 확인에만 써.",
-    caution: "실제 추천 아님",
-    valuePoint: "백엔드 없이 레이아웃, 피드백 버튼, 예매 버튼 상태를 확인할 수 있어.",
+    reason: "#가볍게 #12세",
+    analysisPoint: mode === "precise" ? (index === 0 ? "#애니메이션취향" : "#판타지취향") : "",
+    caution: "",
+    valuePoint: "#17:00상영 #좌석여유",
     providerCode: index % 2 === 0 ? "CGV" : "MEGABOX",
     theaterName: index % 2 === 0 ? "강남" : "코엑스",
     regionName: "서울",
@@ -924,14 +925,6 @@ function formatShowtime(item) {
   return parts.length > 0 ? parts.join(" ") : "시간 정보 없음";
 }
 
-function normalizeCaution(value) {
-  if (!value || value === "없음") {
-    return "주의점 없음";
-  }
-
-  return value;
-}
-
 function feedbackKey(item) {
   return `${item.movieId || "movie"}:${item.showtimeId || "showtime"}`;
 }
@@ -1023,7 +1016,12 @@ function renderResultCard(item, index) {
   body.appendChild(heading);
 
   body.appendChild(createElement("p", "ai-result-copy", item.reason || "취향과 현재 조건에 잘 맞는 후보야."));
-  body.appendChild(createElement("p", ["ai-result-copy", "ai-caution"], normalizeCaution(item.caution)));
+  if (item.analysisPoint) {
+    const analysisPoint = createElement("p", ["ai-result-copy", "ai-analysis-point"]);
+    analysisPoint.appendChild(createElement("strong", null, "분석 포인트"));
+    analysisPoint.appendChild(document.createTextNode(` ${item.analysisPoint}`));
+    body.appendChild(analysisPoint);
+  }
   body.appendChild(createElement("p", "ai-result-copy", item.valuePoint || "시간, 가격, 좌석 조건을 함께 확인해봐."));
 
   const showtimeGrid = createElement("div", "ai-showtime-grid");

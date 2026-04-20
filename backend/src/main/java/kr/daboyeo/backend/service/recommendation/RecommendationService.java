@@ -6,9 +6,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import kr.daboyeo.backend.config.RecommendationProperties;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiPick;
@@ -37,8 +41,14 @@ import static kr.daboyeo.backend.domain.recommendation.RecommendationModels.norm
 public class RecommendationService {
 
     private static final int CANDIDATE_LIMIT = 240;
-    private static final int AI_CANDIDATE_LIMIT = 8;
     private static final int RESULT_LIMIT = 3;
+    private static final Pattern INTERNAL_TEXT_PATTERN = Pattern.compile(
+        "(?i)\\bscore\\s*[:=]?\\s*\\d+\\b|\\bmatchedtags\\b|\\bpenalties\\b|\\b(?:audience|mood|genre|content|pace):[a-z0-9_]+\\b"
+    );
+    private static final Pattern GENERIC_REASON_PATTERN = Pattern.compile(
+        "(선택한\\s*분위기|겹치는\\s*신호|신호가\\s*있|우선\\s*추천|분위기\\s*잘\\s*맞|조건과\\s*가까운\\s*후보)"
+    );
+    private static final Pattern USER_TAG_PATTERN = Pattern.compile("#[\\p{L}\\p{N}:_\\-]+");
 
     private final RecommendationProperties properties;
     private final PosterSeedService posterSeedService;
@@ -154,12 +164,14 @@ public class RecommendationService {
             );
         }
 
-        List<ScoredCandidate> aiCandidates = scored.stream().limit(AI_CANDIDATE_LIMIT).toList();
+        List<ScoredCandidate> aiCandidates = scored.stream()
+            .limit(properties.aiCandidateLimitFor(mode))
+            .toList();
         var aiResult = localModelClient.rankAndExplain(mode, tagProfile, aiCandidates);
         List<RecommendationItem> items = aiResult
-            .map(result -> itemsFromAi(aiCandidates, result.picks()))
+            .map(result -> itemsFromAi(scored, result.picks(), tagProfile, mode))
             .filter(list -> !list.isEmpty())
-            .orElseGet(() -> fallbackItems(aiCandidates));
+            .orElseGet(() -> fallbackItems(scored, tagProfile, mode));
 
         RecommendationResponse response = new RecommendationResponse(
             runId,
@@ -248,55 +260,354 @@ public class RecommendationService {
         return new FeedbackResponse(true, delta);
     }
 
-    private List<RecommendationItem> itemsFromAi(List<ScoredCandidate> candidates, List<AiPick> picks) {
-        Map<Long, ScoredCandidate> byShowtime = candidates.stream()
-            .collect(Collectors.toMap(candidate -> candidate.candidate().showtimeId(), Function.identity()));
-        List<RecommendationItem> items = new ArrayList<>();
+    private List<RecommendationItem> itemsFromAi(
+        List<ScoredCandidate> rankedCandidates,
+        List<AiPick> picks,
+        TagProfile profile,
+        RecommendationMode mode
+    ) {
+        Map<Long, ScoredCandidate> byShowtime = rankedCandidates.stream()
+            .collect(Collectors.toMap(
+                candidate -> candidate.candidate().showtimeId(),
+                Function.identity(),
+                (left, right) -> left,
+                LinkedHashMap::new
+            ));
+        Map<Long, AiPick> pickByShowtime = picks.stream()
+            .collect(Collectors.toMap(
+                AiPick::showtimeId,
+                Function.identity(),
+                (left, right) -> left,
+                LinkedHashMap::new
+            ));
+        List<ScoredCandidate> ordered = new ArrayList<>();
         for (AiPick pick : picks) {
             ScoredCandidate scored = byShowtime.remove(pick.showtimeId());
             if (scored != null) {
-                items.add(toItem(scored, pick.reason(), pick.caution(), pick.valuePoint()));
-            }
-            if (items.size() >= RESULT_LIMIT) {
-                return items;
+                ordered.add(scored);
             }
         }
-        byShowtime.values().stream()
-            .limit(RESULT_LIMIT - items.size())
-            .map(this::fallbackItem)
-            .forEach(items::add);
-        return items;
-    }
-
-    private List<RecommendationItem> fallbackItems(List<ScoredCandidate> candidates) {
-        return candidates.stream()
-            .limit(RESULT_LIMIT)
-            .map(this::fallbackItem)
+        ordered.addAll(byShowtime.values());
+        return selectDistinctMovieItems(ordered)
+            .stream()
+            .map(scored -> {
+                AiPick pick = pickByShowtime.get(scored.candidate().showtimeId());
+                if (pick == null) {
+                    return fallbackItem(scored, profile, mode);
+                }
+                return toItem(
+                    scored,
+                    qualityReason(pick.reason(), scored),
+                    pick.caution(),
+                    qualityValuePoint(pick.valuePoint(), scored.candidate()),
+                    profile,
+                    mode,
+                    qualityAnalysisPoint(pick.analysisPoint(), scored, profile, mode)
+                );
+            })
             .toList();
     }
 
-    private RecommendationItem fallbackItem(ScoredCandidate scored) {
-        ShowtimeCandidate candidate = scored.candidate();
-        String reason = "입력한 취향과 현재 상영 조건에 가장 가깝게 맞는 후보야.";
-        if (!scored.matchedTags().isEmpty()) {
-            reason = "선택한 분위기와 겹치는 신호가 많아서 우선 추천했어.";
-        }
-        String caution = scored.penalties().isEmpty()
-            ? "큰 주의 요소는 감지되지 않았어."
-            : "피하고 싶은 요소와 일부 겹치는 점이 있어.";
-        return toItem(scored, reason, caution, valuePoint(candidate));
+    private List<RecommendationItem> fallbackItems(List<ScoredCandidate> rankedCandidates, TagProfile profile, RecommendationMode mode) {
+        return selectDistinctMovieItems(rankedCandidates)
+            .stream()
+            .map(scored -> fallbackItem(scored, profile, mode))
+            .toList();
     }
 
-    private RecommendationItem toItem(ScoredCandidate scored, String reason, String caution, String valuePoint) {
+    private String qualityReason(String reason, ScoredCandidate scored) {
+        String sanitized = sanitizeUserFacingText(reason);
+        if (isWeakReason(sanitized, scored.candidate())) {
+            return groundedReason(scored);
+        }
+        String tags = normalizeReasonTags(sanitized);
+        return tags.isBlank() ? groundedReason(scored) : tags;
+    }
+
+    private boolean isWeakReason(String reason, ShowtimeCandidate candidate) {
+        if (reason == null || reason.isBlank()) {
+            return true;
+        }
+        String normalized = reason.trim();
+        if (sameText(normalized, candidate.title())) {
+            return true;
+        }
+        return GENERIC_REASON_PATTERN.matcher(normalized).find() || !hasUserFacingTag(normalized);
+    }
+
+    private String groundedReason(ScoredCandidate scored) {
+        ShowtimeCandidate candidate = scored.candidate();
+        List<String> tags = new ArrayList<>();
+        scored.matchedTags().stream()
+            .filter(this::isReasonSourceTag)
+            .map(this::tagPhrase)
+            .filter(value -> !value.isBlank())
+            .forEach(tags::add);
+        candidate.allTags().stream()
+            .filter(this::isReasonSourceTag)
+            .map(this::tagPhrase)
+            .filter(value -> !value.isBlank())
+            .forEach(tags::add);
+        if (candidate.runtimeMinutes() != null && candidate.runtimeMinutes() <= 125) {
+            tags.add("#부담적은러닝타임");
+        }
+        if (!candidate.ageRating().isBlank()) {
+            tags.add(ageTag(candidate.ageRating()));
+        }
+        if (tags.isEmpty()) {
+            tags.add("#조건근접");
+        }
+        return joinTags(tags, 4);
+    }
+
+    private String qualityValuePoint(String valuePoint, ShowtimeCandidate candidate) {
+        String sanitized = sanitizeUserFacingText(valuePoint);
+        if (isWeakValuePoint(sanitized, candidate)) {
+            return groundedValuePoint(candidate);
+        }
+        String tags = normalizeValueTags(sanitized);
+        return tags.isBlank() ? groundedValuePoint(candidate) : tags;
+    }
+
+    private boolean isWeakValuePoint(String valuePoint, ShowtimeCandidate candidate) {
+        if (valuePoint == null || valuePoint.isBlank()) {
+            return true;
+        }
+        String normalized = valuePoint.trim();
+        if (sameText(normalized, candidate.theaterName())
+            || sameText(normalized, candidate.screenName())
+            || sameText(normalized, candidate.regionName())) {
+            return true;
+        }
+        return !hasUserFacingTag(normalized);
+    }
+
+    private String groundedValuePoint(ShowtimeCandidate candidate) {
+        List<String> tags = new ArrayList<>();
+        if (candidate.startsAt() != null) {
+            tags.add("#" + DateTimeFormatter.ofPattern("HH:mm").format(candidate.startsAt()) + "상영");
+        }
+        if (candidate.minPriceAmount() != null) {
+            tags.add("#" + candidate.minPriceAmount() + "원");
+        }
+        String seat = seatHint(candidate.remainingSeatCount(), candidate.totalSeatCount());
+        if ("enough".equals(seat)) {
+            tags.add("#좌석여유");
+        } else if ("limited".equals(seat)) {
+            tags.add("#좌석주의");
+        }
+        if (!candidate.theaterName().isBlank()) {
+            tags.add("#예매가능");
+        }
+        if (tags.isEmpty()) {
+            tags.add("#예매정보");
+        }
+        return joinTags(tags, 4);
+    }
+
+    private String ageTag(String ageRating) {
+        String age = ageRating == null ? "" : ageRating.trim();
+        if (age.isBlank()) {
+            return "";
+        }
+        String compact = age
+            .replace("이상", "")
+            .replace("관람가", "")
+            .replace("관람", "")
+            .replaceAll("\\s+", "");
+        if (compact.matches("\\d+")) {
+            compact = compact + "세";
+        }
+        return "#" + compact;
+    }
+
+    private String tagPhrase(String tag) {
+        if (tag == null || tag.isBlank()) {
+            return "";
+        }
+        String normalized = tag.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "audience:alone" -> "#혼영";
+            case "audience:friends" -> "#친구랑";
+            case "audience:date" -> "#데이트";
+            case "audience:family" -> "#가족";
+            case "audience:child" -> "#아이와함께";
+            case "mood:light" -> "#가볍게";
+            case "mood:immersive" -> "#몰입";
+            case "mood:exciting" -> "#신나는";
+            case "mood:calm" -> "#잔잔한";
+            case "mood:tense" -> "#긴장감";
+            case "mood:warm" -> "#따뜻한";
+            case "mood:visual" -> "#시각적재미";
+            case "pace:easy" -> "#이해쉬움";
+            case "pace:fast" -> "#빠른전개";
+            case "pace:slow" -> "#천천히몰입";
+            case "content:too_long" -> "#긴영화주의";
+            case "content:complex" -> "#난도주의";
+            case "content:violence" -> "#잔인함주의";
+            case "content:sad_ending" -> "#슬픈결말주의";
+            case "content:loud" -> "#큰소리주의";
+            default -> {
+                if (normalized.startsWith("genre:")) {
+                    yield "#" + normalized.substring("genre:".length()).replace('_', '-');
+                }
+                yield "";
+            }
+        };
+    }
+
+    private boolean isReasonSourceTag(String tag) {
+        return tag != null && !tag.trim().toLowerCase(Locale.ROOT).startsWith("content:");
+    }
+
+    private String genreLabel(String genre) {
+        String normalized = genre == null ? "" : genre.trim().toLowerCase(Locale.ROOT).replace('_', '-');
+        return switch (normalized) {
+            case "action" -> "액션";
+            case "adventure" -> "어드벤처";
+            case "animation" -> "애니메이션";
+            case "comedy" -> "코미디";
+            case "crime" -> "범죄";
+            case "drama" -> "드라마";
+            case "family" -> "가족";
+            case "fantasy" -> "판타지";
+            case "history" -> "역사";
+            case "horror" -> "공포";
+            case "music" -> "음악";
+            case "musical" -> "뮤지컬";
+            case "mystery" -> "미스터리";
+            case "romance" -> "로맨스";
+            case "sf", "sci-fi", "science-fiction" -> "SF";
+            case "thriller" -> "스릴러";
+            default -> normalized.isBlank() ? "장르" : normalized;
+        };
+    }
+
+    private String seatHint(Integer remainingSeatCount, Integer totalSeatCount) {
+        if (remainingSeatCount == null) {
+            return "";
+        }
+        if (remainingSeatCount <= 0) {
+            return "none";
+        }
+        if (totalSeatCount == null || totalSeatCount <= 0) {
+            return remainingSeatCount >= 20 ? "enough" : "limited";
+        }
+        double ratio = remainingSeatCount / (double) totalSeatCount;
+        if (remainingSeatCount >= 30 || ratio >= 0.3) {
+            return "enough";
+        }
+        if (remainingSeatCount <= 10 || ratio <= 0.1) {
+            return "limited";
+        }
+        return "normal";
+    }
+
+    private String joinTags(List<String> tags, int limit) {
+        return tags.stream()
+            .filter(value -> value != null && !value.isBlank())
+            .distinct()
+            .limit(limit)
+            .collect(Collectors.joining(" "));
+    }
+
+    private boolean hasUserFacingTag(String value) {
+        return value != null && USER_TAG_PATTERN.matcher(value).find();
+    }
+
+    private String normalizeReasonTags(String value) {
+        return joinTags(extractTags(value).stream()
+            .filter(tag -> !isValueTag(tag))
+            .toList(), 4);
+    }
+
+    private String normalizeValueTags(String value) {
+        return joinTags(extractTags(value).stream()
+            .filter(this::isValueTag)
+            .toList(), 4);
+    }
+
+    private List<String> extractTags(String value) {
+        if (value == null || value.isBlank()) {
+            return List.of();
+        }
+        List<String> tags = new ArrayList<>();
+        var matcher = USER_TAG_PATTERN.matcher(value);
+        while (matcher.find()) {
+            tags.add(matcher.group());
+        }
+        return tags;
+    }
+
+    private boolean isValueTag(String tag) {
+        if (tag == null || tag.isBlank()) {
+            return false;
+        }
+        return tag.matches("#\\d{1,2}:\\d{2}(상영)?")
+            || tag.matches("#\\d+원")
+            || tag.equals("#좌석여유")
+            || tag.equals("#좌석주의")
+            || tag.equals("#예매가능")
+            || tag.equals("#예매정보");
+    }
+
+    private boolean sameText(String left, String right) {
+        if (left == null || right == null || left.isBlank() || right.isBlank()) {
+            return false;
+        }
+        return left.trim().equalsIgnoreCase(right.trim());
+    }
+
+    private List<ScoredCandidate> selectDistinctMovieItems(List<ScoredCandidate> rankedCandidates) {
+        List<ScoredCandidate> selected = new ArrayList<>();
+        List<ScoredCandidate> deferred = new ArrayList<>();
+        Set<String> seenMovies = new LinkedHashSet<>();
+        for (ScoredCandidate scored : rankedCandidates) {
+            if (selected.size() >= RESULT_LIMIT) {
+                break;
+            }
+            String movieKey = movieKey(scored);
+            if (seenMovies.add(movieKey)) {
+                selected.add(scored);
+            } else {
+                deferred.add(scored);
+            }
+        }
+        if (selected.size() < RESULT_LIMIT) {
+            for (ScoredCandidate scored : deferred) {
+                if (selected.size() >= RESULT_LIMIT) {
+                    break;
+                }
+                selected.add(scored);
+            }
+        }
+        return selected;
+    }
+
+    private RecommendationItem fallbackItem(ScoredCandidate scored, TagProfile profile, RecommendationMode mode) {
+        ShowtimeCandidate candidate = scored.candidate();
+        return toItem(scored, groundedReason(scored), "", groundedValuePoint(candidate), profile, mode, qualityAnalysisPoint("", scored, profile, mode));
+    }
+
+    private RecommendationItem toItem(
+        ScoredCandidate scored,
+        String reason,
+        String caution,
+        String valuePoint,
+        TagProfile profile,
+        RecommendationMode mode,
+        String analysisPoint
+    ) {
         ShowtimeCandidate candidate = scored.candidate();
         return new RecommendationItem(
             candidate.movieId(),
             candidate.showtimeId(),
             candidate.title(),
             scored.score(),
-            blankToDefault(reason, "취향과 상영 조건을 함께 봤을 때 가장 가까운 선택이야."),
-            blankToDefault(caution, "큰 주의 요소는 없어."),
-            blankToDefault(valuePoint, valuePoint(candidate)),
+            blankToDefault(sanitizeUserFacingText(reason), "#조건근접"),
+            mode == RecommendationMode.PRECISE ? blankToDefault(sanitizeUserFacingText(analysisPoint), analysisPoint(scored, profile)) : "",
+            blankToDefault(sanitizeUserFacingText(caution), ""),
+            blankToDefault(sanitizeUserFacingText(valuePoint), valuePoint(candidate)),
             candidate.providerCode(),
             candidate.theaterName(),
             candidate.regionName(),
@@ -311,17 +622,60 @@ public class RecommendationService {
     }
 
     private String valuePoint(ShowtimeCandidate candidate) {
-        StringBuilder builder = new StringBuilder();
-        if (candidate.minPriceAmount() != null) {
-            builder.append(String.format("%,d원 기준으로 비교할 수 있어. ", candidate.minPriceAmount()));
+        return groundedValuePoint(candidate);
+    }
+
+    private String qualityAnalysisPoint(
+        String analysisPoint,
+        ScoredCandidate scored,
+        TagProfile profile,
+        RecommendationMode mode
+    ) {
+        if (mode != RecommendationMode.PRECISE) {
+            return "";
         }
-        if (candidate.startsAt() != null) {
-            builder.append(DateTimeFormatter.ofPattern("HH:mm").format(candidate.startsAt())).append(" 상영이 있어.");
+        String sanitized = sanitizeUserFacingText(analysisPoint);
+        String tag = extractTags(sanitized).stream()
+            .filter(this::isAnalysisTag)
+            .findFirst()
+            .orElse("");
+        return tag.isBlank() ? analysisPoint(scored, profile) : tag;
+    }
+
+    private boolean isAnalysisTag(String tag) {
+        if (tag == null || tag.isBlank() || isValueTag(tag)) {
+            return false;
         }
-        if (builder.isEmpty()) {
-            return "상영관과 예매 정보를 바로 확인할 수 있어.";
+        String normalized = tag.trim().toLowerCase(Locale.ROOT);
+        int length = tag.codePointCount(0, tag.length());
+        return length <= 18
+            && !normalized.contains("_")
+            && !normalized.contains("주의")
+            && !normalized.contains("잔인")
+            && !normalized.contains("폭력")
+            && !normalized.contains("시끄")
+            && !normalized.contains("슬픔")
+            && !normalized.contains("긴영화");
+    }
+
+    private String analysisPoint(ScoredCandidate scored, TagProfile profile) {
+        ShowtimeCandidate candidate = scored.candidate();
+        Set<String> likedGenres = profile == null ? Set.of() : profile.likedGenres();
+        for (String tag : candidate.allTags()) {
+            String normalized = tag == null ? "" : tag.toLowerCase(Locale.ROOT);
+            if (normalized.startsWith("genre:") && likedGenres.contains(normalized)) {
+                return "#" + genreLabel(normalized.substring("genre:".length())) + "취향";
+            }
         }
-        return builder.toString().trim();
+        if (!likedGenres.isEmpty()) {
+            String preferredGenre = likedGenres.iterator().next();
+            return "#" + genreLabel(preferredGenre.substring("genre:".length())) + "취향";
+        }
+        return candidate.allTags().stream()
+            .filter(tag -> tag != null && tag.toLowerCase(Locale.ROOT).startsWith("genre:"))
+            .map(tag -> "#" + genreLabel(tag.substring("genre:".length())) + "계열")
+            .findFirst()
+            .orElse("#장르근접");
     }
 
     private Map<String, Integer> feedbackDelta(ShowtimeCandidate candidate, FeedbackAction action) {
@@ -337,6 +691,29 @@ public class RecommendationService {
 
     private String blankToDefault(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value.trim();
+    }
+
+    private String sanitizeUserFacingText(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        String sanitized = INTERNAL_TEXT_PATTERN.matcher(value).replaceAll(" ");
+        sanitized = sanitized.replaceAll("\\s+", " ").trim();
+        return sanitized.replaceAll("[\\p{Punct}\\s]+", "").isBlank() ? "" : sanitized;
+    }
+
+    private String movieKey(ScoredCandidate scored) {
+        ShowtimeCandidate candidate = scored.candidate();
+        String title = candidate.title();
+        if (title != null && !title.isBlank()) {
+            return "title:" + title.trim().toLowerCase(Locale.ROOT);
+        }
+        String externalMovieId = candidate.externalMovieId();
+        if (externalMovieId != null && !externalMovieId.isBlank()) {
+            return candidate.providerCode() + ":" + externalMovieId.trim();
+        }
+        Long movieId = candidate.movieId();
+        return movieId == null ? "showtime:" + candidate.showtimeId() : "movie:" + movieId;
     }
 
     private long elapsedMs(Instant startedAt) {

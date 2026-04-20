@@ -28,4 +28,9 @@ daboyeo:
     fast-model: ${DABOYEO_RECOMMEND_FAST_MODEL:gemma-4-e2b-it}
     precise-model: ${DABOYEO_RECOMMEND_PRECISE_MODEL:gemma-4-e4b-it}
     min-start-buffer-minutes: ${DABOYEO_RECOMMEND_MIN_START_BUFFER_MINUTES:20}
+    fast-ai-candidate-limit: ${DABOYEO_RECOMMEND_FAST_AI_CANDIDATE_LIMIT:5}
+    precise-ai-candidate-limit: ${DABOYEO_RECOMMEND_PRECISE_AI_CANDIDATE_LIMIT:5}
+    fast-max-tokens: ${DABOYEO_RECOMMEND_FAST_MAX_TOKENS:280}
+    precise-max-tokens: ${DABOYEO_RECOMMEND_PRECISE_MAX_TOKENS:160}
+    response-text-max-length: ${DABOYEO_RECOMMEND_RESPONSE_TEXT_MAX_LENGTH:56}
     frontend-origins: ${DABOYEO_FRONTEND_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,http://*:5173}

@@ -197,3 +197,51 @@ Do not rewrite existing entries; append only.
 - summary: `LM Studio 호출 대기 및 JSON 잘림 해결`
 - details: `LM Studio 호출에 connect/read timeout을 추가하고 JSON schema 문자열 maxLength 및 max_tokens 260을 적용했다. E2B fast와 E4B precise 모두 실제 수집 후보로 status=ok, recommendation_count=3 응답을 확인했다.`
 - status: `resolved`
+
+- time: `2026-04-20 09:54:16 +09:00`
+- location: `backend recommendation API to LM Studio`
+- summary: `최적화 중 토큰 예산 과축소로 AI 응답 JSON 잘림`
+- details: `fast 200, precise 240 max_tokens 설정에서 두 모델 모두 3번째 추천 JSON이 잘려 API가 fallback으로 응답했다. 후보/프롬프트 축소는 유지하고 fast 280, precise 320으로 토큰 예산을 올려 fast와 precise 모두 status=ok를 확인했다.`
+- status: `resolved`
+
+- time: `2026-04-20 10:05:16 +09:00`
+- location: `scripts/ingest/collect_all_to_tidb.py, showtimes.movie_id`
+- summary: `메가박스 수집 데이터에서 showtimes.movie_title 과 movies.title_ko 불일치 발견`
+- details: `대량 수집 후 검증 쿼리에서 showtimes.movie_title <> movies.title_ko 인 행이 139개 확인됐다. 특히 하나의 movie_id가 여러 메가박스 상영 제목에 연결되어 추천 응답의 movieId와 피드백 대상 정합성이 흔들릴 수 있다.`
+- status: `open`
+
+- time: `2026-04-20 10:24:00 +09:00`
+- location: `backend recommendation focused tests`
+- summary: `영화 다양성 테스트 기대값 불일치`
+- details: `제목 우선 중복 제거 정책으로 고정한 뒤 기존 테스트가 서로 다른 제목이 같은 movie_id 를 가진 경우까지 중복으로 기대해 실패했다. 메가박스 과거 매핑 오류를 고려해 같은 제목의 다른 시간표를 중복으로 보는 테스트로 수정했고 추천 패키지 테스트를 재실행해 통과했다.`
+- status: `resolved`
+
+- time: `2026-04-20 10:55:00 +09:00`
+- location: `scripts/ingest/collect_all_to_tidb.py, showtimes.movie_id`
+- summary: `메가박스 movie_id 매핑 오류 해결`
+- details: `메가박스 상영 row의 movieNo 를 우선 사용해 영화 row를 upsert하고, showtimes에는 있으나 movies에는 없는 external_movie_id 를 raw showtime 기반으로 backfill한 뒤 showtimes.external_movie_id 와 movies.external_movie_id 기준으로 기존 연결을 보정하도록 수정했다. 검증 결과 오늘 메가박스 title mismatch 0, multi-title movie_id 그룹 0, 전체 external link mismatch 0을 확인했다.`
+- status: `resolved`
+
+- time: `2026-04-20 12:45:00 +09:00`
+- location: `frontend benchmark via Chrome CDP`
+- summary: `프론트 벤치마크 초기 CDP 타임아웃`
+- details: `Chrome /json/list 의 첫 target 이 page가 아니라 extension background_page 여서 벤치 DOM 완료 신호를 읽지 못하고 두 차례 타임아웃됐다. 이후 type=page target만 선택하도록 벤치 드라이버를 수정해 fast/precise 5회 측정을 완료했다.`
+- status: `resolved`
+
+- time: `2026-04-20 14:10:33 +09:00`
+- location: `frontend benchmark via Chrome CDP`
+- summary: `벤치 드라이버 WebSocket 경로와 소켓 타임아웃 문제`
+- details: `수동 CDP WebSocket 연결에서 query가 없는 target path 뒤에 불필요한 ?를 붙여 Chrome이 target id를 찾지 못했고, 수정 후에는 기본 socket timeout 30초가 추론 중 먼저 만료됐다. 요청 측정값으로 쓰지 않고 request path 처리와 socket timeout을 수정한 뒤 fast/precise 5회 벤치를 완료했다.`
+- status: `resolved`
+
+- time: `2026-04-20 14:50:59 +09:00`
+- location: `backend restart for compact JSON frontend benchmark`
+- summary: `백엔드 재시작 시 Spring DB 환경변수 매핑 누락으로 세션 API 503`
+- details: `.env`에는 TIDB_HOST/TIDB_PORT/TIDB_USER/TIDB_PASSWORD/TIDB_DATABASE가 있었지만 Spring은 DABOYEO_DB_URL/DABOYEO_DB_USERNAME/DABOYEO_DB_PASSWORD를 사용한다. 첫 재시작은 이 매핑 없이 기본 datasource로 떠서 /api/recommendation/sessions가 503을 반환했다. 값은 출력하지 않고 TiDB env에서 Spring datasource env를 구성해 재시작한 뒤 health와 session create/delete를 확인하고 벤치를 재실행했다.`
+- status: `resolved`
+
+- time: `2026-04-20 16:12:39 +09:00`
+- location: `backend recommendation focused tests`
+- summary: `analysisPoint를 precise 전용으로 바꾸면서 fast 기대값 테스트가 실패`
+- details: `기존 품질 테스트 3개가 fast/E2B 응답에도 analysisPoint=#애니메이션취향 이 있다고 기대해 실패했다. 새 계약에 맞춰 fast는 blank analysisPoint, precise/E4B는 selected-poster genre analysisPoint를 기대하도록 테스트를 수정했고 focused/package/full Gradle 테스트를 재실행해 통과했다.`
+- status: `resolved`
