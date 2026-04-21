@@ -12,6 +12,9 @@
   --purple60: #BDB9E4;
   --pink50: #faa8c4;
   --red50: #FF4444;
+  /* --fixed-header-height: 88px; */
+  --fixed-header-height: 60px;
+  --basic-page-top-gap: 32px;
   scroll-behavior: smooth;
   /* background: linear-gradient(135deg, #6c5ce7, #a29bfe, #fd79a8); */
 }
@@ -20,7 +23,7 @@ body {
   font: 16px/1.7 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--gray100);
   background-color: #000;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('/assets/backgroundImg.avif');
+  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('../assets/backgroundImg.avif');
   background-size: cover;
   background-position: center top;
   background-attachment: fixed;
@@ -78,6 +81,7 @@ h1 span {
   justify-content: space-between;
   align-items: center;
   gap: 40px;
+  min-height: var(--fixed-header-height);
   /* max-width: 1200px; */
   padding: 0 30px;
   margin: 0 auto;
@@ -117,6 +121,25 @@ h1 span {
 
 body.header-visible {
   padding-top: 60px;
+}
+
+body.basic-page {
+  padding-top: var(--fixed-header-height);
+}
+
+body.basic-page.header-visible {
+  padding-top: var(--fixed-header-height);
+}
+
+body.basic-page .fixed-header {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+body.basic-page .main-content {
+  padding-top: var(--basic-page-top-gap);
+  margin-top: 0;
+  min-height: calc(100vh - var(--fixed-header-height));
 }
 
 /* ============================================
@@ -170,15 +193,20 @@ body.header-visible {
   .header-content {
     gap: 20px;
   }
+
+  :root {
+    --fixed-header-height: 72px;
+    --basic-page-top-gap: 24px;
+  }
 }
 
 /* ============================================
        3. footer
        ============================================ */
-.footer {
+#footer {
   position: relative;
   width: 100%;
-  background-color: #f5f5f5;
+  background-color: var(--white50);
   padding: 60px 20px 40px;
   z-index: 100;
 }
@@ -319,14 +347,14 @@ body.header-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--white50);
+  background: var(--white0);
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 10px 15px;
   width: 220px;
   cursor: pointer;
   font-size: 13px;
-  color: #333;
+  color: var(--gray0);
   transition: all 0.2s ease;
 }
 
