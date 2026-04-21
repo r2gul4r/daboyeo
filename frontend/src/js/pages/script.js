@@ -156,34 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============================================
-  // 4. 검색 및 실행 기능
+  // 4. 페이지 이동 및 이벤트 리스너
   // ============================================
 
-  /**
-   * 검색 데이터 수집 및 페이지 이동
-   */
-  function performSearch() {
-    const timeRadio = document.querySelector('input[name="timeRange"]:checked');
-    const selectedTimeRange = timeRadio ? timeRadio.value : 'morning';
-    
-    const searchData = {
-      region: regionInput.value || '전체',
-      date: dateInput.value,
-      timeRange: selectedTimeRange,
-      personCount: currentPersonCount
-    };
-
-    console.log('검색 실행:', searchData);
-    alert(`검색을 시작합니다!\n지역: ${searchData.region}\n날짜: ${searchData.date}\n시간대: ${searchData.timeRange}\n인원: ${searchData.personCount}명`);
-  }
-
+  // AI 추천받기 버튼 클릭 시 AI 페이지로 이동
   if (searchBtn) {
-    searchBtn.addEventListener('click', performSearch);
-  }
-
-  if (nearbyBtn) {
-    nearbyBtn.addEventListener('click', () => {
-      console.log('내 위치 기반 주변 극장 검색 시작...');
+    searchBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = './src/pages/ai.html';
     });
   }
 

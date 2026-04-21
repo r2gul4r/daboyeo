@@ -1,16 +1,13 @@
 @import url("./common.css");
 
 :root {
-  --ai-bg: #06070b;
-  --ai-bg-soft: #0d0f15;
+  --gray0-soft: #0d0f15;
   --ai-surface: rgba(19, 21, 31, 0.92);
   --ai-surface-strong: #171a24;
   --ai-line: rgba(255, 255, 255, 0.12);
   --ai-line-strong: rgba(167, 139, 250, 0.58);
-  --ai-text: #f3f4f8;
   --ai-muted: #a7a8b4;
   --ai-soft: #d9d7e5;
-  --ai-primary: #a78bfa;
   --ai-primary-strong: #8b5cf6;
   --ai-like: #7dd3fc;
   --ai-dislike: #f0abfc;
@@ -18,26 +15,16 @@
   --ai-warn: #fbbf24;
   --ai-danger: #fb7185;
   --ai-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
-  font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html {
-  min-height: 100%;
-  background: var(--ai-bg);
 }
 
 body.ai-guide-page {
   min-height: 100vh;
   margin: 0;
-  color: var(--ai-text);
+  color: var(--white0);
   background:
     linear-gradient(145deg, rgba(167, 139, 250, 0.13), transparent 34%),
     linear-gradient(315deg, rgba(45, 212, 191, 0.09), transparent 28%),
-    var(--ai-bg);
+    var(--gray0);
   letter-spacing: 0;
   overflow-x: hidden;
 }
@@ -74,7 +61,7 @@ body.ai-guide-page a {
 }
 
 .ai-brand {
-  color: var(--ai-text);
+  color: var(--white0);
   font-size: 19px;
   font-weight: 900;
   text-decoration: none;
@@ -83,7 +70,7 @@ body.ai-guide-page a {
 .ai-brand::after {
   content: "AI";
   margin-left: 8px;
-  color: var(--ai-primary);
+  color: var(--purple50);
   font-size: 13px;
 }
 
@@ -98,7 +85,7 @@ body.ai-guide-page a {
 .ai-choice-card {
   border: 1px solid var(--ai-line);
   border-radius: 8px;
-  color: var(--ai-text);
+  color: var(--white0);
   background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
@@ -108,7 +95,7 @@ body.ai-guide-page a {
   min-width: 74px;
   height: 38px;
   border-color: rgba(255, 255, 255, 0.26);
-  color: var(--ai-text);
+  color: var(--white0);
   background: rgba(255, 255, 255, 0.1);
   font-weight: 800;
 }
@@ -172,14 +159,14 @@ body.ai-guide-page a {
 
 .ai-kicker {
   margin: 0 0 12px;
-  color: var(--ai-primary);
+  color: var(--purple50);
   font-size: 14px;
   font-weight: 800;
 }
 
 .ai-title {
   margin: 0;
-  color: var(--ai-text);
+  color: var(--white0);
   font-size: 88px;
   line-height: 0.98;
   font-weight: 900;
@@ -188,7 +175,7 @@ body.ai-guide-page a {
 }
 
 .ai-title span {
-  color: var(--ai-primary);
+  color: var(--purple50);
 }
 
 .ai-description {
@@ -216,7 +203,7 @@ body.ai-guide-page a {
 }
 
 .ai-summary-label {
-  color: var(--ai-primary);
+  color: var(--purple50);
   font-weight: 800;
 }
 
@@ -243,7 +230,7 @@ body.ai-guide-page a {
 
 .ai-choice-card strong {
   display: block;
-  color: var(--ai-text);
+  color: var(--white0);
   font-size: 21px;
   font-weight: 900;
   word-break: keep-all;
@@ -259,7 +246,7 @@ body.ai-guide-page a {
 }
 
 .ai-choice-card.is-selected {
-  border-color: var(--ai-primary);
+  border-color: var(--purple50);
   background: rgba(167, 139, 250, 0.17);
 }
 
@@ -308,8 +295,8 @@ body.ai-guide-page a {
 
 .ai-complete-button {
   min-width: 156px;
-  border-color: var(--ai-primary);
-  background: var(--ai-primary);
+  border-color: var(--purple50);
+  background: var(--purple50);
   color: #12111a;
 }
 
@@ -377,7 +364,7 @@ body.ai-guide-page a {
 .ai-count-pill span {
   display: block;
   margin-top: 2px;
-  color: var(--ai-text);
+  color: var(--white0);
   font-size: 17px;
   font-weight: 900;
 }
@@ -417,8 +404,8 @@ body.ai-guide-page a {
 }
 
 .ai-round-button.is-active {
-  border-color: var(--ai-primary);
-  color: var(--ai-text);
+  border-color: var(--purple50);
+  color: var(--white0);
   background: rgba(167, 139, 250, 0.15);
 }
 
@@ -450,7 +437,7 @@ body.ai-guide-page a {
 }
 
 .ai-poster-card.is-selected {
-  border-color: var(--ai-primary);
+  border-color: var(--purple50);
   box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.28), 0 16px 48px rgba(0, 0, 0, 0.32);
 }
 
@@ -499,7 +486,7 @@ body.ai-guide-page a {
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 8px;
   color: #11131a;
-  background: var(--ai-primary);
+  background: var(--purple50);
   font-weight: 900;
 }
 
@@ -521,7 +508,7 @@ body.ai-guide-page a {
 
 .ai-mode-card strong {
   display: block;
-  color: var(--ai-text);
+  color: var(--white0);
   font-size: 27px;
   font-weight: 900;
 }
@@ -575,7 +562,7 @@ body.ai-guide-page a {
   height: 54px;
   margin: 0 auto 22px;
   border: 3px solid rgba(255, 255, 255, 0.12);
-  border-top-color: var(--ai-primary);
+  border-top-color: var(--purple50);
   border-radius: 50%;
   animation: ai-spin 900ms linear infinite;
 }
@@ -590,7 +577,7 @@ body.ai-guide-page a {
 .ai-error-panel h2,
 .ai-empty-panel h2 {
   margin: 0;
-  color: var(--ai-text);
+  color: var(--white0);
   font-size: 42px;
   line-height: 1.15;
   word-break: keep-all;
@@ -635,7 +622,7 @@ body.ai-guide-page a {
 }
 
 .ai-result-title span {
-  color: var(--ai-primary);
+  color: var(--purple50);
 }
 
 .ai-result-note {
@@ -708,7 +695,7 @@ body.ai-guide-page a {
   place-items: center;
   border-radius: 8px;
   color: #11131a;
-  background: var(--ai-primary);
+  background: var(--purple50);
   font-weight: 900;
 }
 
@@ -725,7 +712,7 @@ body.ai-guide-page a {
 
 .ai-movie-title {
   margin: 0;
-  color: var(--ai-text);
+  color: var(--white0);
   font-size: 24px;
   line-height: 1.3;
   font-weight: 900;
@@ -738,7 +725,7 @@ body.ai-guide-page a {
   padding: 7px 8px;
   border: 1px solid var(--ai-line);
   border-radius: 8px;
-  color: var(--ai-primary);
+  color: var(--purple50);
   text-align: center;
   font-weight: 900;
 }
@@ -752,11 +739,11 @@ body.ai-guide-page a {
 }
 
 .ai-analysis-point {
-  color: var(--ai-text);
+  color: var(--white0);
 }
 
 .ai-analysis-point strong {
-  color: var(--ai-primary);
+  color: var(--purple50);
   font-size: 12px;
   font-weight: 900;
 }
@@ -785,7 +772,7 @@ body.ai-guide-page a {
 .ai-showtime-item span {
   display: block;
   margin-top: 5px;
-  color: var(--ai-text);
+  color: var(--white0);
   font-size: 14px;
   line-height: 1.4;
   word-break: keep-all;
@@ -806,8 +793,8 @@ body.ai-guide-page a {
 }
 
 .ai-booking-button {
-  border-color: var(--ai-primary);
-  background: var(--ai-primary);
+  border-color: var(--purple50);
+  background: var(--purple50);
   color: #11131a;
 }
 
@@ -833,7 +820,7 @@ body.ai-guide-page a {
   padding: 13px 16px;
   border: 1px solid var(--ai-line-strong);
   border-radius: 8px;
-  color: var(--ai-text);
+  color: var(--white0);
   background: rgba(12, 14, 20, 0.94);
   box-shadow: var(--ai-shadow);
   opacity: 0;

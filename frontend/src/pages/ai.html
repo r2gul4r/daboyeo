@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다보여 | AI 영화 추천</title>
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="45x45" href="../../favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/daboyeoAi.css">
+</head>
+<body class="ai-guide-page">
+  <div class="ai-shell">
+    <header class="ai-topbar">
+      <div class="ai-topbar-left">
+        <button id="aiBackButton" class="ai-back-button" title="뒤로 가기"><i class="fas fa-arrow-left"></i></button>
+        <a href="../../index.html" class="ai-brand">DABOYEO</a>
+      </div>
+      <div id="aiProgress" class="ai-progress">준비 중</div>
+    </header>
+    <main id="aiScreen" class="ai-screen" tabindex="-1">
+      <!-- AI 콘텐츠가 여기에 렌더링됩니다 -->
+    </main>
+    <div id="aiToast" class="ai-toast"></div>
+  </div>
+
+  <script type="module" src="../js/pages/daboyeoAi.js"></script>
+</body>
+</html>
