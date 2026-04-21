@@ -7,6 +7,7 @@ import {
 } from "../api/client.js";
 
 const STORAGE_KEY = "daboyeoAnonymousId";
+const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
 const MAIN_PAGE_URL = "../../index.html";
 const LOCAL_PREVIEW_ID_PREFIX = "local-preview-";
 const POSTER_POOL_SIZE = 30;
@@ -34,12 +35,44 @@ const moodOptions = [
 ];
 
 const avoidOptions = [
-  { value: "violence", label: "잔인한 장면" },
-  { value: "too_long", label: "너무 긴 영화" },
-  { value: "complex", label: "어려운 이야기" },
-  { value: "sad_ending", label: "슬픈 결말" },
-  { value: "loud", label: "시끄러운 영화" },
+  {
+    value: "violence",
+    label: "잔인한 장면",
+    hint: "수위 높은 장면은 최대한 빼고 싶어.",
+    imageUrl: "https://images.unsplash.com/photo-1764005677020-52e3266af0fd?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
+  },
+  {
+    value: "too_long",
+    label: "너무 긴 영화",
+    hint: "늘어지는 러닝타임은 오늘 부담돼.",
+    imageUrl: "https://images.unsplash.com/photo-1751630991322-f935847f16c3?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
+  },
+  {
+    value: "complex",
+    label: "어려운 이야기",
+    hint: "해석이 너무 많이 필요한 건 피하고 싶어.",
+    imageUrl: "https://images.unsplash.com/photo-1758951995614-1a223f1512e4?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
+  },
+  {
+    value: "sad_ending",
+    label: "슬픈 결말",
+    hint: "보고 나서 처지는 여운은 오늘 말고.",
+    imageUrl: "https://images.unsplash.com/photo-1740101957152-f5df81e3b60f?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
+  },
+  {
+    value: "loud",
+    label: "시끄러운 영화",
+    hint: "볼륨이나 자극이 센 건 조금 부담돼.",
+    imageUrl: "https://images.unsplash.com/photo-1759230766134-e3ff1c27d20e?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
+  },
 ];
+
+const avoidNoneOption = {
+  value: "__none__",
+  label: "딱히 없음",
+  hint: "걸리는 요소 없이 넓게 추천받을래.",
+  imageUrl: "https://images.unsplash.com/photo-1762541693135-fb989de961e1?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
+};
 
 const modeOptions = [
   {
@@ -78,6 +111,12 @@ const stepBackMap = {
   mode: "posters",
 };
 
+const timeRangeLabels = {
+  morning: "조조",
+  brunch: "브런치",
+  night: "야간",
+};
+
 const screen = document.getElementById("aiScreen");
 const backButton = document.getElementById("aiBackButton");
 const progress = document.getElementById("aiProgress");
@@ -92,6 +131,7 @@ const state = {
     mood: null,
     avoid: [],
   },
+  searchContext: null,
   posters: {
     status: "idle",
     items: [],
@@ -110,9 +150,12 @@ const state = {
     error: null,
   },
   feedback: new Map(),
+  avoidNoneSelected: false,
   stepTimer: null,
   toastTimer: null,
 };
+
+state.searchContext = readSearchContext();
 
 function createLocalPreviewId() {
   const randomId = window.crypto?.randomUUID
@@ -185,6 +228,86 @@ function clearChildren(element) {
   }
 }
 
+function normalizeSearchContext(raw) {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+
+  const personCount = Number(raw.personCount);
+  const normalized = {
+    region: typeof raw.region === "string" ? raw.region.trim() : "",
+    date: typeof raw.date === "string" ? raw.date.trim() : "",
+    timeRange: typeof raw.timeRange === "string" ? raw.timeRange.trim().toLowerCase() : "",
+    personCount: Number.isFinite(personCount) && personCount > 0 ? Math.floor(personCount) : null,
+  };
+
+  return hasSearchContext(normalized) ? normalized : null;
+}
+
+function hasSearchContext(context) {
+  return Boolean(
+    context
+      && (context.region
+        || context.date
+        || context.timeRange
+        || context.personCount),
+  );
+}
+
+function readSearchContext() {
+  try {
+    const raw = sessionStorage.getItem(SEARCH_CONTEXT_KEY);
+    return raw ? normalizeSearchContext(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
+function searchContextRegion(context) {
+  const region = context?.region?.trim() || "";
+  return region && region !== "전체" ? region : "";
+}
+
+function searchContextParts(context) {
+  if (!hasSearchContext(context)) {
+    return [];
+  }
+
+  const parts = [];
+  const region = searchContextRegion(context);
+  if (region) {
+    parts.push(region);
+  }
+  if (context.date) {
+    parts.push(context.date);
+  }
+  if (context.timeRange && timeRangeLabels[context.timeRange]) {
+    parts.push(timeRangeLabels[context.timeRange]);
+  }
+  if (context.personCount) {
+    parts.push(`${context.personCount}명`);
+  }
+  return parts;
+}
+
+function searchContextText(context) {
+  const parts = searchContextParts(context);
+  return parts.length > 0 ? parts.join(" · ") : "";
+}
+
+function buildSearchFiltersPayload() {
+  if (!hasSearchContext(state.searchContext)) {
+    return null;
+  }
+
+  return {
+    region: searchContextRegion(state.searchContext),
+    date: state.searchContext.date || null,
+    timeRange: state.searchContext.timeRange || null,
+    personCount: state.searchContext.personCount || null,
+  };
+}
+
 function optionLabel(options, value) {
   return options.find((option) => option.value === value)?.label || "아직 선택 안 함";
 }
@@ -235,6 +358,7 @@ function resetInputs(keepSession = true) {
   state.posters.activeBatchIndex = 0;
   state.run = { status: "idle", mode: null, response: null, error: null };
   state.feedback = new Map();
+  state.avoidNoneSelected = false;
 
   if (!keepSession) {
     state.anonymousId = null;
@@ -320,6 +444,7 @@ function renderTitle(parts) {
 function renderStepShell({ kicker, titleParts, description, content, wide = false }) {
   const section = createElement("section", ["ai-step", wide ? "ai-step-wide" : null]);
   const intro = createElement("div", "ai-intro");
+  const panel = createElement("div", ["ai-step-panel", wide ? "ai-step-panel-wide" : null]);
   intro.appendChild(createElement("p", "ai-kicker", kicker));
   intro.appendChild(renderTitle(titleParts));
   intro.appendChild(createElement("p", "ai-description", description));
@@ -330,13 +455,19 @@ function renderStepShell({ kicker, titleParts, description, content, wide = fals
   }
 
   section.appendChild(intro);
-  section.appendChild(content);
+  panel.appendChild(content);
+  section.appendChild(panel);
 
   return section;
 }
 
 function renderSummary() {
   const rows = [];
+  const searchText = searchContextText(state.searchContext);
+
+  if (searchText) {
+    rows.push(["상영 조건", searchText]);
+  }
 
   if (state.survey.audience) {
     rows.push(["함께 볼 사람", optionLabel(audienceOptions, state.survey.audience)]);
@@ -367,10 +498,10 @@ function renderSummary() {
   const summary = createElement("div", "ai-summary");
 
   rows.forEach(([label, value]) => {
-    const row = createElement("div", "ai-summary-row");
-    row.appendChild(createElement("span", "ai-summary-label", label));
-    row.appendChild(createElement("span", "ai-summary-value", value));
-    summary.appendChild(row);
+    const chip = createElement("div", "ai-summary-chip");
+    chip.appendChild(createElement("span", "ai-summary-label", label));
+    chip.appendChild(createElement("span", "ai-summary-value", value));
+    summary.appendChild(chip);
   });
 
   return summary;
@@ -432,6 +563,7 @@ function toggleAvoid(value) {
   state.survey.avoid = exists
     ? state.survey.avoid.filter((item) => item !== value)
     : [...state.survey.avoid, value];
+  state.avoidNoneSelected = false;
   render();
 }
 
@@ -486,23 +618,49 @@ function showPosterBatch(batchIndex) {
 
 function renderAvoidStep() {
   const panel = createElement("div", "ai-avoid-panel");
-  const chipGrid = createElement("div", "ai-chip-grid");
+  const cardGrid = createElement("div", "ai-avoid-grid");
 
-  avoidOptions.forEach((option) => {
-    const chip = createElement("button", ["ai-avoid-chip", state.survey.avoid.includes(option.value) ? "is-selected" : null], option.label);
-    chip.type = "button";
-    chip.addEventListener("click", () => toggleAvoid(option.value));
-    chipGrid.appendChild(chip);
-  });
+  [...avoidOptions, avoidNoneOption].forEach((option) => {
+    const isNone = option.value === avoidNoneOption.value;
+    const isSelected = isNone
+      ? state.avoidNoneSelected
+      : state.survey.avoid.includes(option.value);
+    const card = createElement("button", ["ai-avoid-card", isSelected ? "is-selected" : null, isNone ? "is-none" : null]);
+    const media = createElement("div", "ai-avoid-card-media");
+    const image = createElement("img", "ai-avoid-card-image");
+    const content = createElement("div", "ai-avoid-card-content");
 
-  const noneButton = createElement("button", "ai-avoid-chip", "딱히 없음");
-  noneButton.type = "button";
-  noneButton.addEventListener("click", () => {
-    state.survey.avoid = [];
-    render();
-    scheduleStep("posters");
+    card.type = "button";
+    image.src = option.imageUrl;
+    image.alt = `${option.label} 선택 이미지`;
+    image.loading = "lazy";
+
+    content.appendChild(createElement("strong", null, option.label));
+    content.appendChild(createElement("span", null, option.hint));
+
+    media.appendChild(image);
+    media.appendChild(createElement("div", "ai-avoid-card-scrim"));
+    media.appendChild(content);
+
+    if (isSelected) {
+      media.appendChild(createElement("div", "ai-avoid-card-badge", "선택"));
+    }
+
+    card.appendChild(media);
+    card.addEventListener("click", () => {
+      if (isNone) {
+        state.survey.avoid = [];
+        state.avoidNoneSelected = true;
+        render();
+        scheduleStep("posters");
+        return;
+      }
+
+      toggleAvoid(option.value);
+    });
+
+    cardGrid.appendChild(card);
   });
-  chipGrid.appendChild(noneButton);
 
   const completeRow = createElement("div", "ai-complete-row");
   const completeButton = createElement("button", "ai-complete-button", "선택 완료");
@@ -511,7 +669,7 @@ function renderAvoidStep() {
   completeRow.appendChild(completeButton);
   completeRow.appendChild(createElement("span", "ai-complete-hint", "여러 개 골라도 돼. 없으면 딱히 없음을 누르면 바로 넘어가."));
 
-  panel.appendChild(chipGrid);
+  panel.appendChild(cardGrid);
   panel.appendChild(completeRow);
 
   return renderStepShell({
@@ -645,6 +803,11 @@ function renderPosterStep() {
     { text: "을 골라봐" },
   ]));
 
+  const summary = renderSummary();
+  if (summary) {
+    intro.appendChild(summary);
+  }
+
   const counts = createElement("div", "ai-poster-counts");
   counts.appendChild(renderPosterCount("is-like", "선택", state.posterChoices.likedSeedMovieIds.length, LIKE_LIMIT));
 
@@ -755,13 +918,17 @@ async function runRecommendation(mode) {
       dislikedSeedMovieIds: [],
     },
   };
+  const searchFilters = buildSearchFiltersPayload();
+  if (searchFilters) {
+    payload.searchFilters = searchFilters;
+  }
 
   try {
     const response = await requestRecommendations(payload);
     state.run = { status: "success", mode, response, error: null };
 
     const recommendations = Array.isArray(response?.recommendations) ? response.recommendations : [];
-    setStep(response?.status === "no_candidates" || recommendations.length === 0 ? "empty" : "results");
+    setStep(recommendations.length === 0 ? "empty" : "results");
   } catch (error) {
     if (state.posters.isPreview) {
       state.run = {
@@ -784,6 +951,14 @@ function createPreviewRecommendationResponse(mode) {
     state.posterChoices.likedSeedMovieIds.includes(String(movie.id))
   ));
   const sourceMovies = liked.length > 0 ? liked : state.posters.items.slice(0, 3);
+  const regionName = searchContextRegion(state.searchContext) || "서울";
+  const showDate = state.searchContext?.date || "오늘";
+  const previewTimesByRange = {
+    morning: ["08:10", "09:40", "10:30"],
+    brunch: ["11:40", "13:20", "15:10"],
+    night: ["18:10", "20:00", "21:40"],
+  };
+  const previewTimes = previewTimesByRange[state.searchContext?.timeRange] || ["14:30", "16:30", "18:30"];
   const recommendations = sourceMovies.slice(0, 3).map((movie, index) => ({
     movieId: 9000 + index,
     showtimeId: 19000 + index,
@@ -792,13 +967,13 @@ function createPreviewRecommendationResponse(mode) {
     reason: "#가볍게 #12세",
     analysisPoint: mode === "precise" ? (index === 0 ? "#애니메이션취향" : "#판타지취향") : "",
     caution: "",
-    valuePoint: "#17:00상영 #좌석여유",
+    valuePoint: `#${previewTimes[index] || previewTimes[previewTimes.length - 1]}상영 #좌석여유`,
     providerCode: index % 2 === 0 ? "CGV" : "MEGABOX",
     theaterName: index % 2 === 0 ? "강남" : "코엑스",
-    regionName: "서울",
+    regionName,
     screenName: `${index + 1}관`,
-    showDate: "오늘",
-    startsAt: `${14 + index * 2}:30`,
+    showDate,
+    startsAt: previewTimes[index] || previewTimes[previewTimes.length - 1],
     minPriceAmount: 12000 + index * 1000,
     currencyCode: "KRW",
     bookingUrl: "https://www.cgv.co.kr/",
@@ -991,6 +1166,18 @@ function renderShowtimeItem(label, value) {
   return item;
 }
 
+function renderSearchContextPanel() {
+  const text = searchContextText(state.searchContext);
+  if (!text) {
+    return null;
+  }
+
+  const panel = createElement("div", "ai-result-context");
+  panel.appendChild(createElement("strong", null, "상영 조건"));
+  panel.appendChild(createElement("span", null, text));
+  return panel;
+}
+
 function renderResultCard(item, index) {
   const card = createElement("article", ["ai-result-card", index === 0 ? "is-top" : null]);
   const inner = createElement("div", "ai-result-card-inner");
@@ -1070,6 +1257,10 @@ function renderResultsStep() {
     { text: "가 좋아" },
   ]));
   side.appendChild(createElement("p", "ai-result-note", response.message || "설문, 포스터 취향, 현재 상영 후보를 합쳐 추천했어."));
+  const searchContextPanel = renderSearchContextPanel();
+  if (searchContextPanel) {
+    side.appendChild(searchContextPanel);
+  }
 
   const meta = createElement("div", "ai-result-meta");
   meta.appendChild(createElement("span", null, modeLabel));

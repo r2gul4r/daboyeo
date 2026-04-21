@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
+import kr.daboyeo.backend.domain.recommendation.RecommendationModels.SearchFilters;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ShowtimeCandidate;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.TagProfile;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,34 @@ class RecommendationScorerTimeTests {
         assertThat(eveningScore).isGreaterThan(afternoonScore);
     }
 
+    @Test
+    void nightSearchContextRewardsImmersiveMood() {
+        TagProfile profile = new TagProfile();
+        profile.setMood("immersive");
+        SearchFilters filters = new SearchFilters("Gangnam", LocalDate.of(2026, 4, 17), "night", 2);
+
+        int withoutFilters = scorer.scoreOne(profile, candidateAt(19)).orElseThrow().score();
+        int withFilters = scorer.scoreOne(profile, candidateAt(19), filters).orElseThrow().score();
+
+        assertThat(withFilters).isGreaterThan(withoutFilters);
+    }
+
+    @Test
+    void unknownSeatCountGetsPenaltyWhenPersonCountIsRequested() {
+        TagProfile profile = new TagProfile();
+        SearchFilters filters = new SearchFilters("Gangnam", LocalDate.of(2026, 4, 17), "night", 4);
+
+        int knownSeatScore = scorer.scoreOne(profile, candidateAt(19)).orElseThrow().score();
+        int unknownSeatScore = scorer.scoreOne(profile, candidateAt(19, null, null), filters).orElseThrow().score();
+
+        assertThat(unknownSeatScore).isLessThan(knownSeatScore);
+    }
+
     private ShowtimeCandidate candidateAt(int hour) {
+        return candidateAt(hour, 80, 100);
+    }
+
+    private ShowtimeCandidate candidateAt(int hour, Integer remainingSeats, Integer totalSeats) {
         LocalDateTime startsAt = LocalDateTime.of(2026, 4, 17, hour, 0);
         return new ShowtimeCandidate(
             1L,
@@ -51,8 +79,8 @@ class RecommendationScorerTimeTests {
             LocalDate.from(startsAt),
             startsAt,
             startsAt.plusHours(2),
-            80,
-            100,
+            remainingSeats,
+            totalSeats,
             12_000,
             "KRW",
             "https://example.test/booking",

@@ -1,195 +1,229 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // ============================================
-  // 1. 전역 변수 및 요소 선택
-  // ============================================
+document.addEventListener("DOMContentLoaded", () => {
+  const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
+  const AI_PAGE_URL = "./src/basic/daboyeoAi.html";
 
-  // 날짜 관련
   const dateInput = document.getElementById("dateInput");
   const calendar = document.getElementById("calendar");
   const datesContainer = document.getElementById("calendarDates");
   const monthYear = document.getElementById("monthYear");
   const prevMonthBtn = document.getElementById("prevMonth");
   const nextMonthBtn = document.getElementById("nextMonth");
-
-  // 인원 관련 (HTML ID: personCount, increaseBtn, decreaseBtn)
-  const personCountDisplay = document.getElementById('personCount');
-  const increaseBtn = document.getElementById('increaseBtn');
-  const decreaseBtn = document.getElementById('decreaseBtn');
-
-  // 검색 및 기타
-  const searchBtn = document.getElementById('searchBtn');
-  const nearbyBtn = document.getElementById('nearbyBtn');
+  const personCountDisplay = document.getElementById("personCount");
+  const increaseBtn = document.getElementById("increaseBtn");
+  const decreaseBtn = document.getElementById("decreaseBtn");
+  const searchBtn = document.getElementById("searchBtn");
+  const nearbyBtn = document.getElementById("nearbyBtn");
   const regionInput = document.getElementById("regionInput");
 
-  let currentDate = new Date(); // 달력 표시용 기준 날짜
-  let currentPersonCount = 1;   // 선택된 인원 수 (기본값 1)
+  let currentDate = new Date();
+  let currentPersonCount = 1;
 
-  // ============================================
-  // 2. 날짜 선택 기능 (커스텀 캘린더)
-  // ============================================
-
-  /**
-   * 날짜 입력창 초기화 (오늘 날짜 세팅)
-   */
   function initializeDateInput() {
+    if (!dateInput || dateInput.value) {
+      return;
+    }
+
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, "0");
     const day = String(today.getDate()).padStart(2, "0");
-    const todayString = `${year}-${month}-${day}`;
-
-    dateInput.value = todayString;
+    dateInput.value = `${year}-${month}-${day}`;
   }
 
-  /**
-   * 캘린더 렌더링
-   */
   function renderCalendar() {
+    if (!datesContainer || !monthYear) {
+      return;
+    }
+
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    monthYear.textContent = `${year}년 ${month + 1}월`;
+    monthYear.textContent = `${year}.${String(month + 1).padStart(2, "0")}`;
+    datesContainer.innerHTML = "";
 
     const firstDay = new Date(year, month, 1).getDay();
     const lastDate = new Date(year, month + 1, 0).getDate();
 
-    datesContainer.innerHTML = "";
-
-    // 시작 요일 맞추기 위한 빈 칸 생성
-    for (let i = 0; i < firstDay; i++) {
-      datesContainer.innerHTML += `<div></div>`;
+    for (let index = 0; index < firstDay; index += 1) {
+      datesContainer.appendChild(document.createElement("div"));
     }
 
-    // 날짜 생성
-    for (let d = 1; d <= lastDate; d++) {
-      const dateEl = document.createElement("div");
-      dateEl.textContent = d;
+    for (let day = 1; day <= lastDate; day += 1) {
+      const dateCell = document.createElement("div");
+      const thisDate = new Date(year, month, day);
+      dateCell.textContent = String(day);
 
-      const thisDate = new Date(year, month, d);
-
-      // 오늘 날짜 표시
       if (thisDate.getTime() === today.getTime()) {
-        dateEl.classList.add("today");
+        dateCell.classList.add("today");
       }
 
-      // 과거 날짜 비활성화
       if (thisDate < today) {
-        dateEl.classList.add("disabled");
+        dateCell.classList.add("disabled");
       } else {
-        dateEl.addEventListener("click", () => {
-          const selectedDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        dateCell.addEventListener("click", () => {
+          const selectedDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           dateInput.value = selectedDate;
-          calendar.style.display = "none";
+          if (calendar) {
+            calendar.style.display = "none";
+          }
         });
       }
-      datesContainer.appendChild(dateEl);
+
+      datesContainer.appendChild(dateCell);
     }
   }
 
-  // 날짜 입력창 클릭 시 달력 표시
-  dateInput.addEventListener("click", (e) => {
-    e.stopPropagation();
-    calendar.style.display = "block";
-    renderCalendar();
-  });
-
-  // 이전 달 이동
-  prevMonthBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const today = new Date();
-    if (currentDate.getFullYear() > today.getFullYear() ||
-       (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() > today.getMonth())) {
-      currentDate.setMonth(currentDate.getMonth() - 1);
-      renderCalendar();
-    }
-  });
-
-  // 다음 달 이동
-  nextMonthBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar();
-  });
-
-  // 외부 클릭 시 달력 닫기
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".form-group")) {
-      calendar.style.display = "none";
-    }
-  });
-
-  // ============================================
-  // 3. 인원 선택 기능 (수정됨)
-  // ============================================
-
-  /**
-   * 인원 수 화면 업데이트
-   */
   function updatePersonCount() {
     if (personCountDisplay) {
-      personCountDisplay.textContent = currentPersonCount;
+      personCountDisplay.textContent = String(currentPersonCount);
     }
   }
 
-  // 인원 증가 버튼
+  function selectedTimeRange() {
+    return document.querySelector('input[name="timeRange"]:checked')?.value || "morning";
+  }
+
+  function normalizeRegion(value) {
+    const trimmed = value?.trim() || "";
+    return trimmed || "전체";
+  }
+
+  function buildSearchContext() {
+    return {
+      region: normalizeRegion(regionInput?.value),
+      date: dateInput?.value || "",
+      timeRange: selectedTimeRange(),
+      personCount: currentPersonCount,
+    };
+  }
+
+  function saveSearchContext(searchContext) {
+    sessionStorage.setItem(SEARCH_CONTEXT_KEY, JSON.stringify(searchContext));
+  }
+
+  function readSearchContext() {
+    try {
+      const raw = sessionStorage.getItem(SEARCH_CONTEXT_KEY);
+      if (!raw) {
+        return null;
+      }
+
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") {
+        return null;
+      }
+
+      const personCount = Number(parsed.personCount);
+      return {
+        region: normalizeRegion(parsed.region),
+        date: typeof parsed.date === "string" ? parsed.date : "",
+        timeRange: typeof parsed.timeRange === "string" ? parsed.timeRange : "morning",
+        personCount: Number.isFinite(personCount) && personCount > 0 ? Math.floor(personCount) : 1,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  function restoreSearchContext() {
+    const context = readSearchContext();
+    if (!context) {
+      return;
+    }
+
+    if (regionInput) {
+      regionInput.value = context.region === "전체" ? "" : context.region;
+    }
+
+    if (dateInput && context.date) {
+      dateInput.value = context.date;
+      const restoredDate = new Date(`${context.date}T00:00:00`);
+      if (!Number.isNaN(restoredDate.getTime())) {
+        currentDate = restoredDate;
+      }
+    }
+
+    currentPersonCount = context.personCount;
+    updatePersonCount();
+
+    const timeRadio = document.querySelector(`input[name="timeRange"][value="${context.timeRange}"]`);
+    if (timeRadio) {
+      timeRadio.checked = true;
+    }
+  }
+
+  function performSearch() {
+    saveSearchContext(buildSearchContext());
+    window.location.href = AI_PAGE_URL;
+  }
+
+  if (dateInput && calendar) {
+    dateInput.addEventListener("click", (event) => {
+      event.stopPropagation();
+      calendar.style.display = "block";
+      renderCalendar();
+    });
+  }
+
+  if (prevMonthBtn) {
+    prevMonthBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const today = new Date();
+      if (
+        currentDate.getFullYear() > today.getFullYear()
+        || (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() > today.getMonth())
+      ) {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+      }
+    });
+  }
+
+  if (nextMonthBtn) {
+    nextMonthBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    });
+  }
+
+  if (calendar) {
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".form-group")) {
+        calendar.style.display = "none";
+      }
+    });
+  }
+
   if (increaseBtn) {
-    increaseBtn.addEventListener('click', (e) => {
-      e.preventDefault(); // 기본 동작 방지
-      currentPersonCount++;
+    increaseBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      currentPersonCount += 1;
       updatePersonCount();
     });
   }
 
-  // 인원 감소 버튼 (1명 미만으로 내려가지 않도록 제한)
   if (decreaseBtn) {
-    decreaseBtn.addEventListener('click', (e) => {
-      e.preventDefault(); // 기본 동작 방지
-      if (currentPersonCount > 1) {
-        currentPersonCount--;
-        updatePersonCount();
-      } else {
-        console.log("최소 인원은 1명입니다.");
-      }
+    decreaseBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      currentPersonCount = Math.max(1, currentPersonCount - 1);
+      updatePersonCount();
     });
-  }
-
-  // ============================================
-  // 4. 검색 및 실행 기능
-  // ============================================
-
-  /**
-   * 검색 데이터 수집 및 페이지 이동
-   */
-  function performSearch() {
-    const timeRadio = document.querySelector('input[name="timeRange"]:checked');
-    const selectedTimeRange = timeRadio ? timeRadio.value : 'morning';
-
-    const searchData = {
-      region: regionInput.value || '전체',
-      date: dateInput.value,
-      timeRange: selectedTimeRange,
-      personCount: currentPersonCount
-    };
-
-    console.log('검색 실행:', searchData);
-    alert(`검색을 시작합니다!\n지역: ${searchData.region}\n날짜: ${searchData.date}\n시간대: ${searchData.timeRange}\n인원: ${searchData.personCount}명`);
   }
 
   if (searchBtn) {
-    searchBtn.addEventListener('click', performSearch);
+    searchBtn.addEventListener("click", performSearch);
   }
 
   if (nearbyBtn) {
-    nearbyBtn.addEventListener('click', () => {
-      console.log('내 위치 기반 주변 극장 검색 시작...');
+    nearbyBtn.addEventListener("click", () => {
+      console.log("근처 극장 직접 비교는 기존 플로우를 유지해.");
     });
   }
 
-  // ============================================
-  // 5. 초기화 실행
-  // ============================================
   initializeDateInput();
-  updatePersonCount(); // 초기 인원 수 표시
+  restoreSearchContext();
+  updatePersonCount();
 });

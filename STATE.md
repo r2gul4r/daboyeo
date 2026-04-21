@@ -1,374 +1,260 @@
-# STATE
+﻿# STATE
 
 ## Current Task
 
-- task: `Refresh backend README stack and direction`
-- phase: `completed`
-- scope: `Update backend README so it matches the current Java 21, Spring Boot, JDBC, TiDB/MySQL, and LM Studio backend direction`
-- verification_target: `README content review, git diff --check, git status --short`
-- previous_task_note: `User cancelled the parent harness file request and asked to update backend README instead.`
+- task: `Extend the accepted Audience Gallery Stitch concept across the full AI recommendation flow`
+- phase: `design`
+- scope: `Keep the accepted Audience Gallery direction and regenerate only the Stitch results screen so it stays dark, premium, and structurally aligned with the rest of the flow`
+- verification_target: `The Stitch results screen no longer drifts white and uses a dark cinematic recommendation-stage layout that matches the accepted flow`
+- previous_task_note: `User wants the tuned results screen localized into Korean, wants the third poster side padding removed, and wants the screen cleaned up so it is ready to bring into the local frontend.`
 
 ## Orchestration Profile
 
-- score_total: `2`
-- score_breakdown: `1 one-file documentation update, 1 stale backend stack/direction correction`
-- hard_triggers: `none`
-- selected_rules: `tiny one-file doc update, preserve existing source changes, no runtime or browser checks`
-- selected_skills: `none`
+- score_total: `8`
+- score_breakdown: `1 shared-brand extraction from index/common/style, 1 Stitch design-system authoring, 1 Stitch screen generation, 1 local HTML/CSS/JS integration, 1 interaction-preservation risk, 1 UX acceptance subtlety, 1 dirty-worktree safety, 1 in-app-browser delivery requirement`
+- hard_triggers: `frontend_redesign, contract_instability, ambiguous_acceptance_criteria`
+- selected_rules: `single-session, preserve existing source changes, no destructive reset/checkout/clean, keep the accepted Audience Gallery concept, regenerate only the Stitch results screen with stricter dark-layout constraints`
+- selected_skills: `none; Stitch MCP tools used directly`
 - execution_topology: `single-session`
-- orchestration_value: `low`
+- orchestration_value: `medium`
 - agent_budget: `0`
-- spawn_decision: `no spawn; one README file with no independent slices`
-- efficiency_basis: `handoff cost is higher than directly correcting the stale backend documentation`
-- selection_reason: `user explicitly redirected from parent harness creation to backend README modification`
+- spawn_decision: `no spawn; brand extraction, Stitch prompting, and local implementation are tightly coupled and cheaper to keep in one lane`
+- efficiency_basis: `the handoff cost of splitting design extraction, Stitch prompting, and frontend integration is higher than iterating them together against the same page and current browser context`
+- selection_reason: `the user accepted the single-CTA direction and now wants a final prep pass focused on Korean copy, the third poster alignment bug, and handoff-readiness for local implementation`
 
 ## Evaluation Plan
 
 - evaluation_need: `full`
 - project_invariants:
-  - `Do not change or delete installed model files.`
-  - `Keep LM Studio as the local model provider.`
-  - `Keep public recommendation request/response shape stable.`
-  - `Do not fake recommendation data.`
-  - `Do not expose .env secrets in output.`
+  - `Preserve the existing main index visual language as the primary brand source.`
+  - `Do not change backend recommendation contracts or local model/runtime behavior for this task.`
+  - `Keep the AI page at the existing local route frontend/src/basic/daboyeoAi.html.`
+  - `Do not introduce a new frontend framework or large external dependency.`
+  - `Do not fake Stitch output as if it were generated if Stitch tooling fails; record the gap plainly.`
+  - `Do not rewrite other AI flow steps while refining the results screen.`
 - task_acceptance:
-  - `Liked seed poster genres are captured separately from generic tag weights.`
-  - `Recommendation response adds a compatible analysisPoint field without removing reason/caution/valuePoint.`
-  - `Precise/E4B LM response includes id plus one compact analysis tag such as #SF취향.`
-  - `Precise/E4B analysisPoint uses the AI-generated tag when valid and falls back to deterministic selected-poster genre analysis when invalid or missing.`
-  - `Fast/E2B results return a blank/null analysisPoint so the frontend does not render the analysis point line.`
-  - `Frontend local preview mirrors the mode difference.`
-  - `Fast mode remains mapped to gemma-4-e2b-it and precise mode remains mapped to gemma-4-e4b-it.`
+  - `The regenerated results screen uses no white page background or dominant white cards.`
+  - `The results screen feels like the same product as steps 1 through 5, preserving the dark premium Nocturne/Audience Gallery tone.`
+  - `The information hierarchy feels like a recommendation stage, not an editorial article or generic listing page.`
+  - `The layout clearly separates context and summary from ranked recommendations without awkward dead zones.`
+  - `The recommendation cards feel cleaner and more premium after the control cleanup.`
+  - `Thumbs-up/down style feedback controls are either removed or replaced by a subtler, more fitting interaction.`
+  - `All visible UI copy is localized into natural Korean suitable for the DABOYEO product.`
+  - `The third recommendation card poster no longer shows awkward left/right inner margin or inset spacing.`
 - non_goals:
-  - `No model deletion, reinstall, quantization change, or fine-tuning.`
-  - `No Ollama migration.`
-  - `No frontend redesign.`
-  - `No deployment or external smoke URL check.`
-  - `No fake seed insertion for recommendation candidates.`
+  - `No backend recommendation logic changes.`
+  - `No new deployment or external preview URL work.`
+  - `No model/runtime tuning.`
+  - `No rewrite of the main index page.`
+  - `No backend or recommendation-contract changes.`
+  - `No redesign of Step 1, Step 2, Step 3, posters, or mode in this turn.`
 - hard_checks:
-  - `Update focused prompt/evidence and weak-text replacement tests.`
-  - `Run recommendation package tests.`
-  - `Run frontend syntax check.`
-  - `Run bootJar.`
-  - `Run local API benchmark after restart.`
-  - `Run git diff --check.`
-  - `git diff --check`
-  - `git status --short`
+  - `Run git status --short`
+  - `Keep concrete Stitch evidence: project id, result screen id, title, and preview image`
 - llm_review_rubric:
-  - `Data integrity fix does not discard provider-specific raw data.`
-  - `Tag heuristic is conservative, explainable, and maintainable.`
-  - `Recommendation diversity preserves value/time choices while avoiding same-movie repetition.`
-  - `Prompt/output guard blocks internal implementation vocabulary from user-facing copy.`
-  - `Fallback path remains deterministic when LM Studio fails.`
+  - `The renewed page inherits the index-page visual hierarchy, spacing, and glass-card language instead of drifting into a different dark-dashboard style.`
+  - `Primary actions are obvious and the first step is above the fold without huge dead space.`
+  - `The result layout still feels premium and legible while preserving current data density.`
+  - `The renewed page avoids decorative noise that competes with poster selection and recommendation content.`
+  - `The results screen should not introduce bright white surfaces that visually break from the flow.`
+  - `The ranked cards should read as premium movie picks with poster-driven focus and tight supporting metadata.`
+  - `The action row should feel purposeful; noisy social-style controls should not dilute the premium cinema tone.`
+  - `Localized Korean copy should feel product-grade, concise, and not machine-translated.`
 - evidence_required:
-  - `Record changed files, tests, ingest replay totals, mismatch/tag counts, API matrix status/timing, quality observations, and verification outputs.`
+  - `Record the regenerated Stitch result artifact and the constraint set used to prevent white-surface drift.`
 
 ## Verification Results
 
-- backend_readme_refresh_task:
-  - `backend README`: `updated stale Java 17 note to Java 21 and documented current Spring Boot 3.5.13, Gradle, JDBC, TiDB/MySQL, Flyway, JUnit, and LM Studio stack`
-  - `backend direction`: `clarified that backend does not replace collectors and focuses on DB-backed API/service/recommendation behavior`
-  - `local run and verification`: `documented gradle bootRun, gradle test, gradle bootJar, and focused recommendation tests`
-  - `git diff --check`: `passed with CRLF warnings only`
-  - `git status --short`: `reviewed; existing Java source changes remain unrelated to this README edit`
-
-- ai_generated_precise_analysis_point_task:
-  - `LocalModelRecommendationClient`: `precise/E4B response contract changed from id-only to compact {"r":[{"id":showtimeId,"a":"#SF취향"}]}`
-  - `LocalModelRecommendationClient`: `precise prompt now includes selected-poster analysis hints and asks for exactly 3 objects when 3+ candidates are available`
-  - `LocalModelRecommendationClient`: `precise JSON schema now requires id+a objects and minItems matches available candidate count up to 3`
-  - `RecommendationModels`: `AiPick now carries optional analysisPoint while preserving the existing 4-argument constructor`
-  - `RecommendationService`: `precise uses valid AI-generated analysisPoint, rejects too-long/underscore/caution/value tags, and falls back to deterministic genre analysis only when needed`
-  - `RecommendationService`: `AI candidate payload is movie-distinct before calling LM Studio so E4B analysis maps to the same 3 recommendations shown to the user`
-  - `RecommendationProperties/application.yml/.env.example`: `precise max tokens raised from 96 to 160 because user accepts around 10s latency for real AI analysis`
-  - `focused tests`: `LocalModelRecommendationClientTests and RecommendationServiceQualityTests passed`
-  - `recommendation package tests`: `passed`
-  - `gradle test`: `passed`
-  - `gradle bootJar`: `passed`
-  - `node --check frontend\src\js\pages\daboyeoAi.js`: `passed`
-  - `backend log scan after benchmark`: `no WARN/ERROR/Exception/fail lines found`
-  - `git diff --check`: `passed with CRLF warnings only`
-  - `local API benchmark on fresh port 18080`: `fast/E2B 5 runs avg=4.84s min=4.60s max=5.78s, all status=ok count=3 analysisCount=0`
-  - `local API benchmark on fresh port 18080 precise`: `precise/E4B 5 runs avg=9.23s min=8.47s max=10.11s, all status=ok count=3 analysisCount=3`
-  - `raw precise evidence`: `every precise run stored 3 raw AI picks with id+a, and response showtimeIds/analysisPoints matched those raw picks`
-  - `benchmark cleanup`: `temporary backend process on port 18080 stopped after measurement`
-
-- precise_only_analysis_point_task:
-  - `RecommendationService`: `passes RecommendationMode through item mapping and returns analysisPoint only when mode == PRECISE`
-  - `frontend preview`: `local preview now mirrors production behavior; fast has no analysisPoint and precise shows selected-poster genre analysis`
-  - `mode card copy`: `precise mode now advertises poster taste analysis instead of removed caution wording`
-  - `RecommendationServiceQualityTests`: `fast expectations changed to blank analysisPoint and a precise-mode coverage test was added`
-  - `initial focused test run`: `failed because three fast-mode tests still expected #애니메이션취향; fixed expectations and added precise coverage`
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.RecommendationServiceQualityTests --tests kr.daboyeo.backend.service.recommendation.LocalModelRecommendationClientTests`: `passed after test contract update`
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.* --tests kr.daboyeo.backend.repository.recommendation.*`: `passed`
-  - `gradle test`: `passed`
-  - `gradle bootJar`: `passed`
-  - `node --check frontend\src\js\pages\daboyeoAi.js`: `passed`
-  - `git diff --check`: `passed with CRLF warnings only`
-  - `ERROR_LOG.md`: `recorded resolved fast analysisPoint expectation failure`
-  - `local API benchmark on fresh port 18080`: `fast/E2B 5 runs avg=5.93s min=5.52s max=7.09s, all status=ok count=3 analysisCount=0`
-  - `local API benchmark on fresh port 18080 precise`: `precise/E4B 5 runs avg=4.65s min=2.01s max=6.92s, all status=ok count=3 analysisCount=3 firstAnalysis=#SF취향`
-  - `benchmark cleanup`: `temporary backend process on port 18080 stopped after measurement`
-
-- selected_poster_genre_analysis_task:
-  - `RecommendationModels`: `RecommendationItem now includes compatible analysisPoint and TagProfile tracks likedGenres from selected posters`
-  - `PreferenceProfileBuilder`: `liked seed poster genres are stored as genre weights and as liked genre signals`
-  - `RecommendationService`: `analysisPoint chooses candidate/liked genre overlap first, then selected-poster genre fallback, then candidate genre family fallback`
-  - `frontend result card`: `renders 분석 포인트 when analysisPoint is present`
-  - `local API precise/E4B sample`: `selected Interstellar/Inception/Dune seed posters produced analysisPoint=#SF취향 with status=ok and 3 recommendations`
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.RecommendationServiceQualityTests --tests kr.daboyeo.backend.service.recommendation.LocalModelRecommendationClientTests`: `passed`
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.* --tests kr.daboyeo.backend.repository.recommendation.*`: `passed`
-  - `gradle test`: `passed`
-  - `gradle bootJar`: `passed`
-  - `node --check frontend\src\js\pages\daboyeoAi.js`: `passed`
-  - `backend log scan after API sample`: `no WARN/ERROR/Exception/fail lines found`
-  - `git diff --check`: `passed with CRLF warnings only`
-  - `repository baseline commands`: `git status --short, Get-Content -Raw WORKSPACE_CONTEXT.toml, Select-String section headers completed`
-
-- e4b_precise_optimization_task:
-  - `precise/E4B contract`: `changed LM Studio internal precise response from tag text objects to id-only rerank JSON {"r":[1,2,3]}`
-  - `public API compatibility`: `unchanged; RecommendationService maps blank precise AI text to deterministic user-facing tags`
-  - `precise token budget`: `default/env example/application.yml changed from 320 -> 96 max tokens`
-  - `response text budget`: `default/env example/application.yml changed from 72 -> 56 chars`
-  - `prompt payload`: `candidate prompt now keeps id, title, b, vp only; duplicate tg/rt/age/th/time/price/seat fields removed`
-  - `reason tag quality`: `content warning tags are excluded from reason source tags; they no longer appear as recommendation reasons`
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.LocalModelRecommendationClientTests --tests kr.daboyeo.backend.service.recommendation.RecommendationServiceQualityTests`: `passed`
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.* --tests kr.daboyeo.backend.repository.recommendation.*`: `passed`
-  - `gradle bootJar`: `passed`
-  - `gradle test`: `passed`
-  - `backend log scan after API sample`: `no WARN/ERROR/Exception/fail lines found`
-  - `git diff --check`: `passed with CRLF warnings only`
-  - `repository baseline commands`: `git status --short, Get-Content -Raw WORKSPACE_CONTEXT.toml, Select-String section headers completed`
-  - `local API precise/E4B final sample`: `3/3 status=ok, count=3, times=7.97s/1.52s/3.20s, avg=4.23s, warmed avg=2.36s`
-  - `local API fast/E2B comparison sample`: `status=ok, count=3, time=6.27s`
-
-- user_facing_tag_task:
-  - `LocalModelRecommendationClient`: `compact LM prompt now requires why/v as 2-4 Korean hashtags, and candidate b/vp hints carry user-facing tags`
-  - `RecommendationService`: `reason/valuePoint now reject generic prose or non-tag output; weak/mixed AI text is replaced or filtered into grounded tags`
-  - `reason tag scope`: `keeps taste/audience/mood/age/runtime/genre-style tags and removes value-only tags`
-  - `valuePoint tag scope`: `keeps time/price/seat/booking tags and removes taste/reason tags`
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.LocalModelRecommendationClientTests --tests kr.daboyeo.backend.service.recommendation.RecommendationServiceQualityTests`: `passed`
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.* --tests kr.daboyeo.backend.repository.recommendation.*`: `passed`
-  - `gradle test`: `passed`
-  - `gradle bootJar`: `passed`
-  - `git diff --check`: `passed with CRLF warnings only`
-  - `backend log scan after API sample`: `no WARN/ERROR/Exception/fail lines found`
-  - `local API fast/E2B sample`: `200 ok, 7.16s, firstReason=#신나는 #12세, firstValuePoint=#17:00상영 #좌석여유`
-  - `local API precise/E4B sample`: `200 ok, 21.62s, firstReason=#전체관람가 #친구랑, firstValuePoint=#15:50상영 #좌석여유 #예매가능`
-
-- current_latency_trim_task:
-  - `precise-ai-candidate-limit`: `default/env example/application.yml changed from 6 to 5 so fast and precise both send 5 candidates max`
-  - `AI caution generation`: `removed from LM Studio prompt and strict JSON schema; AiPick missing caution parses with null`
-  - `frontend caution rendering`: `removed result-card caution paragraph and unused caution CSS`
-  - `API compatibility`: `RecommendationItem.caution field remains in the response shape but is blank when AI does not provide it`
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.* --tests kr.daboyeo.backend.repository.recommendation.*`: `passed`
-  - `gradle test`: `passed`
-  - `gradle bootJar`: `passed`
-  - `node --check frontend\src\js\pages\daboyeoAi.js`: `passed`
-  - `git diff --check`: `passed with CRLF warnings only`
-  - `frontend Chrome CDP benchmark after trim`: `fast/E2B 5회 avg=15.265s, warmed 2-5 avg=14.019s; precise/E4B 5회 avg=29.057s, warmed 2-5 avg=28.257s; all responses status=ok, count=3, uniqueTitles=3`
-
-- compact_lm_json_task:
-  - `LM internal response contract`: `changed to compact {"r":[{"id":showtimeId,"why":"...","v":"..."}]}`
-  - `public API compatibility`: `existing RecommendationItem reason/valuePoint/caution fields remain unchanged; compact picks are mapped back to AiPick internally`
-  - `AI prompt payload`: `candidate keys shortened to id/t/tg/rt/age/th/time/price/seat and tags are available as factual basis`
-  - `LocalModelRecommendationClientTests`: `passed`
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.* --tests kr.daboyeo.backend.repository.recommendation.*`: `passed`
-  - `gradle bootJar`: `passed`
-  - `git diff --check`: `passed with CRLF warnings only`
-  - `repository baseline commands`: `git status --short, Get-Content -Raw WORKSPACE_CONTEXT.toml, Select-String section headers completed`
-  - `frontend Chrome CDP benchmark after compact JSON`: `fast/E2B 5회 avg=6.199s, warmed 2-5 avg=5.768s; precise/E4B 5회 avg=22.315s, warmed 2-5 avg=21.576s; all responses status=ok, count=3, uniqueTitles=3`
-
-- current_task_final:
-  - `python -m py_compile scripts\ingest\collect_all_to_tidb.py`: `passed`
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.* --tests kr.daboyeo.backend.repository.recommendation.*` from `backend`: `passed after aligning the diversity test with the title-first duplicate policy`
-  - `gradle test` from `backend`: `passed`
-  - `gradle bootJar` from `backend`: `passed`
-  - `python scripts\ingest\collect_all_to_tidb.py --provider all --limit-movies 20 --limit-theaters 20 --limit-schedules 120`: `Lotte 120 showtimes / 22 tags, Megabox 120 showtimes / 130 tags`
-  - `python scripts\ingest\collect_all_to_tidb.py --provider megabox --limit-movies 1 --limit-theaters 1 --limit-schedules 1`: `backfilled 2 stale showtime movies and repaired 2 showtime movie links after the new reconciliation step`
-  - `DB movie_tags_total`: `158`
-  - `DB movie_tags_by_provider_type`: `LOTTE_CINEMA age_rating=20 format=2; MEGABOX age_rating=54 format=40 genre=42`
-  - `DB megabox_today_title_mismatches`: `0`
-  - `DB megabox_today_multi_title_movie_ids`: `0`
-  - `DB all_showtime_movie_link_mismatches`: `0`
-  - `local API matrix`: `6/6 fast/precise recommendation requests returned status=ok, count=3, uniqueTitles=3, duplicateTitles=0, internalLeaks=0`
-  - `local API latency`: `fast 15.9s-18.8s, precise 35.6s-41.3s on the current school PC/LM Studio runtime`
-  - `backend logs after API matrix`: `no WARN/ERROR/Exception/fail lines found`
-  - `git diff --check`: `passed with CRLF warnings only`
-  - `git status --short`: `reviewed`
-  - `Get-Content -Raw WORKSPACE_CONTEXT.toml`: `read; existing mojibake is unrelated to this task`
-  - `Select-String -Path WORKSPACE_CONTEXT.toml -Pattern section headers`: `passed`
-
-- unit_tests:
-  - `gradle test --tests kr.daboyeo.backend.service.recommendation.* --tests kr.daboyeo.backend.repository.recommendation.*` from `backend`: `passed`
-  - `gradle test` from `backend`: `passed`
-  - `gradle bootJar` from `backend`: `passed`
-- lm_studio_runtime:
-  - `lms server start --port 1234 --bind 127.0.0.1`: `running`
-  - `scripts/local/load_lmstudio_recommendation_models.ps1`: `loaded both models with context=2048, parallel=1, ttl=3600, gpu=max`
-  - `lms ps`: `gemma-4-e2b-it and gemma-4-e4b-it idle, context=2048, parallel=1`
-  - `nvidia-smi`: `GTX 1070 Ti visible, 8192 MiB total, about 7400 MiB used after model load`
-- real_data_refresh:
-  - `python scripts/ingest/collect_all_to_tidb.py --provider all --limit-movies 10 --limit-theaters 10 --limit-schedules 30`: `Lotte 30 showtimes and Megabox 30 showtimes upserted for 2026-04-20`
-  - `python scripts/ingest/collect_all_to_tidb.py --provider all --limit-movies 20 --limit-theaters 20 --limit-schedules 120`: `Lotte 120 showtimes and Megabox 120 showtimes upserted for 2026-04-20`
-  - `candidate_distribution`: `287 stored showtimes, 230 upcoming after buffer, 29 distinct upcoming titles, movie_tags=0`
-  - `provider_distribution`: `Lotte 115 upcoming / 2 titles, Megabox 115 upcoming / 29 titles`
-- local_api:
-  - `POST /api/recommendations fast`: `status=ok, model=gemma-4-e2b-it, elapsed=5.1s, recommendation_count=3`
-  - `POST /api/recommendations precise`: `status=ok, model=gemma-4-e4b-it, elapsed=8.7s, recommendation_count=3`
-  - `transient fallback check`: `fast 200 / precise 240 max_tokens caused truncated JSON; resolved with fast 280 / precise 320`
-  - `multi_case_matrix`: `14/14 requests returned status=ok, no transport errors, no backend WARN/ERROR, no JSON fallback`
-  - `latency_matrix`: `fast avg 4.3s, min 2.5s, max 6.5s; precise avg 8.2s, min 6.5s, max 9.2s`
-  - `result_diversity`: `4 unique titles across 42 recommendation items, 6 unique title/time/theater signatures`
-  - `quality_findings`: `fast E2B sometimes returned weak reason text such as score/tag fragments; precise E4B wording was better but often repeated similar reasons`
-  - `feedback_loop`: `disliking the top precise recommendations was accepted, but the next recommendation did not materially diversify because high scoring/tag scarcity kept the same candidates on top`
-- data_quality_findings:
-  - `showtimes.movie_title <> movies.title_ko`: `139 rows`
-  - `movie_ids_with_multiple_showtime_titles`: `at least 2 movie_id groups; one Megabox movie_id was linked to 30 distinct showtime titles`
-  - `impact`: `recommendation title is shown from showtimes, but movieId/feedback identity can be wrong until ingest mapping is fixed`
-- repository_checks:
-  - `git diff --check`: `passed with CRLF warnings only`
-  - `git status --short`: `reviewed`
-  - `Get-Content -Raw WORKSPACE_CONTEXT.toml`: `read`
-  - `Select-String -Path WORKSPACE_CONTEXT.toml -Pattern section headers`: `passed`
-  - `recommendation cleanup`: `recommendation_profiles=0, recommendation_runs=0, recommendation_feedback=0 after test sessions were deleted`
-
-## Retrospective
-
-- task: `Make precise analysisPoint AI-generated`
-- score_total: `6`
-- evaluation_fit: `full fit; prompt/schema, service mapping, fallback validation, raw DB evidence, and latency all mattered because the user challenged the AI-analysis claim`
-- orchestration_fit: `single-session fit; LM schema, parser, response mapping, distinct-candidate prefilter, and tests were tightly coupled`
-- predicted_topology: `single-session`
-- actual_topology: `single-session`
-- spawn_count: `0`
-- rework_or_reclassification: `first AI-analysis pass returned 3 raw objects but duplicate showtime choices meant only one mapped to displayed results; fixed by sending movie-distinct candidates to LM Studio`
-- reviewer_findings: `precise/E4B now genuinely generates the displayed analysisPoint tags, while fast/E2B remains simple and blank`
-- verification_outcome: `focused tests, recommendation package tests, full gradle test, bootJar, frontend syntax check, backend log scan, diff check, and 5x fast/5x precise local API benchmark passed`
-- next_gate_adjustment: `future precision improvements should preserve raw-id-to-response-id evidence when claiming AI-generated user-facing analysis`
-
-- task: `Limit selected-poster genre analysis point to precise mode`
-- score_total: `4`
-- evaluation_fit: `light-to-full fit; small mode gate still needed focused tests because public response compatibility and frontend preview behavior changed`
-- orchestration_fit: `single-session fit; backend mode gate, preview alignment, and test expectations were one compact contract adjustment`
-- predicted_topology: `single-session`
-- actual_topology: `single-session`
-- spawn_count: `0`
-- rework_or_reclassification: `focused tests initially failed because old fast-mode expectations still required analysisPoint; updated tests to match precise-only contract`
-- reviewer_findings: `fast/E2B now stays simpler; precise/E4B keeps selected-poster genre analysis as the visible differentiator`
-- verification_outcome: `focused tests, recommendation package tests, full gradle test, bootJar, frontend syntax check, and diff check passed`
-- next_gate_adjustment: `future UI copy should keep fast simple and reserve richer explanation lines for precise mode`
-
-- task: `Add selected-poster genre analysis point`
-- score_total: `6`
-- evaluation_fit: `full fit; response contract, deterministic fallback, frontend rendering, and local API sample all needed checking`
-- orchestration_fit: `single-session fit; genre signal capture, response mapping, and result-card rendering were tightly coupled`
-- predicted_topology: `single-session`
-- actual_topology: `single-session`
-- spawn_count: `0`
-- rework_or_reclassification: `task shifted from generic non-caution analysis tags to selected-poster genre analysis after user feedback`
-- reviewer_findings: `public response remains compatible; analysisPoint does not use caution/avoidance tags; sparse candidate genre data still limits exact overlap quality`
-- verification_outcome: `focused tests, recommendation package tests, full gradle test, bootJar, frontend syntax check, diff check, backend log scan, workspace baseline commands, and local precise API sample passed`
-- next_gate_adjustment: `future quality work should improve movie_tags genre coverage so analysisPoint can prefer exact candidate overlap more often`
-
-- task: `Optimize E4B precise recommendation latency`
-- score_total: `5`
-- evaluation_fit: `full fit; E4B latency changes needed local LM Studio API evidence because token-budget-only tuning did not improve enough`
-- orchestration_fit: `single-session fit; runtime config, prompt/schema, service fallback quality, and local benchmark were tightly coupled`
-- predicted_topology: `single-session`
-- actual_topology: `single-session`
-- spawn_count: `0`
-- rework_or_reclassification: `first pass lowered precise max_tokens to 180 and shortened prompt but still averaged 22.79s; second pass switched precise to id-only rerank and reached 4.23s avg`
-- reviewer_findings: `public API stayed compatible; E4B model identity preserved; precise still uses E4B for candidate ordering while server generates grounded tags`
-- verification_outcome: `focused tests, recommendation package tests, full gradle test, bootJar, diff check, backend log scan, workspace baseline commands, and fast/precise local API samples passed`
-- next_gate_adjustment: `future E4B quality work should tune ranking inputs, not reintroduce generated explanation text unless latency budget allows it`
-
-- task: `Use user-facing recommendation tags`
-- score_total: `5`
-- evaluation_fit: `full fit; prompt shape, deterministic fallback, and live API output all had to be checked because small local models can still mix tag categories`
-- orchestration_fit: `single-session fit; recommendation prompt and service post-processing were tightly coupled and cheaper to repair locally`
-- predicted_topology: `single-session`
-- actual_topology: `single-session`
-- spawn_count: `0`
-- rework_or_reclassification: `after live fast sample mixed reason tags into valuePoint, added service-side tag category filtering`
-- reviewer_findings: `public API shape stayed stable; LM internal JSON stayed compact; internal score/tag-token leakage remains blocked`
-- verification_outcome: `focused tests, recommendation package tests, full gradle test, bootJar, diff check, backend log scan, and fast/precise local API samples passed`
-- next_gate_adjustment: `future quality tuning should change deterministic tag mapping first, then adjust LM prompt only if the fallback output is already good`
-
-- task: `Optimize local LM Studio recommendation runtime`
-- score_total: `6`
-- evaluation_fit: `full fit; runtime tuning needed executable API evidence because too-low token settings can silently fall back`
-- orchestration_fit: `single-session fit; local LM process state, backend budget tuning, and timing had to be iterated on the same machine`
-- predicted_topology: `single-session`
-- actual_topology: `single-session`
-- spawn_count: `0`
-- rework_or_reclassification: `token budget was raised after fast 200 / precise 240 truncated JSON`
-- reviewer_findings: `model identities preserved; public response shape preserved; fallback path still works; CORS was removed from LM server restart because backend is the caller`
-- verification_outcome: `expanded matrix confirmed JSON/API stability after optimization, but exposed result diversity limits and a Megabox movie_id data-integrity issue`
-- next_gate_adjustment: `fix ingest movie_id mapping and add movie tags before judging recommendation diversity as an AI problem`
-
-- task: `Fix recommendation data integrity and result quality`
-- score_total: `8`
-- evaluation_fit: `full fit; real ingest, DB integrity queries, backend tests, and local LM API checks were all needed because the original issue mixed stale data, prompt quality, and ranking behavior`
-- orchestration_fit: `delegated-parallel fit; ingest and backend slices were disjoint enough for workers, while main kept reconciliation and integration verification`
-- predicted_topology: `delegated-parallel`
-- actual_topology: `delegated-parallel plus main integration repair`
-- spawn_count: `2`
-- rework_or_reclassification: `focused diversity test initially encoded movie_id-first behavior; adjusted to title-first because stale Megabox movie_id data can collapse different titles`
-- reviewer_findings: `added cross-run showtime/movie reconciliation because schedule-only upsert fixed new rows but left stale bad links behind`
-- verification_outcome: `all hard checks passed; DB link mismatches are now zero and API matrix shows no internal-token leaks or duplicate titles`
-- next_gate_adjustment: `for future ingest fixes, include stale-row reconciliation in the first contract instead of verifying only freshly reprocessed rows`
-
-- task: `Trim recommendation LLM output for frontend latency`
-- score_total: `5`
-- evaluation_fit: `light fit; focused tests and syntax checks were enough because the public response shape stayed compatible`
-- orchestration_fit: `single-session fit; backend prompt/schema and one frontend render line were too tightly coupled for delegation`
-- predicted_topology: `single-session`
-- actual_topology: `single-session`
-- spawn_count: `0`
-- rework_or_reclassification: `none`
-- reviewer_findings: `JSON keys were already English; speed win comes from fewer generated Korean value tokens and fewer required schema fields`
-- verification_outcome: `candidate limit and caution removal compiled and tests passed`
-- next_gate_adjustment: `next latency pass should benchmark after restarting backend with new jar/env and then consider lowering max_tokens`
-
-- task: `Compact LM Studio recommendation response JSON`
-- score_total: `4`
-- evaluation_fit: `light fit; parser and prompt contract tests plus recommendation package tests covered the changed behavior`
-- orchestration_fit: `single-session fit; compact schema, parser, prompt, and tests were one small backend slice`
-- predicted_topology: `single-session`
-- actual_topology: `single-session`
-- spawn_count: `0`
-- rework_or_reclassification: `none`
-- reviewer_findings: `public API shape stayed stable; compact LM response maps back into existing AiPick flow; candidate prompt now includes tags without score/matchedTags/penalties`
-- verification_outcome: `focused tests, recommendation package tests, bootJar, diff check, and workspace baseline commands passed`
-- next_gate_adjustment: `restart backend and re-run frontend benchmark before changing token budgets further`
+- current_task:
+  - `classification`: `reclassified from the earlier search-context task to a Stitch-led AI page renewal before further edits`
+  - `design_source_truth`: `frontend/index.html, frontend/src/css/common.css, frontend/src/css/style.css, frontend/src/basic/daboyeoAi.html, frontend/src/css/daboyeoAi.css, frontend/src/js/pages/daboyeoAi.js reviewed`
+  - `stitch_project`: `new project 804553865551885533 created for a natural-language + YAML Stitch retry`
+  - `workspace_status`: `dirty worktree acknowledged; backend and frontend changes from earlier tasks must be preserved`
+  - `stitch_design_system_calls`: `create_design_system failed twice with invalid argument, so the same design brief was embedded directly into the generation prompt`
+  - `stitch_screen_generation_call`: `generate_screen_from_text succeeded on project 804553865551885533 using a natural-language + YAML prompt`
+  - `stitch_screen_result`: `screen 79709b742b72493f9329a306caec72e5 created with title AI 가이드 - 동행 선택`
+  - `stitch_generated_design_system`: `Aperture Noir design system was auto-generated by Stitch with dark editorial cinema guidance`
+  - `alternate_concept_request`: `user asked to keep the current concept and generate a distinctly different second concept`
+  - `fresh_session_redirect`: `user clarified that the next concept must come from a new Stitch session based only on the main index page concept, not the current AI page or earlier Stitch screen layout`
+  - `fresh_session_project`: `new Stitch project 18001920443669087555 created specifically for a main-index-only fresh concept generation`
+  - `fresh_session_screen_generation`: `generate_screen_from_text succeeded on project 18001920443669087555 with a Screening Pass prompt grounded only in frontend/index.html, common.css, and style.css`
+  - `fresh_session_screen_result`: `screen b4c22a52b73745cda879558cde5c5da2 created with title DABOYEO AI 가이드 - 누구랑 볼 거야?`
+  - `fresh_session_design_system`: `Obsidian Cinema auto-generated with a dark premium cinematic design-md package`
+  - `second_fresh_session_request`: `user asked for one more brand-seeded fresh session and chose the option that discards the central pass layout too`
+  - `audience_gallery_project`: `new Stitch project 7742688576431333902 created for a second fresh-session concept based only on the main index design language`
+  - `audience_gallery_generation`: `generate_screen_from_text succeeded on project 7742688576431333902 with an Audience Gallery prompt that forbids both the central pass pattern and the left-hero/right-grid pattern`
+  - `audience_gallery_screen_result`: `screen b41e5db6e26e40a49f27c4aeb2330a9d created with title AI 추천 가이드 - 관람 맥락 선택`
+  - `audience_gallery_design_system`: `Nocturne Premiere auto-generated with a service-first dark cinematic design-md package`
+  - `frontend_step_order_confirmed`: `frontend/src/js/pages/daboyeoAi.js confirms the real order mood -> avoid -> posters -> mode -> results after audience`
+  - `mood_screen_result`: `screen 86fceb00a9f3409b87b8088bfdc1c29d created with title AI 추천 가이드 - 컨디션 선택 (Mood Panorama)`
+  - `avoid_screen_result`: `screen 2c3001ecf08e48748300b1de8e6f25b1 created with title AI 추천 가이드 - 회피 요소 선택 (Filter Wall)`
+  - `poster_screen_result`: `screen ae497e29b4314f8a872609c50d7c5cd9 created with title AI 추천 가이드 - 포스터 취향 진단 (Poster Diagnosis)`
+  - `mode_screen_result`: `screen cdbea20ab1984117b1b6b28bdbc2cf08 created with title AI 추천 가이드 - 추천 방식 선택 (Split Decision)`
+  - `results_screen_result`: `screen a11a57f615384ba28f95ce67ac495b55 created with title AI 추천 가이드 - 최종 결과 (Recommendation Results)`
+  - `stitch_list_screens_check`: `list_screens on project 7742688576431333902 returned an empty payload even after successful screen generation outputs, so per-screen tool outputs remain the source of truth for this turn`
+  - `step23_visual_feedback`: `user said Step 2 and Step 3 feel too text-heavy and asked for images or emoji-like visual accents`
+  - `mood_screen_visual_refresh`: `edit_screens produced screen 054790327ad546cea071e2b8dba14860 with title AI 추천 가이드 - 컨디션 선택 (Visual Panorama), adding cinematic imagery to each mood tile`
+  - `avoid_screen_visual_refresh`: `edit_screens produced screen ce4566126dc541d1b7f8d35f4b9253fd with title AI 추천 가이드 - 회피 요소 선택 (Visual Filter Wall), adding premium monochrome icon badges to each filter option`
+  - `mood_screen_image_refresh`: `edit_screens produced screen 4bd222dc03f042aabd44501271769bc0 with title AI 추천 가이드 - 컨디션 선택 (Visual Panorama) Updated, making each mood choice explicitly image-led`
+  - `avoid_screen_image_refresh`: `edit_screens produced screen 8e3daba1cfdc4cec8cbfbf2a1ce103ba with title AI 추천 가이드 - 회피 요소 선택 (Cinematic Filter Wall), replacing icons with image-led choice cards`
+  - `step23_layout_redo_request`: `user said Step 2 broke the dark concept due to white-heavy imagery, Step 2 and Step 3 images feel mismatched, and Step 3 should use one more filled slot`
+  - `mood_screen_layout_redo`: `edit_screens produced screen 14cdcd6fa0a544c89a47e57d478c593d with title AI 추천 가이드 - 컨디션 선택 (Mood Frames), replacing the bright panorama treatment with a dark 3-over-2 image-card grid`
+  - `avoid_screen_layout_redo`: `edit_screens produced screen 3f4f4ead25c5479b8d1f9d82e556df00 with title AI 추천 가이드 - 회피 요소 선택 (Cinematic Grid), rebuilding the screen as a 3x2 image-led wall with 딱히 없음 promoted to a full sixth card`
+  - `mood_button_polish`: `edit_screens produced screen 24c6df25e92944a88c0b572fa5ce235b with title AI 추천 가이드 - 컨디션 선택 (Mood Frames), integrating the button/selection affordance into each card`
+  - `avoid_image_replacement`: `edit_screens produced screen 3f4f4ead25c5479b8d1f9d82e556df00 with title AI 추천 가이드 - 회피 요소 선택 (Cinematic Grid), replacing the prior mismatched image set with darker curated imagery`
+  - `step23_polish_request`: `user said Step 2 button placement still feels off and Step 3 images still feel mismatched`
+  - `step3_image_source_redirect`: `user narrowed the next pass to Step 3 image correction and explicitly suggested GPT-generated or newly sourced imagery`
+  - `step3_local_image_implementation`: `user rejected generated imagery as too dull and asked for fitting internet images to be put into the actual page`
+  - `step3_local_files_updated`: `frontend/src/js/pages/daboyeoAi.js now renders a 6-card avoid image grid and frontend/src/css/daboyeoAi.css now styles the image-led Step 3 layout`
+  - `step3_image_sources_selected`: `selected six Unsplash-hosted images for violence, too_long, complex, sad_ending, loud, and 딱히 없음`
+  - `verification_2026_04_21`: `node --check frontend/src/js/pages/daboyeoAi.js passed; node --check frontend/src/js/pages/script.js passed; git diff --check passed with CRLF warnings only; git status --short reviewed`
+  - `results_screen_redesign_request`: `user says the current Stitch results screen looks white and layout quality is low, so it must be regenerated with stronger dark-layout constraints`
+  - `results_screen_short_prompt_success`: `generate_screen_from_text succeeded with a shorter prompt and produced screen 8c8ebac647434c24a68f40e105393323 titled AI 추천 결과 (Dark Cinematic Stage)`
+  - `results_screen_tuning_success`: `edit_screens succeeded for screen 8c8ebac647434c24a68f40e105393323 and produced screen 6dde7392043c4d428e86e3d69457668f titled AI 추천 결과 (Refined Cinematic Stage)`
+  - `results_card_cleanup_request`: `user says the layout is closer but the cards still need refinement and explicitly questions whether the thumbs-up button should exist`
+  - `results_single_cta_success`: `edit_screens succeeded for screen 19d165f4f0444c40b2eb4a7a7272ef5b and produced screen 7099697f6fcd4cd8bce42512e072bd22 with all social/feedback controls removed from the cards`
+  - `results_korean_and_poster_fix_request`: `user wants the current results screen localized to Korean and specifically wants the third poster side spacing removed before implementation handoff`
 
 ## Writer Slot
 
 - writer_slot: `main`
-- write_set: `STATE.md, backend/README.md`
+- write_set: `STATE.md, ERROR_LOG.md if needed`
 - write_sets:
-  - `worker_ingest`: `scripts/ingest/collect_all_to_tidb.py and related ingest tests/helpers if needed`
-  - `worker_backend`: `backend/src/main/java/kr/daboyeo/backend/service/recommendation/** and backend/src/test/java/kr/daboyeo/backend/service/recommendation/**`
-  - `main`: `STATE.md, MULTI_AGENT_LOG.md, ERROR_LOG.md, integration review, real-data verification`
+  - `main`: `STATE.md, ERROR_LOG.md if needed`
 - shared_assets_owner: `main`
 - note: `One shared task board is active; no concurrent registry mode.`
 - concurrent_note: `No parallel writer is active.`
 
 ## Contract Freeze
 
-- contract_freeze: `Update backend README only to reflect the current backend stack and direction; do not change runtime code, collectors, frontend, DB schema, or deployment settings.`
-- note: `This task intentionally touches documentation state plus backend README only. Existing Java source changes are preserved and unrelated.`
+- contract_freeze: `Regenerate only the Stitch results screen in project 7742688576431333902 so it stays dark, cinematic, and structurally aligned with the accepted Audience Gallery flow.`
+- note: `This turn returns to Stitch-only design work focused on the results screen.`
 - contract_source: `user request`
-- contract_revision: `2026-04-20-backend-readme-stack-direction`
-- verification_target: `README content review, git diff --check, git status --short`
+- contract_revision: `2026-04-21-stitch-ai-page-renewal`
+- verification_target: `Stitch project/screen/design-system evidence plus repository baseline verification commands`
 
 ## Reviewer
 
 - reviewer: `main self-review`
-- reviewer_target: `backend README stack and direction refresh`
-- reviewer_focus: `current build settings, backend responsibility boundaries, secrets/environment guidance, and no accidental runtime scope change`
+- reviewer_target: `Results-screen visual fit, hierarchy, and brand continuity`
+- reviewer_focus: `shared DABOYEO visual language reuse, above-the-fold layout quality, step usability, and local route stability`
 
 ## Last Update
 
-- timestamp: `2026-04-20 16:48:00 +09:00`
-- note: `Completed backend README refresh after user cancelled parent harness file request.`
+- timestamp: `2026-04-21 20:46:00 +09:00`
+- timestamp: `2026-04-21 21:02:00 +09:00`
+- timestamp: `2026-04-21 21:19:00 +09:00`
+- timestamp: `2026-04-21 21:41:00 +09:00`
+- timestamp: `2026-04-21 22:05:00 +09:00`
+- timestamp: `2026-04-21 22:24:00 +09:00`
+- note: `Reclassified back to design because the user wants the Stitch results screen regenerated, not more local Step 3 implementation.`
+
+## Retrospective
+
+- task: `STATE board recovery during AI page renewal`
+- score_total: `2`
+- evaluation_fit: `light fit; a readable task board was required before continuing implementation`
+- orchestration_fit: `single-session fit; the fix was an internal state recovery only`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `STATE.md became encoding-corrupted during inline edits and was rebuilt as a clean UTF-8 task board`
+- reviewer_findings: `no product-code change yet; this was internal orchestration recovery`
+- verification_outcome: `STATE.md is readable again and current-task contract is explicit`
+- next_gate_adjustment: `when patching large state sections, prefer smaller apply_patch steps or rewrite the board cleanly once instead of mixed-encoding incremental edits`
+
+- task: `Fresh Stitch session concept generation from main index only`
+- score_total: `8`
+- evaluation_fit: `full fit; the outcome required concrete design artifacts rather than local code edits`
+- orchestration_fit: `single-session fit; prompt design and Stitch generation stayed tightly coupled`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the task was reclassified away from concept comparison into a fresh-session generation flow seeded only by the main index page`
+- reviewer_findings: `the new concept is structurally distinct from the previous AI page and prior Stitch outputs, but no local implementation decision has been made yet`
+- verification_outcome: `fresh Stitch project 18001920443669087555 and screen b4c22a52b73745cda879558cde5c5da2 were generated successfully`
+- next_gate_adjustment: `when the user asks for a truly fresh concept, start a new Stitch project immediately instead of iterating inside the earlier comparison project`
+
+- task: `Second fresh Stitch session with Audience Gallery layout`
+- score_total: `8`
+- evaluation_fit: `full fit; the design outcome needed concrete Stitch artifacts and comparison evidence`
+- orchestration_fit: `single-session fit; main-brand extraction, prompt writing, and generation stayed cheaper in one lane`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the fresh-session task was refined again to exclude the central pass layout and force a new macro-structure`
+- reviewer_findings: `the new concept is meaningfully different from the Screening Pass idea because it shifts to a full-width audience-card rail instead of a dominant center panel`
+- verification_outcome: `fresh Stitch project 7742688576431333902 and screen b41e5db6e26e40a49f27c4aeb2330a9d were generated successfully`
+- next_gate_adjustment: `when generating another comparison concept, explicitly ban the latest layout pattern in the prompt so Stitch cannot drift back toward it`
+
+- task: `Audience Gallery full-flow Stitch expansion`
+- score_total: `8`
+- evaluation_fit: `full fit; the accepted concept had to be extended screen-by-screen against the real frontend step order`
+- orchestration_fit: `single-session fit; one lane kept the concept continuity and prompt calibration cheaper than delegation`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the task shifted from concept exploration to accepted-concept serial generation in the same Stitch project`
+- reviewer_findings: `each step now has its own micro-layout while remaining inside the same Nocturne Premiere family; the result screen reads like a recommendation service rather than a survey summary`
+- verification_outcome: `step screens for mood, avoid, posters, mode, and results were all generated successfully in project 7742688576431333902`
+- next_gate_adjustment: `when the user accepts a concept, pin the real frontend step order first and then generate the remaining screens in that order to avoid dead-end variants`
+
+- task: `Step 2 and Step 3 visual enrichment`
+- score_total: `6`
+- evaluation_fit: `light fit; this was a focused refinement pass on two accepted screens`
+- orchestration_fit: `single-session fit; direct Stitch edits were cheaper than reopening broader concept exploration`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the accepted flow remained intact, but Step 2 and Step 3 were revised because they felt too text-heavy`
+- reviewer_findings: `Step 2 now has cinematic image cues per mood tile and Step 3 now has elegant iconography, which improves scanability without breaking the premium tone`
+- verification_outcome: `Stitch edit_screens succeeded for both targeted screens in project 7742688576431333902`
+- next_gate_adjustment: `when a step feels text-heavy, prefer imagery or restrained iconography over emoji so the premium tone stays intact`
+
+- task: `Step 2 and Step 3 image-led refinement`
+- score_total: `6`
+- evaluation_fit: `light fit; this was a focused second-pass refinement on two accepted screens`
+- orchestration_fit: `single-session fit; direct Stitch edits stayed the cheapest path`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the first visual refresh was not strong enough because Step 3 still leaned on icons, so both screens were pushed further toward image-led choices`
+- reviewer_findings: `Step 2 now reads much closer to Step 1 with distinct per-option imagery, and Step 3 no longer feels like a text/icon utility board`
+- verification_outcome: `Stitch edit_screens succeeded again for both targeted screens in project 7742688576431333902`
+- next_gate_adjustment: `when the user asks for Step 1-like richness, treat that as a request for per-option owned imagery rather than abstract texture or iconography`
+
+- task: `Step 2 and Step 3 layout redo`
+- score_total: `6`
+- evaluation_fit: `light fit; this was a constrained design correction pass`
+- orchestration_fit: `single-session fit; direct Stitch edits remained the fastest path`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the image-led pass still missed the mark, so Step 2 and Step 3 were restructured again at the layout level`
+- reviewer_findings: `Step 2 now stays within the dark Nocturne palette and Step 3 feels structurally complete with a sixth neutral choice card`
+- verification_outcome: `Stitch edit_screens succeeded for both redesigned screens in project 7742688576431333902`
+- next_gate_adjustment: `when imagery clashes with the theme, change the layout container and image role together instead of only swapping pictures`
+
+- task: `Step 2 button polish and Step 3 image replacement`
+- score_total: `5`
+- evaluation_fit: `light fit; this was a narrow polish pass on two already accepted redesigns`
+- orchestration_fit: `single-session fit; direct edits were fastest`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `Step 2 needed one more interaction polish pass and Step 3 needed only image replacement, not another full concept reset`
+- reviewer_findings: `Step 2 no longer has awkward detached button placement and Step 3 keeps the stronger 6-slot layout while using more fitting imagery`
+- verification_outcome: `Stitch edit_screens succeeded for the targeted polish pass in project 7742688576431333902`
+- next_gate_adjustment: `when a user flags button placement after a layout redo, keep the layout and polish affordance integration instead of reopening the whole composition`
+
+- task: `Local Step 3 internet-image implementation`
+- score_total: `8`
+- evaluation_fit: `full fit; the task shifted from design evidence to real local UI implementation and needed code-level verification`
+- orchestration_fit: `single-session fit; one tight JS/CSS slice was cheaper than delegation`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the task was reclassified from Stitch-only design iteration into a local Step 3 implementation using external image sources`
+- reviewer_findings: `the avoid step now reads like the accepted concept much better because six cards have distinct imagery while multi-select behavior remains intact`
+- verification_outcome: `node --check passed for daboyeoAi.js and script.js; git diff --check passed with CRLF warnings only`
+- next_gate_adjustment: `when a user says generated visuals feel dull, switch quickly to sourced imagery and implement the accepted slice locally instead of over-iterating prompts`

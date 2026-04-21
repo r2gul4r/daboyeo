@@ -91,12 +91,49 @@ public final class RecommendationModels {
         }
     }
 
+    public record SearchFilters(
+        String region,
+        LocalDate date,
+        String timeRange,
+        Integer personCount
+    ) {
+        public SearchFilters {
+            region = normalizeRegion(region);
+            timeRange = normalize(timeRange);
+            personCount = personCount == null ? null : Math.max(1, personCount);
+        }
+
+        public boolean active() {
+            return !region.isBlank() || date != null || !timeRange.isBlank() || personCount != null;
+        }
+
+        public boolean hasRegion() {
+            return !region.isBlank();
+        }
+
+        public boolean hasDate() {
+            return date != null;
+        }
+
+        public boolean hasTimeRange() {
+            return !timeRange.isBlank();
+        }
+
+        public boolean hasPersonCount() {
+            return personCount != null;
+        }
+    }
+
     public record RecommendationRequest(
         String anonymousId,
         String mode,
         RecommendationSurvey survey,
-        PosterChoices posterChoices
+        PosterChoices posterChoices,
+        SearchFilters searchFilters
     ) {
+        public RecommendationRequest(String anonymousId, String mode, RecommendationSurvey survey, PosterChoices posterChoices) {
+            this(anonymousId, mode, survey, posterChoices, null);
+        }
     }
 
     public record FeedbackRequest(
@@ -364,6 +401,18 @@ public final class RecommendationModels {
         String normalized = value == null ? "" : value.trim();
         if (normalized.length() > 120) {
             return normalized.substring(0, 120);
+        }
+        return normalized;
+    }
+
+    public static String normalizeRegion(String value) {
+        String normalized = value == null ? "" : value.trim();
+        if (normalized.isBlank()) {
+            return "";
+        }
+        String lowered = normalized.toLowerCase(Locale.ROOT);
+        if ("전체".equals(normalized) || "all".equals(lowered)) {
+            return "";
         }
         return normalized;
     }
