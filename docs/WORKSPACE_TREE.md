@@ -25,7 +25,7 @@ daboyeo/
     src/js/api/
     src/js/pages/
   db/
-    migrations/
+    sql/
     seeds/
     samples/
   collectors/

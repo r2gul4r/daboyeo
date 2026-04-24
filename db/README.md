@@ -6,7 +6,7 @@ TiDB/MySQL 관련 파일을 모으는 영역이다.
 
 ## 디렉터리
 
-- `migrations/`: Flyway 또는 수동 마이그레이션 정책 문서
+- `sql/`: TiDB/MySQL에 직접 적용할 수 있는 수동 SQL과 관련 문서
 - `seeds/`: 로컬 개발용 기준 데이터
 - `samples/`: 공유 가능한 샘플 데이터 자리
 

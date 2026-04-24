@@ -21,3 +21,21 @@ spring:
 logging:
   level:
     kr.daboyeo: INFO
+
+daboyeo:
+  cors:
+    allowed-origins: ${DABOYEO_FRONTEND_ORIGINS:http://localhost:5173,http://localhost:8080}
+  sync:
+    enabled: ${DABOYEO_SYNC_ENABLED:false}
+    timezone: ${DABOYEO_SYNC_TIMEZONE:Asia/Seoul}
+    python-executable: ${DABOYEO_SYNC_PYTHON:python}
+    process-timeout-seconds: ${DABOYEO_SYNC_TIMEOUT_SECONDS:180}
+    showtimes:
+      enabled: ${DABOYEO_SHOWTIME_SYNC_ENABLED:false}
+      cron: ${DABOYEO_SHOWTIME_SYNC_CRON:0 0 3 * * *}
+      date-offset-days: ${DABOYEO_SHOWTIME_DATE_OFFSETS:0,1}
+    seats:
+      enabled: ${DABOYEO_SEAT_SYNC_ENABLED:false}
+      cron: ${DABOYEO_SEAT_SYNC_CRON:0 0/30 * * * *}
+      lookahead-hours: ${DABOYEO_SEAT_SYNC_LOOKAHEAD_HOURS:6}
+      limit: ${DABOYEO_SEAT_SYNC_LIMIT:100}

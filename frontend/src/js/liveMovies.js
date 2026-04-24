@@ -3,7 +3,18 @@
  */
 
 const movieGrid = document.getElementById('movie-grid');
-const API_BASE_URL = 'http://localhost:8000/api';
+const DEFAULT_API_BASE_ORIGIN = 'http://localhost:8080';
+const API_BASE_URL = resolveApiBaseUrl();
+
+function resolveApiBaseUrl() {
+    const override = typeof window !== 'undefined' ? window.DABOYEO_API_BASE_URL : '';
+    const baseOrigin = normalizeApiOrigin(override || DEFAULT_API_BASE_ORIGIN);
+    return `${baseOrigin}/api`;
+}
+
+function normalizeApiOrigin(value) {
+    return String(value || DEFAULT_API_BASE_ORIGIN).replace(/\/+$/, '');
+}
 
 // --- 가상 데이터 및 기본값 설정 (Virtual Data Engine) ---
 const MOCK_DEFAULTS = {
@@ -19,7 +30,9 @@ const MOCK_DEFAULTS = {
 let currentSearchConfig = { ...MOCK_DEFAULTS };
 
 let allRawSchedules = []; 
+let modalRawSchedules = [];
 let currentSelectedMovie = null;
+let currentSelectedMovieKey = null;
 let currentTab = 'ALL';
 
 // 1. URL에서 파라미터 읽어오기
@@ -63,8 +76,15 @@ async function loadLiveMovies() {
 
     try {
         // 백엔드 API 호출 시 현재 설정된 좌표 전송
-        const { lat, lng } = currentSearchConfig;
-        const response = await fetch(`${API_BASE_URL}/live/nearby?lat=${lat}&lng=${lng}`);
+        const { lat, lng, date, timeStart, timeEnd } = currentSearchConfig;
+        const searchParams = new URLSearchParams({
+            lat: String(lat),
+            lng: String(lng),
+            date,
+            timeStart,
+            timeEnd
+        });
+        const response = await fetch(`${API_BASE_URL}/live/nearby?${searchParams.toString()}`);
         const data = await response.json();
         
         if (!data || !data.results) {
@@ -133,6 +153,7 @@ function applyFilters() {
         const title = current.normalized.title;
         if (!acc[title]) {
             acc[title] = {
+                movieKey: current.movie_key || current.movie_name,
                 title: title,
                 providers: new Set([current.normalized.provider]),
                 rating: current.normalized.rating,
@@ -164,7 +185,7 @@ function renderMovieCards(movies) {
     movies.forEach(movie => {
         const card = document.createElement('div');
         card.className = 'movie-card';
-        card.addEventListener('click', () => window.openModal(movie.title));
+        card.addEventListener('click', () => window.openModal(movie));
         
         const providerIcons = Array.from(movie.providers).map(p => {
             const color = p === 'CGV' ? '#E71A0F' : (p === 'LOTTE' ? '#FF8C00' : '#361771');
@@ -190,19 +211,21 @@ function renderMovieCards(movies) {
 }
 
 // --- 모달 기능 ---
-window.openModal = function(movieTitle) {
-    currentSelectedMovie = movieTitle;
+window.openModal = async function(movie) {
+    currentSelectedMovie = typeof movie === 'string' ? movie : movie.title;
+    currentSelectedMovieKey = typeof movie === 'string' ? movie : movie.movieKey;
     const modal = document.getElementById('schedule-modal');
     if (!modal) return;
 
     const titleEl = document.getElementById('modal-movie-title');
     const posterEl = document.getElementById('modal-movie-poster');
 
-    if (titleEl) titleEl.innerText = movieTitle;
-    if (posterEl) posterEl.src = getPosterUrl(movieTitle);
+    if (titleEl) titleEl.innerText = currentSelectedMovie;
+    if (posterEl) posterEl.src = getPosterUrl(currentSelectedMovie);
     
     modal.classList.add('active');
     document.body.style.overflow = 'hidden'; 
+    await fetchMovieSchedulesForModal();
     window.switchTab('ALL');
 };
 
@@ -210,6 +233,7 @@ window.closeModal = function() {
     const modal = document.getElementById('schedule-modal');
     if (modal) modal.classList.remove('active');
     document.body.style.overflow = 'auto';
+    modalRawSchedules = [];
 };
 
 window.switchTab = function(provider) {
@@ -227,7 +251,8 @@ function renderScheduleList() {
     if (!listEl) return;
     listEl.innerHTML = '';
 
-    const targetSchedules = allRawSchedules.filter(item => {
+    const sourceSchedules = modalRawSchedules.length > 0 ? modalRawSchedules : allRawSchedules;
+    const targetSchedules = sourceSchedules.filter(item => {
         const norm = item.normalized;
         const matchMovie = norm.title === currentSelectedMovie;
         const matchProvider = currentTab === 'ALL' || norm.provider === currentTab;
@@ -279,6 +304,68 @@ function renderScheduleList() {
             </div>
         `;
         listEl.appendChild(groupEl);
+    }
+}
+
+async function fetchMovieSchedulesForModal() {
+    if (!currentSelectedMovieKey) return;
+
+    try {
+        const { lat, lng, date, timeStart, timeEnd } = currentSearchConfig;
+        const searchParams = new URLSearchParams({
+            lat: String(lat),
+            lng: String(lng),
+            date,
+            timeStart,
+            timeEnd
+        });
+        const response = await fetch(`${API_BASE_URL}/live/movies/${encodeURIComponent(currentSelectedMovieKey)}/schedules?${searchParams.toString()}`);
+        if (!response.ok) {
+            return;
+        }
+
+        const data = await response.json();
+        if (!data || !Array.isArray(data.theaters)) {
+            return;
+        }
+
+        const nextSchedules = [];
+        data.theaters.forEach(group => {
+            (group.schedules || []).forEach(schedule => {
+                nextSchedules.push({
+                    movie_key: data.movie?.movie_key || currentSelectedMovieKey,
+                    movie_name: data.movie?.movie_name || currentSelectedMovie,
+                    provider: group.provider,
+                    provider_code: group.provider_code,
+                    theater_id: group.theater_id,
+                    theater_name: group.theater_name,
+                    format_name: schedule.format_name,
+                    age_rating: data.movie?.age_rating || "ALL",
+                    start_time: schedule.start_time,
+                    end_time: schedule.end_time,
+                    total_seat_count: schedule.total_seat_count,
+                    available_seat_count: schedule.available_seat_count,
+                    booking_url: schedule.booking_url,
+                    normalized: {
+                        title: data.movie?.movie_name || currentSelectedMovie,
+                        provider: group.provider || "ETC",
+                        format: schedule.format_name || "2D",
+                        theater: group.theater_name || "불명",
+                        rating: data.movie?.age_rating || "ALL",
+                        total_seats: schedule.total_seat_count || 100,
+                        available_seats: schedule.available_seat_count || 0,
+                        start_time: schedule.start_time || "00:00",
+                        booking_url: schedule.booking_url || ""
+                    }
+                });
+            });
+        });
+
+        if (nextSchedules.length > 0) {
+            modalRawSchedules = nextSchedules;
+        }
+    } catch (error) {
+        console.error("Modal API Error:", error);
     }
 }
 
