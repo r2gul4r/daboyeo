@@ -233,13 +233,13 @@
       </div>
     </div>
 
-    <!-- AI Recommendation Section - 수정 3: 좌석 추천으로 변경 -->
+    <!-- Seat Recommendation Section -->
     <div class="ai-recommendation-section" id="ai">
-      <div class="ai-section-label">AI 좌석 추천</div>
+      <div class="ai-section-label">성향 좌석 추천</div>
 
       <div class="ai-content-wrapper">
         <div class="ai-grid" id="aiGrid">
-          <div class="ai-card featured">
+          <div class="ai-card featured" role="button" tabindex="0" data-seat-flow="mbti">
             <div class="ai-card-emoji"><i class="fas fa-user-tie"></i></div>
             <div class="ai-card-title">MBTI별 추천</div>
           </div>
@@ -260,9 +260,9 @@
         <div class="ai-description">
           <div class="ai-description-title">당신의 성향에 맞는<br> <span>명당 좌석</span>을 추천합니다</div>
           <div class="ai-description-text">
-            DABOYEO의 AI 좌석 추천 시스템은 당신의 성격 유형, 관람 스타일, 선호도를 분석하여 최고의 관람 경험을 제공할 수 있는 명당 좌석을 추천합니다. MBTI별 추천, 커플 좌석, 단체 좌석, 그리고 운의 손길을 받는 랜덤 뽑기까지 다양한 옵션으로 당신의 영화 관람을 더욱 특별하게 만들어보세요.
+            DABOYEO의 성향별 좌석 추천은 성격 유형과 관람 스타일을 바탕으로 편하게 고를 수 있는 명당 구역을 제안합니다. MBTI별 추천부터 커플 좌석, 단체 좌석, 랜덤 뽑기까지 영화관에서 더 잘 맞는 자리를 찾아보세요.
           </div>
-          <button class="best-seat-cta-btn"><i class="fas fa-chair"></i> 명당 좌석 찾기</button>
+          <button class="best-seat-cta-btn" type="button" data-seat-flow="mbti" onclick="window.location.href='./src/basic/seatRecommendMbti.html?flow=mbti'"><i class="fas fa-chair"></i> 명당 좌석 찾기</button>
         </div>
       </div>
     </div>
@@ -275,7 +275,7 @@
           <div class="step-item">
             <div class="step-icon"><i class="fas fa-search"></i></div>
             <div class="step-title">영화 선택</div>
-            <div class="step-description">검색하거나 Ai 추천을 받거나, 지금 바로<br>볼 수 있는 영화를 탐색하세요.</div>
+            <div class="step-description">검색하거나 추천을 받거나, 지금 바로<br>볼 수 있는 영화를 탐색하세요.</div>
             <div class="step-arrow">→</div>
           </div>
           <div class="step-item">
@@ -287,7 +287,7 @@
           <div class="step-item">
             <div class="step-icon"><i class="fas fa-chair"></i></div>
             <div class="step-title">좌석 선택</div>
-            <div class="step-description">AI가 추천하는 명당 좌석으로<br>최고의 관람 경험을 누리세요.</div>
+            <div class="step-description">성향에 맞는 명당 좌석으로<br>최고의 관람 경험을 누리세요.</div>
             <div class="step-arrow">→</div>
           </div>
           <div class="step-item">

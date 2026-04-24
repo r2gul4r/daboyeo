@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
   const AI_PAGE_URL = "./src/basic/daboyeoAi.html";
+  const SEAT_MBTI_PAGE_URL = "./src/basic/seatRecommendMbti.html";
 
   const dateInput = document.getElementById("dateInput");
   const calendar = document.getElementById("calendar");
@@ -14,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchBtn = document.getElementById("searchBtn");
   const nearbyBtn = document.getElementById("nearbyBtn");
   const regionInput = document.getElementById("regionInput");
+  const seatFlowTriggers = document.querySelectorAll("[data-seat-flow]");
 
   let currentDate = new Date();
   let currentPersonCount = 1;
@@ -159,6 +161,11 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = AI_PAGE_URL;
   }
 
+  function openSeatFlow(flow) {
+    saveSearchContext(buildSearchContext());
+    window.location.href = `${SEAT_MBTI_PAGE_URL}?flow=${encodeURIComponent(flow || "mbti")}`;
+  }
+
   if (dateInput && calendar) {
     dateInput.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -222,6 +229,18 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("근처 극장 직접 비교는 기존 플로우를 유지해.");
     });
   }
+
+  seatFlowTriggers.forEach((trigger) => {
+    const open = () => openSeatFlow(trigger.dataset.seatFlow);
+
+    trigger.addEventListener("click", open);
+    trigger.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        open();
+      }
+    });
+  });
 
   initializeDateInput();
   restoreSearchContext();
