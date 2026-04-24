@@ -2,25 +2,25 @@
 
 ## Current Task
 
-- task: `Finalize selective ksg frontend import after review`
-- phase: `review-fix`
-- scope: `Fix review findings from the ksg frontend import, verify the final diff, then commit and push the lsh branch`
-- verification_target: `AI recommendation requests include saved search filters again, precise-mode labels match E4B Q4 behavior, imported routing stays intact, and JS/diff checks pass before commit and push`
-- previous_task_note: `The MBTI seat recommendation page was committed as c3e96ec; the user now asked to bring teammate work from ksg`
+- task: `Refresh selected frontend work from origin/ksg`
+- phase: `implement`
+- scope: `Bring the new incremental ksg frontend updates after 78873c7 into lsh while preserving local review fixes and the MBTI seat recommendation route`
+- verification_target: `latest allMovies page/CSS are imported, main popular-movie entry routes to allMovies, ksg AI visual tweaks are selectively applied without regressing searchFilters/E4B labels, scratch/deleted xx files remain excluded, and JS/diff checks pass`
+- previous_task_note: `The previous ksg import was committed and pushed as bc4c022; origin/ksg now has new commits 938f37f and a944a88`
 
 ## Orchestration Profile
 
-- score_total: `7`
-- score_breakdown: `2 cross-branch frontend import, 1 route integration with existing seat flow, 1 scratch-file exclusion, 1 AI page compatibility risk, 1 verification, 1 clean working tree baseline`
+- score_total: `6`
+- score_breakdown: `2 incremental cross-branch frontend import, 1 route integration, 1 scratch/deletion exclusion, 1 AI review-fix preservation risk, 1 verification`
 - hard_triggers: `none`
-- selected_rules: `single-session review fix, preserve existing MBTI seat recommendation route, no destructive reset/checkout/clean, exclude scratch files, no backend/model integration`
+- selected_rules: `single-session selective import, preserve existing MBTI seat recommendation route, no destructive reset/checkout/clean, exclude scratch files and unrelated deletions, preserve local review fixes, no backend/model integration`
 - selected_skills: `none; git/source inspection plus local static verification is enough`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
 - spawn_decision: `no spawn; the user did not request subagents and the asset/code wiring is tightly coupled to one page`
 - efficiency_basis: `the import has one tight frontend integration surface and no safe disjoint write sets; main can inspect and integrate faster than delegating`
-- selection_reason: `the user accepted the code review findings and requested fixing them, final review, commit, and push for the current selective ksg import`
+- selection_reason: `the user requested another pull from ksg; live diff shows two new ksg commits centered on allMovies plus tiny AI visual tweaks, so selective import is safer than blanket merge`
 
 ## Evaluation Plan
 
@@ -159,20 +159,26 @@
   - `frontend/src/js/pages/daboyeoAi.js`: `restored daboyeoSearchContext reading, searchFilters payload wiring, search-condition summaries, and context-aware preview showtimes.`
   - `frontend/src/js/pages/daboyeoAi.js`: `changed the precise recommendation mode tags from fast-mode E2B wording to E4B/precision wording.`
   - `verification`: `node --check passed for frontend/src/js/pages/daboyeoAi.js and frontend/src/js/pages/script.js; git diff --check passed with CRLF warnings only; static checks found payload.searchFilters and E4B precise tags.`
+- ksg_incremental_refresh:
+  - `source`: `fetched origin/ksg at a944a88 with two new commits after 78873c7.`
+  - `included`: `latest frontend/src/pages/allMovies.html, frontend/src/css/allMovies.css, frontend/src/css/common.css, main popular-movie route to allMovies, and safe AI layout tweaks.`
+  - `excluded`: `patch.js plus unrelated xx/temp file deletions; did not overwrite daboyeoAi.js wholesale because origin/ksg would remove local searchFilters/E4B review fixes.`
+  - `path_fix`: `allMovies favicon and common script URLs were adjusted from ksg root-relative assumptions to the current src/pages location.`
+  - `verification`: `node --check passed for daboyeoAi.js and script.js; git diff --check passed with CRLF warnings only; static checks confirmed payload.searchFilters and E4B precise tags remain.`
 
 ## Writer Slot
 
 - writer_slot: `main`
-- write_set: `STATE.md, MULTI_AGENT_LOG.md, frontend/src/js/pages/daboyeoAi.js, frontend/src/js/pages/script.js, frontend/index.html, frontend/src/css/daboyeoAi.css, frontend/src/css/style.css, frontend/src/pages/**, frontend/src/assets/AIbackgroundImg.jpg, ERROR_LOG.md if verification errors materially affect the work`
+- write_set: `STATE.md, MULTI_AGENT_LOG.md, frontend/index.html, frontend/src/css/allMovies.css, frontend/src/pages/allMovies.html, frontend/src/css/common.css, frontend/src/css/daboyeoAi.css, frontend/src/js/pages/daboyeoAi.js, ERROR_LOG.md if verification errors materially affect the work`
 - write_sets:
-  - `main`: `STATE.md, MULTI_AGENT_LOG.md, frontend/src/js/pages/daboyeoAi.js, frontend/src/js/pages/script.js, frontend/index.html, frontend/src/css/daboyeoAi.css, frontend/src/css/style.css, frontend/src/pages/**, frontend/src/assets/AIbackgroundImg.jpg, ERROR_LOG.md if needed`
+  - `main`: `STATE.md, MULTI_AGENT_LOG.md, frontend/index.html, frontend/src/css/allMovies.css, frontend/src/pages/allMovies.html, frontend/src/css/common.css, frontend/src/css/daboyeoAi.css, frontend/src/js/pages/daboyeoAi.js, ERROR_LOG.md if needed`
 - shared_assets_owner: `main`
 - note: `One shared task board is active; no concurrent registry mode.`
 - concurrent_note: `No subagents are used for this narrow follow-up; main owns integration files.`
 
 ## Contract Freeze
 
-- contract_freeze: `Selectively import ksg frontend work: include the new AI page/assets, AI CSS/JS refresh, and Top3/discovery pages; exclude patch.js; preserve the committed MBTI seat recommendation page and route; connect main AI/view-all entry points to imported pages; fix review findings before commit/push.`
+- contract_freeze: `Selectively import only the new ksg increments after 78873c7: latest allMovies page/CSS, the main popular-movie route to allMovies, safe common/AI visual tweaks, while excluding patch.js and unrelated xx/temp deletions and preserving local daboyeoAi searchFilters/E4B review fixes.`
 - note: `Keep the generated alias-based PNG sprite and no old SVG dependency while keeping the page static/vanilla and local-demo friendly: no backend dependency, no global top nav, no social feedback controls, one primary CTA, no regression to the existing AI 추천 route, and no false claim that MBTI seat percentages are real measured data.`
 - contract_source: `user request`
 - contract_revision: `2026-04-24-import-ksg-frontend-refresh`
@@ -181,10 +187,16 @@
 ## Reviewer
 
 - reviewer: `main self-review`
-- reviewer_target: `selected import scope, route compatibility, scratch-file exclusion, JS syntax, search-filter payload restoration, precise-mode labeling, and existing MBTI seat route preservation`
-- reviewer_focus: `avoid overwriting the new seat recommendation feature, avoid importing patch.js, keep main page navigation coherent, and ensure the AI recommendation API receives saved search filters`
+- reviewer_target: `incremental ksg import scope, route compatibility, scratch/deletion exclusion, JS syntax, search-filter payload preservation, precise-mode labeling, and existing MBTI seat route preservation`
+- reviewer_focus: `avoid overwriting the new seat recommendation feature, avoid importing patch.js or deleted xx/temp files, keep allMovies paths coherent, and ensure the AI recommendation API still receives saved search filters`
 
 ## Last Update
+
+- timestamp: `2026-04-24 16:18:00 +09:00`
+- note: `Imported the latest ksg allMovies refresh selectively and preserved local AI recommendation review fixes.`
+
+- timestamp: `2026-04-24 16:10:00 +09:00`
+- note: `Reclassified the new request into an incremental selective import from origin/ksg after fetching two new ksg commits.`
 
 - timestamp: `2026-04-24 15:36:00 +09:00`
 - note: `Fixed the accepted review findings by restoring saved search filters in the AI recommendation payload and correcting precise-mode labels.`

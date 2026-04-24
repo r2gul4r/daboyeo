@@ -470,7 +470,6 @@ function renderSplitLayout({ kicker, titleParts, description, extraLeft, content
     leftPane.appendChild(backButton);
   }
 
-  leftPane.appendChild(createElement("p", "ai-kicker", kicker));
   leftPane.appendChild(renderTitle(titleParts));
 
   if (description) {
@@ -575,7 +574,7 @@ function renderAudienceStep() {
   return renderSplitLayout({
     kicker: "AI GUIDE 01",
     titleParts: [
-      { text: "반가워요, 다보예요!\n", style: "font-size: 30px;" },
+      { text: "반가워요, 다보예요!\n", style: "font-size: 40px;" },
       { text: "누구랑 보실 건가요?" },
     ],
     description: "같이 볼 사람부터 골라볼까요? 지금 상황을 기준으로 추천 기준을 잡을게요.",

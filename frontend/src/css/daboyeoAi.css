@@ -216,7 +216,7 @@ body.ai-guide-page a {
 }
 
 .ai-split-left {
-  flex: 1.2;
+  flex: .9;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
