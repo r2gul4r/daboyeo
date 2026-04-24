@@ -2,25 +2,25 @@
 
 ## Current Task
 
-- task: `Make theater-map zone labels recommendation-driven`
-- phase: `verify`
-- scope: `Remove the always-visible static front-zone label and let front labels appear only through the selected MBTI recommendation labels`
-- verification_target: `전방 생동석 is no longer rendered as a static always-on tag, front-zone labels can still appear through primary/secondary recommendation data, static warm front styling is removed, and JS/diff checks pass`
-- previous_task_note: `The user accepted tuning icon blur but flagged the static front-zone tag as visually inconsistent and semantically wrong because it should be recommendation-driven`
+- task: `Finalize selective ksg frontend import after review`
+- phase: `review-fix`
+- scope: `Fix review findings from the ksg frontend import, verify the final diff, then commit and push the lsh branch`
+- verification_target: `AI recommendation requests include saved search filters again, precise-mode labels match E4B Q4 behavior, imported routing stays intact, and JS/diff checks pass before commit and push`
+- previous_task_note: `The MBTI seat recommendation page was committed as c3e96ec; the user now asked to bring teammate work from ksg`
 
 ## Orchestration Profile
 
-- score_total: `4`
-- score_breakdown: `1 remove static HTML tag, 1 remove one-off warm styling, 1 remove obsolete JS duplicate guard, 1 local verification`
+- score_total: `7`
+- score_breakdown: `2 cross-branch frontend import, 1 route integration with existing seat flow, 1 scratch-file exclusion, 1 AI page compatibility risk, 1 verification, 1 clean working tree baseline`
 - hard_triggers: `none`
-- selected_rules: `single-session implementation, preserve existing workspace changes and existing AI 추천 route, no destructive reset/checkout/clean, no backend/model integration`
-- selected_skills: `none; local HTML/CSS/JS edit plus static verification is enough for this narrow follow-up`
+- selected_rules: `single-session review fix, preserve existing MBTI seat recommendation route, no destructive reset/checkout/clean, exclude scratch files, no backend/model integration`
+- selected_skills: `none; git/source inspection plus local static verification is enough`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
 - spawn_decision: `no spawn; the user did not request subagents and the asset/code wiring is tightly coupled to one page`
-- efficiency_basis: `the label behavior is isolated to one HTML map label, one CSS style block, and one JS duplicate guard`
-- selection_reason: `the user requested fixing the static front-zone tag so it is generated from recommendation state instead of always shown`
+- efficiency_basis: `the import has one tight frontend integration surface and no safe disjoint write sets; main can inspect and integrate faster than delegating`
+- selection_reason: `the user accepted the code review findings and requested fixing them, final review, commit, and push for the current selective ksg import`
 
 ## Evaluation Plan
 
@@ -46,6 +46,9 @@
   - `Generated PNG icon cutout edges should avoid dark/green transparent-pixel fringe where possible.`
   - `Micro blur should soften only the icon edge, not make the whole icon visibly out of focus.`
   - `The page keeps no global top nav/header and remains static vanilla HTML/CSS/JS.`
+  - `Cross-branch imports from ksg should preserve existing local routes unless explicitly replacing them.`
+  - `Scratch/import-helper files such as patch.js should not be brought into the app tree unless they are real runtime assets.`
+  - `The newly committed MBTI seat page must remain reachable from the main seat section.`
 - non_goals:
   - `No backend/model integration in this turn.`
   - `No rebrand away from the existing daboyeo visual language.`
@@ -59,6 +62,8 @@
   - `Do not duplicate front labels when the selected profile itself uses the front zone`
   - `Remove obsolete static front duplicate-guard code when the static tag is removed`
   - `Do not present MBTI seat percentages as externally measured preference data without a cited credible dataset`
+  - `Inspect HEAD...origin/ksg before importing`
+  - `Run node --check on changed JS and git diff --check`
 - llm_review_rubric:
   - `The implemented screen should not feel like a settings page; the seat map and cinema background should carry the first viewport.`
   - `The page should be useful without backend data and explain MBTI seat choices with concise Korean copy.`
@@ -143,32 +148,55 @@
   - `frontend/src/css/seatRecommendMbti.css`: `removed the one-off warm .map-zone-label-static-front styling so front labels use the same recommendation-label visual system.`
   - `frontend/src/js/pages/seatRecommendMbti.js`: `removed frontZoneStaticLabel and hasDynamicFrontLabel duplicate-guard code because front labels now only appear through selected profile primary/secondary data.`
   - `verification`: `node --check passed for seatRecommendMbti.js; git diff --check passed with CRLF warnings only; static source checks found no frontZoneStaticLabel, static-front style, or hasDynamicFrontLabel references.`
+- ksg_import:
+  - `source`: `fetched origin/ksg at 78873c7 Top3 모두보기 만드는중.`
+  - `included`: `frontend/src/assets/AIbackgroundImg.jpg, frontend/src/css/allMovies.css, frontend/src/css/dd.css, frontend/src/css/daboyeoAi.css, frontend/src/js/pages/daboyeoAi.js, frontend/src/pages/ai.html, frontend/src/pages/allMovies.html, frontend/src/pages/dd.html.`
+  - `excluded`: `patch.js because it is a one-off helper script that rewrites daboyeoAi.js, not a runtime frontend asset.`
+  - `integration`: `main AI CTA now routes to ./src/pages/ai.html through AI_PAGE_URL, the popular-movie 모두 보기 link routes to ./src/pages/dd.html, and the MBTI seat flow remains routed through ./src/basic/seatRecommendMbti.html.`
+  - `cleanup`: `removed trailing whitespace from imported daboyeoAi.js after git diff --check flagged it.`
+  - `verification`: `node --check passed for frontend/src/js/pages/daboyeoAi.js and frontend/src/js/pages/script.js; git diff --check passed with CRLF warnings only.`
+- review_fix:
+  - `frontend/src/js/pages/daboyeoAi.js`: `restored daboyeoSearchContext reading, searchFilters payload wiring, search-condition summaries, and context-aware preview showtimes.`
+  - `frontend/src/js/pages/daboyeoAi.js`: `changed the precise recommendation mode tags from fast-mode E2B wording to E4B/precision wording.`
+  - `verification`: `node --check passed for frontend/src/js/pages/daboyeoAi.js and frontend/src/js/pages/script.js; git diff --check passed with CRLF warnings only; static checks found payload.searchFilters and E4B precise tags.`
 
 ## Writer Slot
 
 - writer_slot: `main`
-- write_set: `STATE.md, MULTI_AGENT_LOG.md, frontend/src/basic/seatRecommendMbti.html, frontend/src/css/seatRecommendMbti.css, frontend/src/js/pages/seatRecommendMbti.js, ERROR_LOG.md if verification errors materially affect the work`
+- write_set: `STATE.md, MULTI_AGENT_LOG.md, frontend/src/js/pages/daboyeoAi.js, frontend/src/js/pages/script.js, frontend/index.html, frontend/src/css/daboyeoAi.css, frontend/src/css/style.css, frontend/src/pages/**, frontend/src/assets/AIbackgroundImg.jpg, ERROR_LOG.md if verification errors materially affect the work`
 - write_sets:
-  - `main`: `STATE.md, MULTI_AGENT_LOG.md, frontend/src/basic/seatRecommendMbti.html, frontend/src/css/seatRecommendMbti.css, frontend/src/js/pages/seatRecommendMbti.js, ERROR_LOG.md if needed`
+  - `main`: `STATE.md, MULTI_AGENT_LOG.md, frontend/src/js/pages/daboyeoAi.js, frontend/src/js/pages/script.js, frontend/index.html, frontend/src/css/daboyeoAi.css, frontend/src/css/style.css, frontend/src/pages/**, frontend/src/assets/AIbackgroundImg.jpg, ERROR_LOG.md if needed`
 - shared_assets_owner: `main`
 - note: `One shared task board is active; no concurrent registry mode.`
 - concurrent_note: `No subagents are used for this narrow follow-up; main owns integration files.`
 
 ## Contract Freeze
 
-- contract_freeze: `Remove the always-on static 전방 생동석 map tag and keep map zone tags driven by the selected MBTI primary/secondary recommendation labels only.`
+- contract_freeze: `Selectively import ksg frontend work: include the new AI page/assets, AI CSS/JS refresh, and Top3/discovery pages; exclude patch.js; preserve the committed MBTI seat recommendation page and route; connect main AI/view-all entry points to imported pages; fix review findings before commit/push.`
 - note: `Keep the generated alias-based PNG sprite and no old SVG dependency while keeping the page static/vanilla and local-demo friendly: no backend dependency, no global top nav, no social feedback controls, one primary CTA, no regression to the existing AI 추천 route, and no false claim that MBTI seat percentages are real measured data.`
 - contract_source: `user request`
-- contract_revision: `2026-04-24-recommendation-driven-zone-labels`
+- contract_revision: `2026-04-24-import-ksg-frontend-refresh`
 - verification_target: `node --check, git diff --check, and concise implementation summary`
 
 ## Reviewer
 
 - reviewer: `main self-review`
-- reviewer_target: `static front label removal, dynamic front recommendation label preservation, cache busting, and no stale warm style`
-- reviewer_focus: `avoid always-on recommendation-looking tags while preserving selected MBTI zone labels`
+- reviewer_target: `selected import scope, route compatibility, scratch-file exclusion, JS syntax, search-filter payload restoration, precise-mode labeling, and existing MBTI seat route preservation`
+- reviewer_focus: `avoid overwriting the new seat recommendation feature, avoid importing patch.js, keep main page navigation coherent, and ensure the AI recommendation API receives saved search filters`
 
 ## Last Update
+
+- timestamp: `2026-04-24 15:36:00 +09:00`
+- note: `Fixed the accepted review findings by restoring saved search filters in the AI recommendation payload and correcting precise-mode labels.`
+
+- timestamp: `2026-04-24 15:30:00 +09:00`
+- note: `Re-scoped the current import task into review-fix and final commit/push after two code-review findings were accepted.`
+
+- timestamp: `2026-04-24 15:12:26 +09:00`
+- note: `Imported selected ksg frontend files, excluded patch.js, wired the main AI and popular-movie entry points, and verified JS/diff checks.`
+
+- timestamp: `2026-04-24 15:08:30 +09:00`
+- note: `Reclassified the task into a selective ksg frontend import after confirming origin/ksg contains AI page work, Top3/discovery pages, and scratch patch.js.`
 
 - timestamp: `2026-04-24 14:52:04 +09:00`
 - note: `Removed the static front-zone tag and made front labels recommendation-driven only.`
@@ -622,3 +650,15 @@
 - reviewer_findings: `front labels now use the same dynamic primary/secondary recommendation-label path as other zones; the one-off warm front styling and duplicate guard are gone`
 - verification_outcome: `node --check passed for seatRecommendMbti.js; git diff --check passed with CRLF warnings only; static source checks found no frontZoneStaticLabel, static-front style, or hasDynamicFrontLabel references`
 - next_gate_adjustment: `zone tags that look like recommendations should be generated from selected recommendation data, not shown as permanent map annotations`
+
+- task: `Selective ksg frontend import`
+- score_total: `7`
+- evaluation_fit: `full fit; cross-branch import needed route compatibility, scratch-file exclusion, and static JS verification`
+- orchestration_fit: `single-session fit; one tight frontend integration surface was cheaper than delegation`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the request changed from completed seat-page polish to importing teammate frontend work from origin/ksg`
+- reviewer_findings: `AI page refresh and Top3/discovery pages were imported while patch.js was excluded; main AI and popular-movie entry points now route to imported pages; MBTI seat routing remains intact`
+- verification_outcome: `node --check passed for daboyeoAi.js and script.js; git diff --check passed with CRLF warnings only`
+- next_gate_adjustment: `future ksg imports should continue inspecting scratch/helper files before accepting all branch changes`

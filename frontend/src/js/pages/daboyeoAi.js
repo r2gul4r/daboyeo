@@ -11,90 +11,62 @@ const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
 const MAIN_PAGE_URL = "../../index.html";
 const LOCAL_PREVIEW_ID_PREFIX = "local-preview-";
 const POSTER_POOL_SIZE = 30;
-const POSTER_LIMIT = 10;
-const POSTER_BATCH_SIZE = 5;
+const POSTER_LIMIT = 12;
+const POSTER_BATCH_SIZE = 6;
 const MIN_LIKE_COUNT = 3;
 const LIKE_LIMIT = 5;
 const AUTO_ADVANCE_MS = 320;
 const POSTER_AUTO_ADVANCE_MS = 650;
 
 const audienceOptions = [
-  { value: "alone", label: "혼자", hint: "내 취향만 선명하게 맞춰볼게." },
-  { value: "friends", label: "친구", hint: "대화거리와 텐션을 같이 본다." },
-  { value: "date", label: "연인", hint: "분위기와 몰입감을 우선한다." },
-  { value: "family", label: "가족", hint: "호불호가 덜 갈리는 선택을 찾는다." },
-  { value: "child", label: "아이와 함께", hint: "관람 등급과 자극 요소를 강하게 거른다." },
+  { value: "alone", label: "혼자", hint: "혼자서도 몰입할 수 있는 영화로 볼래." },
+  { value: "friends", label: "친구", hint: "대화도 되고 텐션도 사는 영화로 볼래" },
+  { value: "date", label: "연인", hint: "분위기 살리고 함께 즐길 수 있는 영화로 볼래." },
+  { value: "family", label: "가족", hint: "온 가족이 함께 보기 좋은 영화로 볼래." },
+  { value: "child", label: "아이와 함께", hint: "아이와 함께 즐겁게 볼 수 있는 영화로 볼래." },
 ];
 
 const moodOptions = [
-  { value: "light", label: "가볍게", hint: "부담 없이 보기 좋은 쪽으로." },
-  { value: "immersive", label: "깊게 몰입", hint: "서사와 여운이 있는 작품 위주로." },
-  { value: "exciting", label: "신나는 것", hint: "속도감과 재미를 높게 본다." },
-  { value: "calm", label: "잔잔한 것", hint: "편안한 리듬을 선호로 잡는다." },
-  { value: "tense", label: "긴장감 있는 것", hint: "스릴과 집중감을 더 반영한다." },
+  { value: "light", label: "가볍게 즐기기", hint: "부담 없이 편하게 볼 수 있는 작품 위주로." },
+  { value: "immersive", label: "깊게 몰입하기", hint: "서사와 여운이 있는 작품 위주로." },
+  { value: "exciting", label: "신나게 즐기기", hint: "속도감 있고 재미로 몰아치는 작품 위주로." },
+  { value: "calm", label: "잔잔하게 보기", hint: "편안하게 흘러가는 감성적인 작품 위주로." },
+  { value: "tense", label: "긴장감 있게 보기", hint: "손에 땀을 쥐게 하는 긴장감 있는 작품 위주로." },
 ];
 
 const avoidOptions = [
-  {
-    value: "violence",
-    label: "잔인한 장면",
-    hint: "수위 높은 장면은 최대한 빼고 싶어.",
-    imageUrl: "https://images.unsplash.com/photo-1764005677020-52e3266af0fd?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
-  },
-  {
-    value: "too_long",
-    label: "너무 긴 영화",
-    hint: "늘어지는 러닝타임은 오늘 부담돼.",
-    imageUrl: "https://images.unsplash.com/photo-1751630991322-f935847f16c3?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
-  },
-  {
-    value: "complex",
-    label: "어려운 이야기",
-    hint: "해석이 너무 많이 필요한 건 피하고 싶어.",
-    imageUrl: "https://images.unsplash.com/photo-1758951995614-1a223f1512e4?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
-  },
-  {
-    value: "sad_ending",
-    label: "슬픈 결말",
-    hint: "보고 나서 처지는 여운은 오늘 말고.",
-    imageUrl: "https://images.unsplash.com/photo-1740101957152-f5df81e3b60f?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
-  },
-  {
-    value: "loud",
-    label: "시끄러운 영화",
-    hint: "볼륨이나 자극이 센 건 조금 부담돼.",
-    imageUrl: "https://images.unsplash.com/photo-1759230766134-e3ff1c27d20e?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
-  },
+  { value: "too_long", label: "긴 상영시간" },
+  { value: "complex", label: "복잡한 이야기" },
+  { value: "romance", label: "로맨스 중심 전개" },
+  { value: "violence", label: "잔인한 장면" },
+  { value: "sad_ending", label: "슬픈 결말" },
+  { value: "reality", label: "현실감 없는 설정" },
+  { value: "loud", label: "시끄러운 연출" },
+  { value: "none", label: "해당 없음" },
 ];
-
-const avoidNoneOption = {
-  value: "__none__",
-  label: "딱히 없음",
-  hint: "걸리는 요소 없이 넓게 추천받을래.",
-  imageUrl: "https://images.unsplash.com/photo-1762541693135-fb989de961e1?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=80&w=1200",
-};
 
 const modeOptions = [
   {
     value: "fast",
     label: "빠른 추천",
     model: "E2B Q4",
-    description: "짧은 이유와 바로 볼 후보가 필요할 때. 응답 속도를 우선한다.",
-    tags: ["빠름", "간단한 이유", "상위 후보"],
+    description: "짧은 이유와 함께, 바로 볼 수 있는\n영화를 빠르게 추천해 드립니다.",
+    tags: ["E2B Q4", "빠름", "간단한 이유", "상위 후보"],
   },
   {
     value: "precise",
     label: "정밀 추천",
     model: "E4B Q4",
-    description: "후보를 더 꼼꼼히 재정렬하고 포스터 취향 분석까지 보고 싶을 때.",
-    tags: ["정밀", "취향 분석", "재정렬"],
+    description: "후보를 꼼꼼히 비교하고, 포스터 취향까지\n반영해 더 정확하게 추천해 드립니다.",
+    tags: ["E4B Q4", "정밀 분석", "포스터 취향", "후보 비교"],
+    recommended: true,
   },
 ];
 
 const progressText = {
   audience: "1 / 5 상황",
   mood: "2 / 5 컨디션",
-  avoid: "3 / 5 회피",
+  avoid: "3 / 5 상황",
   posters: "4 / 5 포스터",
   mode: "5 / 5 방식",
   loading: "분석 중",
@@ -150,7 +122,6 @@ const state = {
     error: null,
   },
   feedback: new Map(),
-  avoidNoneSelected: false,
   stepTimer: null,
   toastTimer: null,
 };
@@ -335,20 +306,55 @@ function scheduleStep(nextStep, delay = AUTO_ADVANCE_MS) {
   }, delay);
 }
 
+function clearStateFromStep(stepToClear) {
+  const steps = ["audience", "mood", "avoid", "posters", "mode"];
+  const startIndex = steps.indexOf(stepToClear);
+  if (startIndex === -1) return;
+
+  for (let i = startIndex; i < steps.length; i++) {
+    switch (steps[i]) {
+      case "audience":
+        state.survey.audience = null;
+        break;
+      case "mood":
+        state.survey.mood = null;
+        break;
+      case "avoid":
+        state.survey.avoid = [];
+        break;
+      case "posters":
+        state.posterChoices.likedSeedMovieIds = [];
+        break;
+    }
+  }
+}
+
 function setStep(nextStep) {
   if (state.stepTimer) {
     window.clearTimeout(state.stepTimer);
     state.stepTimer = null;
   }
 
-  state.step = nextStep;
+  const performStepChange = () => {
+    state.step = nextStep;
+    if (nextStep === "posters") {
+      ensurePostersLoaded();
+    }
+    render();
+    screen.classList.add("is-entering");
+    setTimeout(() => screen.classList.remove("is-entering"), 400);
+    screen.focus({ preventScroll: true });
+  };
 
-  if (nextStep === "posters") {
-    ensurePostersLoaded();
+  if (state.step && screen.firstChild) {
+    screen.classList.add("is-exiting");
+    setTimeout(() => {
+      screen.classList.remove("is-exiting");
+      performStepChange();
+    }, 350);
+  } else {
+    performStepChange();
   }
-
-  render();
-  screen.focus({ preventScroll: true });
 }
 
 function resetInputs(keepSession = true) {
@@ -358,7 +364,6 @@ function resetInputs(keepSession = true) {
   state.posters.activeBatchIndex = 0;
   state.run = { status: "idle", mode: null, response: null, error: null };
   state.feedback = new Map();
-  state.avoidNoneSelected = false;
 
   if (!keepSession) {
     state.anonymousId = null;
@@ -428,35 +433,63 @@ async function ensurePostersLoaded(force = false) {
 }
 
 function renderTitle(parts) {
-  const title = createElement("h1", "ai-title");
+  const title = createElement("h2", "ai-title");
 
   parts.forEach((part) => {
-    if (part.highlight) {
-      title.appendChild(createElement("span", null, part.text));
-    } else {
-      title.append(document.createTextNode(part.text));
+    const node = createElement("span", part.highlight ? "ai-highlight" : null);
+    if (part.style) {
+      node.style.cssText = part.style;
     }
+
+    const textParts = part.text.split('\n');
+    textParts.forEach((textPart, index) => {
+      if (textPart) {
+        node.appendChild(document.createTextNode(textPart));
+      }
+      if (index < textParts.length - 1) {
+        node.appendChild(document.createElement('br'));
+      }
+    });
+
+    title.appendChild(node);
   });
 
   return title;
 }
 
-function renderStepShell({ kicker, titleParts, description, content, wide = false }) {
-  const section = createElement("section", ["ai-step", wide ? "ai-step-wide" : null]);
-  const intro = createElement("div", "ai-intro");
-  const panel = createElement("div", ["ai-step-panel", wide ? "ai-step-panel-wide" : null]);
-  intro.appendChild(createElement("p", "ai-kicker", kicker));
-  intro.appendChild(renderTitle(titleParts));
-  intro.appendChild(createElement("p", "ai-description", description));
+function renderSplitLayout({ kicker, titleParts, description, extraLeft, content }) {
+  const section = createElement("section", "ai-split-layout");
+
+  const leftPane = createElement("div", "ai-split-left");
+
+  if (stepBackMap[state.step]) {
+    backButton.style.position = "absolute";
+    backButton.style.top = "-90px";
+    backButton.style.left = "0";
+    backButton.style.marginBottom = "0";
+    leftPane.appendChild(backButton);
+  }
+
+  leftPane.appendChild(createElement("p", "ai-kicker", kicker));
+  leftPane.appendChild(renderTitle(titleParts));
+
+  if (description) {
+    leftPane.appendChild(createElement("p", "ai-description", description));
+  }
+  if (extraLeft) {
+    leftPane.appendChild(extraLeft);
+  }
 
   const summary = renderSummary();
   if (summary) {
-    intro.appendChild(summary);
+    leftPane.appendChild(summary);
   }
 
-  section.appendChild(intro);
-  panel.appendChild(content);
-  section.appendChild(panel);
+  const rightPane = createElement("div", "ai-split-right");
+  rightPane.appendChild(content);
+
+  section.appendChild(leftPane);
+  section.appendChild(rightPane);
 
   return section;
 }
@@ -472,88 +505,97 @@ function renderSummary() {
   if (state.survey.audience) {
     rows.push(["함께 볼 사람", optionLabel(audienceOptions, state.survey.audience)]);
   }
-
   if (state.survey.mood) {
     rows.push(["오늘 컨디션", optionLabel(moodOptions, state.survey.mood)]);
   }
-
   if (state.survey.avoid.length > 0) {
-    const avoidLabel = state.survey.avoid
-      .map((value) => optionLabel(avoidOptions, value))
-      .join(", ");
-    rows.push(["피하고 싶은 것", avoidLabel]);
+    const avoidLabel = state.survey.avoid.map((value) => optionLabel(avoidOptions, value)).join(", ");
+    rows.push(["보고 싶지 않은 요소", avoidLabel]);
   }
-
   if (state.posterChoices.likedSeedMovieIds.length) {
-    rows.push([
-      "포스터 취향",
-      `끌림 ${state.posterChoices.likedSeedMovieIds.length}/${LIKE_LIMIT}`,
-    ]);
+    rows.push(["포스터 취향", `${state.posterChoices.likedSeedMovieIds.length} / ${LIKE_LIMIT}`]);
   }
 
-  if (rows.length === 0) {
-    return null;
-  }
+  if (rows.length === 0) return null;
 
   const summary = createElement("div", "ai-summary");
-
   rows.forEach(([label, value]) => {
-    const chip = createElement("div", "ai-summary-chip");
-    chip.appendChild(createElement("span", "ai-summary-label", label));
-    chip.appendChild(createElement("span", "ai-summary-value", value));
-    summary.appendChild(chip);
+    const row = createElement("div", "ai-summary-row");
+    row.appendChild(createElement("strong", null, label));
+    row.appendChild(document.createTextNode(` ${value}`));
+    summary.appendChild(row);
   });
-
   return summary;
 }
 
-function renderChoiceGrid(options, selectedValue, onSelect) {
-  const grid = createElement("div", "ai-choice-grid");
+function renderOptionList(options, selectedValueOrArray, onSelect, isMulti = false) {
+  const list = createElement("div", "ai-option-list");
+  list.style.display = 'flex';
+  list.style.flexDirection = 'column';
+  list.style.alignItems = 'flex-end';
+  list.style.gap = '14px';
+  list.style.width = '100%';
 
   options.forEach((option) => {
-    const button = createElement("button", ["ai-choice-card", selectedValue === option.value ? "is-selected" : null]);
+    const isSelected = isMulti
+      ? selectedValueOrArray.includes(option.value)
+      : selectedValueOrArray === option.value;
+
+    const button = createElement("button", ["ai-glass-btn", "can-hover", isSelected ? "is-selected" : null]);
     button.type = "button";
-    button.appendChild(createElement("strong", null, option.label));
-    button.appendChild(createElement("span", null, option.hint));
-    button.addEventListener("click", () => onSelect(option.value));
-    grid.appendChild(button);
+
+    button.addEventListener("click", (e) => {
+      if (window.innerWidth <= 768 && !isMulti) {
+        if (!button.classList.contains("is-selected") && !button.classList.contains("is-expanded")) {
+          document.querySelectorAll('.ai-glass-btn').forEach(btn => btn.classList.remove("is-expanded"));
+          button.classList.add("is-expanded");
+          return;
+        }
+      }
+      onSelect(option.value);
+    });
+
+    button.appendChild(createElement("span", "ai-glass-btn-title", option.label));
+    if (option.hint || option.description) {
+      button.appendChild(createElement("span", "ai-glass-btn-desc", option.hint || option.description));
+    }
+    list.appendChild(button);
   });
 
-  return grid;
+  return list;
 }
 
 function renderAudienceStep() {
-  const content = renderChoiceGrid(audienceOptions, state.survey.audience, (value) => {
+  const content = renderOptionList(audienceOptions, state.survey.audience, (value) => {
     state.survey.audience = value;
     render();
     scheduleStep("mood");
   });
 
-  return renderStepShell({
+  return renderSplitLayout({
     kicker: "AI GUIDE 01",
     titleParts: [
-      { text: "누구랑\n볼 거야?" },
+      { text: "반가워요, 다보예요!\n", style: "font-size: 30px;" },
+      { text: "누구랑 보실 건가요?" },
     ],
-    description: "상황이 다르면 좋은 영화도 달라져. 같이 볼 사람부터 잡고 갈게.",
+    description: "같이 볼 사람부터 골라볼까요? 지금 상황을 기준으로 추천 기준을 잡을게요.",
     content,
   });
 }
 
 function renderMoodStep() {
-  const content = renderChoiceGrid(moodOptions, state.survey.mood, (value) => {
+  const content = renderOptionList(moodOptions, state.survey.mood, (value) => {
     state.survey.mood = value;
     render();
     scheduleStep("avoid");
   });
 
-  return renderStepShell({
+  return renderSplitLayout({
     kicker: "AI GUIDE 02",
     titleParts: [
-      { text: "오늘\n" },
-      { text: "컨디션", highlight: true },
-      { text: "은?" },
+      { text: "오늘 하루,\n컨디션은 어때요?" },
     ],
-    description: "지금 보고 싶은 감정의 온도를 고르면 추천 방향이 바로 좁혀져.",
+    description: "지금 보고 싶은 감정의 온도를 고르면 추천 방향이 바로 좁혀져요.",
     content,
   });
 }
@@ -563,7 +605,6 @@ function toggleAvoid(value) {
   state.survey.avoid = exists
     ? state.survey.avoid.filter((item) => item !== value)
     : [...state.survey.avoid, value];
-  state.avoidNoneSelected = false;
   render();
 }
 
@@ -618,66 +659,48 @@ function showPosterBatch(batchIndex) {
 
 function renderAvoidStep() {
   const panel = createElement("div", "ai-avoid-panel");
-  const cardGrid = createElement("div", "ai-avoid-grid");
+  panel.style.width = '100%';
 
-  [...avoidOptions, avoidNoneOption].forEach((option) => {
-    const isNone = option.value === avoidNoneOption.value;
-    const isSelected = isNone
-      ? state.avoidNoneSelected
-      : state.survey.avoid.includes(option.value);
-    const card = createElement("button", ["ai-avoid-card", isSelected ? "is-selected" : null, isNone ? "is-none" : null]);
-    const media = createElement("div", "ai-avoid-card-media");
-    const image = createElement("img", "ai-avoid-card-image");
-    const content = createElement("div", "ai-avoid-card-content");
+  const grid = createElement("div", "ai-avoid-grid");
 
-    card.type = "button";
-    image.src = option.imageUrl;
-    image.alt = `${option.label} 선택 이미지`;
-    image.loading = "lazy";
-
-    content.appendChild(createElement("strong", null, option.label));
-    content.appendChild(createElement("span", null, option.hint));
-
-    media.appendChild(image);
-    media.appendChild(createElement("div", "ai-avoid-card-scrim"));
-    media.appendChild(content);
-
-    if (isSelected) {
-      media.appendChild(createElement("div", "ai-avoid-card-badge", "선택"));
-    }
-
-    card.appendChild(media);
-    card.addEventListener("click", () => {
-      if (isNone) {
-        state.survey.avoid = [];
-        state.avoidNoneSelected = true;
+  avoidOptions.forEach((option) => {
+    const isSelected = state.survey.avoid.includes(option.value);
+    const btn = createElement("button", ["ai-avoid-btn", isSelected ? "is-selected" : null], option.label);
+    btn.type = "button";
+    btn.addEventListener("click", () => {
+      if (option.value === "none") {
+        state.survey.avoid = ["none"];
         render();
-        scheduleStep("posters");
-        return;
+        setStep("posters");
+      } else {
+        state.survey.avoid = state.survey.avoid.filter(v => v !== "none");
+        toggleAvoid(option.value);
       }
-
-      toggleAvoid(option.value);
     });
-
-    cardGrid.appendChild(card);
+    grid.appendChild(btn);
   });
 
-  const completeRow = createElement("div", "ai-complete-row");
-  const completeButton = createElement("button", "ai-complete-button", "선택 완료");
-  completeButton.type = "button";
-  completeButton.addEventListener("click", () => setStep("posters"));
-  completeRow.appendChild(completeButton);
-  completeRow.appendChild(createElement("span", "ai-complete-hint", "여러 개 골라도 돼. 없으면 딱히 없음을 누르면 바로 넘어가."));
+  panel.appendChild(grid);
 
-  panel.appendChild(cardGrid);
-  panel.appendChild(completeRow);
+  const ctaRow = createElement("div", "ai-cta-row");
+  const completeBtn = createElement("button", "ai-primary-cta", "선택 완료");
+  completeBtn.type = "button";
+  completeBtn.addEventListener("click", () => {
+    setStep("posters");
+  });
+  ctaRow.appendChild(completeBtn);
 
-  return renderStepShell({
+  const hint = createElement("p", "ai-avoid-cta-hint", "여러 개 선택하실 수 있습니다. 해당 없음을 선택하시면 바로 다음 단계로 넘어갑니다.");
+  ctaRow.appendChild(hint);
+
+  panel.appendChild(ctaRow);
+
+  return renderSplitLayout({
     kicker: "AI GUIDE 03",
     titleParts: [
-      { text: "피하고\n싶은 건?" },
+      { text: "보고 싶지 않은\n요소가 있으신가요?" }
     ],
-    description: "완전히 배제하기보다 점수에서 낮춘다. 단, 아이와 함께라면 위험한 후보는 더 강하게 거른다.",
+    description: "선택하신 요소는 추천에 최대한 반영해 걸러드립니다.\n아이와 함께라면 더 안전한 기준으로 추천해 드릴게요.",
     content: panel,
   });
 }
@@ -740,31 +763,20 @@ function renderPosterCard(movie) {
   const isLiked = state.posterChoices.likedSeedMovieIds.includes(id);
   const card = createElement("button", ["ai-poster-card", isLiked ? "is-selected" : null]);
   card.type = "button";
-  card.setAttribute("aria-pressed", String(isLiked));
-  card.setAttribute("aria-label", `${movie.title || "영화"} 포스터 ${isLiked ? "선택됨" : "선택하기"}`);
   card.addEventListener("click", () => selectPoster(id));
 
-  const imageWrap = createElement("div", "ai-poster-image-wrap");
-  const image = createElement("img", "ai-poster-image");
-  image.alt = `${movie.title || "영화"} 포스터`;
-  image.loading = "lazy";
-
   if (movie.posterUrl) {
+    const image = createElement("img");
+    image.alt = `${movie.title || "영화"} 포스터`;
+    image.loading = "lazy";
     image.src = movie.posterUrl;
-    image.addEventListener("load", () => card.classList.add("has-image"));
-    image.addEventListener("error", () => {
-      card.classList.remove("has-image");
-      image.removeAttribute("src");
-    });
+    image.addEventListener("error", () => image.removeAttribute("src"));
+    card.appendChild(image);
   }
 
-  imageWrap.appendChild(image);
-  imageWrap.appendChild(createElement("div", "ai-poster-fallback", movie.title || "포스터"));
-  if (isLiked) {
-    imageWrap.appendChild(createElement("div", "ai-poster-selected-mark", "✓"));
-  }
-
-  card.appendChild(imageWrap);
+  const overlay = createElement("div", "ai-poster-overlay");
+  overlay.appendChild(createElement("span", null, movie.title || "이름 없는 포스터"));
+  card.appendChild(overlay);
 
   return card;
 }
@@ -773,108 +785,117 @@ function renderPosterStep() {
   if (state.posters.status === "loading" || state.posters.status === "idle") {
     return renderLoadingMessage("포스터를 가져오는 중", "잠깐만 기다려줘.");
   }
-
   if (state.posters.status === "error") {
-    return renderErrorPanel(
-      "포스터를 가져오지 못했어",
-      state.posters.error?.message || "백엔드 추천 API 연결을 확인해줘.",
-      [
-        { label: "다시 시도", onClick: () => ensurePostersLoaded(true) },
-        { label: "처음부터", onClick: () => setStep("audience"), secondary: true },
-      ],
-    );
+    return renderErrorPanel("포스터를 가져오지 못했어", state.posters.error?.message,
+      [{ label: "다시 시도", onClick: () => ensurePostersLoaded(true) }, { label: "처음부터", onClick: () => setStep("audience"), secondary: true }]);
   }
-
   if (state.posters.status === "empty") {
-    return renderErrorPanel(
-      "포스터 seed가 비어 있어",
-      "서버에 포스터 진단용 데이터가 아직 없어. 가짜 선택지는 만들지 않을게.",
-      [{ label: "다시 시도", onClick: () => ensurePostersLoaded(true) }],
-    );
+    return renderErrorPanel("포스터 seed가 비어 있어", "서버에 포스터 진단용 데이터가 아직 없어.",
+      [{ label: "다시 시도", onClick: () => ensurePostersLoaded(true) }]);
   }
-
-  const wrapper = createElement("section", ["ai-step", "ai-step-wide", "ai-poster-step"]);
-  const head = createElement("div", "ai-poster-head");
-  const intro = createElement("div", "ai-intro");
-  intro.appendChild(createElement("p", "ai-kicker", "AI GUIDE 04"));
-  intro.appendChild(renderTitle([
-    { text: "포스터만 보고\n" },
-    { text: "끌림", highlight: true },
-    { text: "을 골라봐" },
-  ]));
-
-  const summary = renderSummary();
-  if (summary) {
-    intro.appendChild(summary);
-  }
-
-  const counts = createElement("div", "ai-poster-counts");
-  counts.appendChild(renderPosterCount("is-like", "선택", state.posterChoices.likedSeedMovieIds.length, LIKE_LIMIT));
-
-  head.appendChild(intro);
-  head.appendChild(counts);
 
   const activeBatch = currentPosterBatch();
-  const roundMeta = createElement("div", "ai-round-meta");
-  roundMeta.appendChild(createElement(
-    "p",
-    "ai-complete-hint",
-    `${state.posters.activeBatchIndex + 1}/${posterBatchCount()}라운드 · 끌리는 포스터 ${MIN_LIKE_COUNT}~${LIKE_LIMIT}개`,
-  ));
-  roundMeta.appendChild(renderPosterRounds());
-
   const grid = createElement("div", "ai-poster-grid");
   activeBatch.forEach((movie) => {
     grid.appendChild(renderPosterCard(movie));
   });
 
-  wrapper.appendChild(head);
-  wrapper.appendChild(roundMeta);
-  wrapper.appendChild(grid);
+  const rightTop = createElement("div", "ai-poster-right-top");
+  rightTop.style.display = "flex";
+  rightTop.style.justifyContent = "flex-end";
+  rightTop.style.marginBottom = "60px";
 
-  if (canContinuePosterDiagnosis() && !isPosterDiagnosisComplete()) {
-    const actionRow = createElement("div", "ai-poster-next-row");
-    const nextButton = createElement("button", "ai-complete-button", "이대로 추천받기");
-    nextButton.type = "button";
-    nextButton.addEventListener("click", () => setStep("mode"));
-    actionRow.appendChild(nextButton);
-    wrapper.appendChild(actionRow);
-  } else if (!canContinuePosterDiagnosis() && state.posters.activeBatchIndex === posterBatchCount() - 1) {
-    wrapper.appendChild(createElement("p", "ai-warning-line", `끌리는 포스터를 ${MIN_LIKE_COUNT}개 이상 골라줘.`));
-  }
+  const nextBatchBtn = createElement("button", "ai-batch-button", ">");
+  nextBatchBtn.type = "button";
+  nextBatchBtn.addEventListener("click", () => {
+    const nextIndex = (state.posters.activeBatchIndex + 1) % posterBatchCount();
+    showPosterBatch(nextIndex);
+  });
+  rightTop.appendChild(nextBatchBtn);
 
-  return wrapper;
+  const ctaRow = createElement("div", ["ai-cta-row", "ai-poster-cta-row"]);
+  const isSatisfied = canContinuePosterDiagnosis();
+  const completeBtn = createElement("button", ["ai-primary-cta", isSatisfied ? "is-active" : null], "선택 완료");
+  completeBtn.type = "button";
+  completeBtn.addEventListener("click", () => {
+    if (isSatisfied) {
+      setStep("mode");
+    } else {
+      showToast(`최소 ${MIN_LIKE_COUNT}개 이상의 포스터를 선택해주세요.`);
+    }
+  });
+  ctaRow.appendChild(completeBtn);
+
+  const content = createElement("div", "ai-poster-pane");
+  content.style.position = "relative";
+  content.style.width = "100%";
+
+  const fakeKicker = createElement("p", "ai-kicker", "AI GUIDE 04");
+  fakeKicker.style.visibility = "hidden";
+  fakeKicker.setAttribute("aria-hidden", "true");
+
+  content.appendChild(rightTop);
+  content.appendChild(fakeKicker);
+  content.appendChild(grid);
+  content.appendChild(ctaRow);
+
+  const extraLeft = createElement("div", "ai-poster-count-left");
+  const span = createElement("span", null, "선택");
+  extraLeft.appendChild(span);
+  extraLeft.appendChild(document.createTextNode(` ${state.posterChoices.likedSeedMovieIds.length} / ${LIKE_LIMIT}`));
+
+  return renderSplitLayout({
+    kicker: "AI GUIDE 04",
+    titleParts: [{ text: "영화 포스터만 보고,\n끌리는 작품을 선택해 주세요.", style: "font-size: 30px;" }],
+    description: null,
+    extraLeft,
+    content,
+  });
 }
 
 function renderModeCard(option) {
-  const card = createElement("button", ["ai-mode-card", option.value === "fast" ? "is-fast" : "is-precise"]);
-  card.type = "button";
-  card.addEventListener("click", () => runRecommendation(option.value));
+  const card = createElement("div", "ai-mode-card");
+
+  if (option.recommended) {
+    const tag = createElement("div", "ai-mode-recommend-tag", "추천");
+    card.appendChild(tag);
+  }
 
   const top = createElement("div");
-  top.appendChild(createElement("strong", null, option.label));
-  top.appendChild(createElement("p", null, option.description));
+  top.appendChild(createElement("h3", null, option.label));
 
-  const meta = createElement("div", "ai-mode-meta");
-  meta.appendChild(createElement("span", null, option.model));
-  option.tags.forEach((tag) => meta.appendChild(createElement("span", null, tag)));
+  top.appendChild(createElement("div", "ai-mode-divider"));
+
+  const desc = createElement("p", null, option.description);
+  desc.innerHTML = option.description.replace(/\n/g, '<br/>');
+  top.appendChild(desc);
+
+  const badges = createElement("div", "ai-mode-badges");
+  option.tags.forEach(t => {
+    badges.appendChild(createElement("span", "ai-mode-badge", t));
+  });
+  top.appendChild(badges);
 
   card.appendChild(top);
-  card.appendChild(meta);
+
+  const btn = createElement("button", "ai-mode-action", "보러가기");
+  btn.type = "button";
+  btn.addEventListener("click", () => runRecommendation(option.value));
+  card.appendChild(btn);
 
   return card;
 }
 
 function renderModeStep() {
   const grid = createElement("div", "ai-mode-grid");
-  modeOptions.forEach((option) => grid.appendChild(renderModeCard(option)));
+  modeOptions.forEach(opt => {
+    grid.appendChild(renderModeCard(opt));
+  });
 
-  return renderStepShell({
+  return renderSplitLayout({
     kicker: "AI GUIDE 05",
-    titleParts: [
-      { text: "어떤 방식으로\n추천할까?" },
-    ],
-    description: "빠른 추천은 E2B Q4, 정밀 추천은 E4B Q4를 쓰는 계약으로 백엔드에 요청한다.",
+    titleParts: [{ text: "어떤 방식으로\n추천해 드릴까요?" }],
+    description: " 빠른 추천은 간단하게, 정밀 추천은 더 꼼꼼하게 분석해 드립니다.",
     content: grid,
   });
 }
@@ -928,7 +949,7 @@ async function runRecommendation(mode) {
     state.run = { status: "success", mode, response, error: null };
 
     const recommendations = Array.isArray(response?.recommendations) ? response.recommendations : [];
-    setStep(recommendations.length === 0 ? "empty" : "results");
+    setStep(response?.status === "no_candidates" || recommendations.length === 0 ? "empty" : "results");
   } catch (error) {
     if (state.posters.isPreview) {
       state.run = {
@@ -1166,20 +1187,8 @@ function renderShowtimeItem(label, value) {
   return item;
 }
 
-function renderSearchContextPanel() {
-  const text = searchContextText(state.searchContext);
-  if (!text) {
-    return null;
-  }
-
-  const panel = createElement("div", "ai-result-context");
-  panel.appendChild(createElement("strong", null, "상영 조건"));
-  panel.appendChild(createElement("span", null, text));
-  return panel;
-}
-
 function renderResultCard(item, index) {
-  const card = createElement("article", ["ai-result-card", index === 0 ? "is-top" : null]);
+  const card = createElement("article", "ai-result-card");
   const inner = createElement("div", "ai-result-card-inner");
   const poster = createElement("div", "ai-result-poster");
   const imageUrl = safeUrl(item.posterUrl);
@@ -1202,14 +1211,21 @@ function renderResultCard(item, index) {
   heading.appendChild(createElement("div", "ai-score", `${Math.round(Number(item.score) || 0)}점`));
   body.appendChild(heading);
 
-  body.appendChild(createElement("p", "ai-result-copy", item.reason || "취향과 현재 조건에 잘 맞는 후보야."));
+  if (item.reason) {
+    body.appendChild(createElement("p", "ai-result-tags", item.reason));
+  }
+
   if (item.analysisPoint) {
-    const analysisPoint = createElement("p", ["ai-result-copy", "ai-analysis-point"]);
-    analysisPoint.appendChild(createElement("strong", null, "분석 포인트"));
+    const analysisPoint = createElement("p", "ai-result-tags");
+    const label = createElement("strong", "ai-analysis-label", "분석 포인트");
+    analysisPoint.appendChild(label);
     analysisPoint.appendChild(document.createTextNode(` ${item.analysisPoint}`));
     body.appendChild(analysisPoint);
   }
-  body.appendChild(createElement("p", "ai-result-copy", item.valuePoint || "시간, 가격, 좌석 조건을 함께 확인해봐."));
+
+  if (item.valuePoint) {
+    body.appendChild(createElement("p", ["ai-result-tags", "ai-result-tags-white"], item.valuePoint));
+  }
 
   const showtimeGrid = createElement("div", "ai-showtime-grid");
   showtimeGrid.appendChild(renderShowtimeItem("극장", [item.providerCode, item.theaterName].filter(Boolean).join(" ")));
@@ -1252,45 +1268,61 @@ function renderResultsStep() {
 
   side.appendChild(createElement("p", "ai-kicker", "AI RESULT"));
   side.appendChild(renderTitle([
-    { text: "지금은\n" },
-    { text: "이 영화", highlight: true },
-    { text: "가 좋아" },
+    { text: "다보의\n영화 추천은!" },
   ]));
-  side.appendChild(createElement("p", "ai-result-note", response.message || "설문, 포스터 취향, 현재 상영 후보를 합쳐 추천했어."));
-  const searchContextPanel = renderSearchContextPanel();
-  if (searchContextPanel) {
-    side.appendChild(searchContextPanel);
-  }
+  side.appendChild(createElement("p", "ai-result-note", "지금 상황과 취향을 반영해, 바로 볼 수 있는 최적의 영화를 골랐어요."));
 
-  const meta = createElement("div", "ai-result-meta");
-  meta.appendChild(createElement("span", null, modeLabel));
-  if (response.model) {
-    meta.appendChild(createElement("span", null, response.model));
-  }
-  if (response.runId) {
-    meta.appendChild(createElement("span", null, `run ${String(response.runId).slice(0, 8)}`));
-  }
-  side.appendChild(meta);
+  const summary = createElement("div", "ai-result-summary");
 
-  if (response.fallback) {
-    side.appendChild(createElement("p", "ai-warning-line", "모델 응답 검증에 실패해서 코드 점수 기준으로 보여주고 있어."));
-  }
+  const addSummaryRow = (label, value) => {
+    const row = createElement("div", "ai-result-summary-row");
+    row.appendChild(createElement("strong", null, label));
+    row.appendChild(createElement("span", null, value));
+    summary.appendChild(row);
+  };
 
-  const actions = createElement("div", "ai-panel-actions");
-  const retryButton = createElement("button", "ai-secondary-button", "다시 추천");
+  const searchText = searchContextText(state.searchContext);
+  if (searchText) {
+    addSummaryRow("상영 조건", searchText);
+  }
+  if (state.survey.audience) {
+    addSummaryRow("함께 볼 사람", optionLabel(audienceOptions, state.survey.audience));
+  }
+  if (state.survey.mood) {
+    addSummaryRow("오늘 컨디션", optionLabel(moodOptions, state.survey.mood));
+  }
+  if (state.survey.avoid.length > 0) {
+    const avoidLabel = state.survey.avoid.map((value) => optionLabel(avoidOptions, value)).join(", ");
+    addSummaryRow("보고 싶지 않은 요소", avoidLabel);
+  }
+  if (state.posterChoices.likedSeedMovieIds.length) {
+    addSummaryRow("포스터 취향", `${state.posterChoices.likedSeedMovieIds.length} / ${LIKE_LIMIT}`);
+  }
+  addSummaryRow("추천 방식", modeLabel);
+
+  side.appendChild(summary);
+
+  const actions = createElement("div", "ai-result-side-actions");
+
+  const topRow = createElement("div", "ai-result-side-actions-row");
+  const retryButton = createElement("button", "ai-secondary-button", "다시 추천받기");
   retryButton.type = "button";
   retryButton.addEventListener("click", () => setStep("mode"));
-  actions.appendChild(retryButton);
+  topRow.appendChild(retryButton);
 
-  const homeButton = createElement("button", "ai-secondary-button", "메인으로 돌아가기");
+  const resetButton = createElement("button", "ai-secondary-button", "초기화 후 메인으로");
+  resetButton.type = "button";
+  resetButton.addEventListener("click", resetProfile);
+  topRow.appendChild(resetButton);
+
+  actions.appendChild(topRow);
+
+  const homeButton = createElement("button", "ai-secondary-button", "메인으로 이동");
   homeButton.type = "button";
+  homeButton.style.width = "100%";
   homeButton.addEventListener("click", goToMainPage);
   actions.appendChild(homeButton);
 
-  const resetButton = createElement("button", "ai-reset-button", "초기화 후 메인");
-  resetButton.type = "button";
-  resetButton.addEventListener("click", resetProfile);
-  actions.appendChild(resetButton);
   side.appendChild(actions);
 
   const list = createElement("div", "ai-result-list");
@@ -1328,8 +1360,35 @@ async function resetProfile() {
 function render() {
   clearChildren(screen);
   screen.classList.toggle("is-poster-screen", state.step === "posters");
-  progress.textContent = `${progressText[state.step] || ""}${isLocalPreviewSession() ? " · 로컬 프리뷰" : ""}`;
-  backButton.hidden = !stepBackMap[state.step];
+  progress.textContent = `${progressText[state.step] || ""}${isLocalPreviewSession() ? " " : ""}`;
+
+  const subHeader = document.querySelector(".ai-sub-header");
+  if (subHeader) {
+    const showBatch = state.step === "posters" && posterBatchCount() > 1;
+    subHeader.style.display = showBatch ? "flex" : "none";
+  }
+
+  const batchBtn = document.getElementById("aiNextBatchButton");
+  if (batchBtn) {
+    if (state.step === "posters" && posterBatchCount() > 1) {
+      batchBtn.style.display = "flex";
+      batchBtn.onclick = () => showPosterBatch((state.posters.activeBatchIndex + 1) % posterBatchCount());
+    } else {
+      batchBtn.style.display = "none";
+      batchBtn.onclick = null;
+    }
+  }
+
+  const progressLine = document.getElementById("aiProgressLine");
+  if (progressLine) {
+    const stepOrder = ["audience", "mood", "avoid", "posters", "mode"];
+    let idx = stepOrder.indexOf(state.step);
+    if (idx !== -1) {
+      progressLine.style.width = `${((idx + 1) / 5) * 100}%`;
+    } else {
+      progressLine.style.width = "100%";
+    }
+  }
 
   switch (state.step) {
     case "audience":
@@ -1371,6 +1430,7 @@ function render() {
 backButton.addEventListener("click", () => {
   const previousStep = stepBackMap[state.step];
   if (previousStep) {
+    clearStateFromStep(previousStep);
     setStep(previousStep);
   }
 });

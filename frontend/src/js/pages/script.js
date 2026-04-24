@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
-  const AI_PAGE_URL = "./src/basic/daboyeoAi.html";
+  const AI_PAGE_URL = "./src/pages/ai.html";
   const SEAT_MBTI_PAGE_URL = "./src/basic/seatRecommendMbti.html";
 
   const dateInput = document.getElementById("dateInput");
