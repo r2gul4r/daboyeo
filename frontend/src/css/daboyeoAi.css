@@ -210,7 +210,7 @@ body.ai-guide-page a {
 .ai-split-layout {
   width: 100%;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 20px;
 }
 
@@ -218,9 +218,10 @@ body.ai-guide-page a {
   flex: 1.2;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
   gap: 20px;
+  position: relative;
 }
 
 .ai-split-right {
@@ -777,6 +778,7 @@ body.ai-guide-page a {
   grid-template-columns: minmax(260px, 0.55fr) minmax(360px, 1fr);
   gap: clamp(24px, 4vw, 54px);
   align-items: start;
+  margin-top: 50px;
 }
 
 .ai-result-side {
@@ -804,20 +806,60 @@ body.ai-guide-page a {
   word-break: keep-all;
 }
 
-.ai-result-meta {
+.ai-result-summary {
+  margin: 40px 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 22px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.ai-result-meta span {
-  padding: 7px 10px;
-  border: 1px solid var(--ai-line);
-  border-radius: 8px;
-  color: var(--ai-soft);
-  font-size: 13px;
+.ai-result-summary-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.ai-result-summary-row strong {
+  color: var(--purple50);
+  font-weight: 700;
+  min-width: 120px;
+}
+
+.ai-result-summary-row span {
+  color: var(--white0);
   font-weight: 800;
+  flex: 1;
+}
+
+.ai-result-side-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 340px;
+}
+
+.ai-result-side-actions-row {
+  display: flex;
+  gap: 10px;
+}
+
+.ai-secondary-button {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.ai-secondary-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
 }
 
 .ai-result-list {
@@ -826,27 +868,22 @@ body.ai-guide-page a {
 }
 
 .ai-result-card {
-  border: 1px solid var(--ai-line);
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   overflow: hidden;
-  background: var(--ai-surface);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.26);
-}
-
-.ai-result-card.is-top {
-  border-color: var(--ai-line-strong);
+  background: transparent;
 }
 
 .ai-result-card-inner {
   display: grid;
-  grid-template-columns: 136px 1fr;
-  min-height: 220px;
+  grid-template-columns: 240px 1fr;
+  min-height: 340px;
 }
 
 .ai-result-poster {
   position: relative;
-  min-height: 220px;
   background: #10131a;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .ai-result-poster img {
@@ -858,65 +895,64 @@ body.ai-guide-page a {
 
 .ai-rank {
   position: absolute;
-  left: 10px;
-  top: 10px;
-  min-width: 36px;
-  height: 36px;
+  left: 0;
+  top: 0;
+  min-width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 8px;
-  color: #11131a;
+  border-radius: 0 0 12px 0;
+  color: #111;
   background: var(--purple50);
   font-weight: 900;
+  font-size: 16px;
 }
 
 .ai-result-body {
-  padding: 20px;
+  padding: 24px 30px;
+  display: flex;
+  flex-direction: column;
 }
 
 .ai-result-heading {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 14px;
+  margin-bottom: 24px;
 }
 
 .ai-movie-title {
   margin: 0;
   color: var(--white0);
-  font-size: 24px;
-  line-height: 1.3;
+  font-size: 26px;
   font-weight: 900;
-  word-break: keep-all;
 }
 
 .ai-score {
-  flex: 0 0 auto;
-  min-width: 62px;
-  padding: 7px 8px;
-  border: 1px solid var(--ai-line);
-  border-radius: 8px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
   color: var(--purple50);
-  text-align: center;
-  font-weight: 900;
+  font-size: 14px;
+  font-weight: 800;
 }
 
-.ai-result-copy {
-  margin: 14px 0 0;
-  color: var(--ai-soft);
+.ai-result-tags {
+  margin: 0 0 12px 0;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 15px;
-  line-height: 1.7;
-  word-break: keep-all;
+  font-weight: 500;
 }
 
-.ai-analysis-point {
-  color: var(--white0);
-}
-
-.ai-analysis-point strong {
+.ai-analysis-label {
   color: var(--purple50);
-  font-size: 12px;
-  font-weight: 900;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.ai-result-tags-white {
+  color: var(--white0);
 }
 
 .ai-showtime-grid {
@@ -927,59 +963,68 @@ body.ai-guide-page a {
 }
 
 .ai-showtime-item {
-  padding: 10px 11px;
-  border: 1px solid var(--ai-line);
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .ai-showtime-item strong {
   display: block;
-  color: var(--ai-muted);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 12px;
-  font-weight: 800;
+  margin-bottom: 6px;
 }
 
 .ai-showtime-item span {
   display: block;
-  margin-top: 5px;
-  color: var(--white0);
-  font-size: 14px;
-  line-height: 1.4;
-  word-break: keep-all;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .ai-result-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 24px;
 }
 
 .ai-booking-button,
 .ai-feedback-button {
-  min-height: 42px;
-  padding: 0 14px;
-  font-weight: 800;
+  height: 44px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .ai-booking-button {
-  border-color: var(--purple50);
+  border: none;
   background: var(--purple50);
-  color: #11131a;
+  color: #111;
+}
+
+.ai-booking-button:hover {
+  background: #b8aaff;
+}
+
+.ai-feedback-button {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.ai-feedback-button:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
 }
 
 .ai-feedback-button.is-selected {
-  border-color: var(--ai-good);
-  color: #c9ffe8;
-  background: rgba(52, 211, 153, 0.14);
-}
-
-.ai-warning-line {
-  margin-top: 16px;
-  color: var(--ai-warn);
-  font-size: 14px;
-  line-height: 1.6;
+  border-color: var(--purple0);
+  color: var(--purple0);
+  background: rgba(167, 139, 250, 0.1);
 }
 
 .ai-toast {

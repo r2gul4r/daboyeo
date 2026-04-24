@@ -34,10 +34,12 @@ const moodOptions = [
 ];
 
 const avoidOptions = [
-  { value: "violence", label: "잔인한 장면" },
   { value: "too_long", label: "긴 상영시간" },
   { value: "complex", label: "복잡한 이야기" },
+  { value: "romance", label: "로맨스 중심 전개" },
+  { value: "violence", label: "잔인한 장면" },
   { value: "sad_ending", label: "슬픈 결말" },
+  { value: "reality", label: "현실감 없는 설정" },
   { value: "loud", label: "시끄러운 연출" },
   { value: "none", label: "해당 없음" },
 ];
@@ -371,7 +373,10 @@ function renderSplitLayout({ kicker, titleParts, description, extraLeft, content
   const leftPane = createElement("div", "ai-split-left");
 
   if (stepBackMap[state.step]) {
-    backButton.style.marginBottom = "60px";
+    backButton.style.position = "absolute";
+    backButton.style.top = "-90px";
+    backButton.style.left = "0";
+    backButton.style.marginBottom = "0";
     leftPane.appendChild(backButton);
   }
 
@@ -726,7 +731,15 @@ function renderPosterStep() {
   ctaRow.appendChild(completeBtn);
 
   const content = createElement("div", "ai-poster-pane");
+  content.style.position = "relative";
+  content.style.width = "100%";
+  
+  const fakeKicker = createElement("p", "ai-kicker", "AI GUIDE 04");
+  fakeKicker.style.visibility = "hidden";
+  fakeKicker.setAttribute("aria-hidden", "true");
+  
   content.appendChild(rightTop);
+  content.appendChild(fakeKicker);
   content.appendChild(grid);
   content.appendChild(ctaRow);
 
