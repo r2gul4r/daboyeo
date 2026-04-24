@@ -4,6 +4,7 @@
 .codex-backups/
 .playwright-cli/
 .local/
+.vscode/
 
 # Python caches
 __pycache__/
@@ -22,6 +23,7 @@ collectors/*/__pycache__/
 .gradle/
 build/
 backend/.gradle/
+backend/.gradle-user-home/
 backend/build/
 backend/bin/
 

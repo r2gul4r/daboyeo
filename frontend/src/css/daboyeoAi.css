@@ -991,7 +991,7 @@ body.ai-guide-page a {
 }
 
 .ai-booking-button,
-.ai-feedback-button {
+.ai-seatmap-button {
   height: 44px;
   padding: 0 20px;
   font-size: 14px;
@@ -1011,21 +1011,15 @@ body.ai-guide-page a {
   background: #b8aaff;
 }
 
-.ai-feedback-button {
+.ai-seatmap-button {
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
 }
 
-.ai-feedback-button:hover {
+.ai-seatmap-button:hover {
   border-color: rgba(255, 255, 255, 0.4);
   color: #fff;
-}
-
-.ai-feedback-button.is-selected {
-  border-color: var(--purple0);
-  color: var(--purple0);
-  background: rgba(167, 139, 250, 0.1);
 }
 
 .ai-toast {

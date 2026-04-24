@@ -9,6 +9,7 @@ import {
 const STORAGE_KEY = "daboyeoAnonymousId";
 const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
 const MAIN_PAGE_URL = "../../index.html";
+const SEAT_RECOMMEND_URL = "./seatRecommendMbti.html?flow=ai-result";
 const LOCAL_PREVIEW_ID_PREFIX = "local-preview-";
 const POSTER_POOL_SIZE = 30;
 const POSTER_LIMIT = 12;
@@ -1179,6 +1180,10 @@ function openBooking(item) {
   window.open(bookingUrl, "_blank", "noopener,noreferrer");
 }
 
+function openSeatMap() {
+  window.location.href = SEAT_RECOMMEND_URL;
+}
+
 function renderShowtimeItem(label, value) {
   const item = createElement("div", "ai-showtime-item");
   item.appendChild(createElement("strong", null, label));
@@ -1234,21 +1239,15 @@ function renderResultCard(item, index) {
   body.appendChild(showtimeGrid);
 
   const actions = createElement("div", "ai-result-actions");
-  const bookingButton = createElement("button", "ai-booking-button", "예매보기");
+  const bookingButton = createElement("button", "ai-booking-button", "예매하기");
   bookingButton.type = "button";
   bookingButton.addEventListener("click", () => openBooking(item));
   actions.appendChild(bookingButton);
 
-  const selectedFeedback = state.feedback.get(feedbackKey(item));
-  const likeButton = createElement("button", ["ai-feedback-button", selectedFeedback === "like" ? "is-selected" : null], "끌려요");
-  likeButton.type = "button";
-  likeButton.addEventListener("click", () => sendFeedback(item, "like"));
-  actions.appendChild(likeButton);
-
-  const dislikeButton = createElement("button", ["ai-feedback-button", selectedFeedback === "dislike" ? "is-selected" : null], "별로예요");
-  dislikeButton.type = "button";
-  dislikeButton.addEventListener("click", () => sendFeedback(item, "dislike"));
-  actions.appendChild(dislikeButton);
+  const seatMapButton = createElement("button", "ai-seatmap-button", "좌석표보기");
+  seatMapButton.type = "button";
+  seatMapButton.addEventListener("click", openSeatMap);
+  actions.appendChild(seatMapButton);
 
   body.appendChild(actions);
   inner.appendChild(poster);

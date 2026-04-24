@@ -2,25 +2,25 @@
 
 ## Current Task
 
-- task: `Refresh selected frontend work from origin/ksg`
+- task: `Fix live movies frontend review findings without completing backend API`
 - phase: `implement`
-- scope: `Bring the new incremental ksg frontend updates after 78873c7 into lsh while preserving local review fixes and the MBTI seat recommendation route`
-- verification_target: `latest allMovies page/CSS are imported, main popular-movie entry routes to allMovies, ksg AI visual tweaks are selectively applied without regressing searchFilters/E4B labels, scratch/deleted xx files remain excluded, and JS/diff checks pass`
-- previous_task_note: `The previous ksg import was committed and pushed as bc4c022; origin/ksg now has new commits 938f37f and a944a88`
+- scope: `Apply bounded frontend fixes for reviewed live movies risks: avoid dynamic innerHTML injection, handle group seat filtering, and remove a missing stylesheet link`
+- verification_target: `liveMovies.js passes syntax check, git diff check passes, and backend unfinished API/collector flow is not expanded`
+- previous_task_note: `The kmh backend/API integration remains intentionally incomplete; the user asked not to force-complete backend API work`
 
 ## Orchestration Profile
 
-- score_total: `6`
-- score_breakdown: `2 incremental cross-branch frontend import, 1 route integration, 1 scratch/deletion exclusion, 1 AI review-fix preservation risk, 1 verification`
-- hard_triggers: `none`
-- selected_rules: `single-session selective import, preserve existing MBTI seat recommendation route, no destructive reset/checkout/clean, exclude scratch files and unrelated deletions, preserve local review fixes, no backend/model integration`
-- selected_skills: `none; git/source inspection plus local static verification is enough`
+- score_total: `4`
+- score_breakdown: `2 frontend XSS safety, 1 filter behavior, 1 verification`
+- hard_triggers: `HTML rendering of URL/API-derived values touches untrusted input; backend API completion explicitly out of scope`
+- selected_rules: `single-session frontend-only hotfix, preserve imported backend as-is, do not complete unfinished API/sync behavior`
+- selected_skills: `none; git/source inspection plus local static/backend verification is enough`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
-- spawn_decision: `no spawn; the user did not request subagents and the asset/code wiring is tightly coupled to one page`
-- efficiency_basis: `the import has one tight frontend integration surface and no safe disjoint write sets; main can inspect and integrate faster than delegating`
-- selection_reason: `the user requested another pull from ksg; live diff shows two new ksg commits centered on allMovies plus tiny AI visual tweaks, so selective import is safer than blanket merge`
+- spawn_decision: `no spawn; the user did not request subagents and the fix is a bounded frontend patch`
+- efficiency_basis: `one coordinator can keep the patch small and avoid drifting into backend completion`
+- selection_reason: `review findings identify direct frontend bugs while backend collector robustness is deferred by user request`
 
 ## Evaluation Plan
 
@@ -50,8 +50,10 @@
   - `Scratch/import-helper files such as patch.js should not be brought into the app tree unless they are real runtime assets.`
   - `The newly committed MBTI seat page must remain reachable from the main seat section.`
 - non_goals:
-  - `No backend/model integration in this turn.`
-  - `No rebrand away from the existing daboyeo visual language.`
+  - `No blanket replacement of current lsh frontend pages/styles.`
+  - `No deletion of current scripts/docs just because origin/kmh lacks newer lsh work.`
+  - `No push unless explicitly requested.`
+  - `No fake encoding conversion that pretends literal ? bytes can recover original Korean.`
 - hard_checks:
   - `Update STATE before product-file edits`
   - `Keep the implementation vanilla HTML/CSS/JS`
@@ -64,18 +66,41 @@
   - `Do not present MBTI seat percentages as externally measured preference data without a cited credible dataset`
   - `Inspect HEAD...origin/ksg before importing`
   - `Run node --check on changed JS and git diff --check`
+  - `Preserve the uncommitted AI result-card action cleanup while importing kmh`
+  - `Run backend Gradle tests or compile checks if the integrated backend surface permits`
+  - `Search imported frontend/backend surfaces for remaining literal question-mark mojibake`
 - llm_review_rubric:
   - `The implemented screen should not feel like a settings page; the seat map and cinema background should carry the first viewport.`
   - `The page should be useful without backend data and explain MBTI seat choices with concise Korean copy.`
   - `The interaction should stay predictable: one selected MBTI, one primary result CTA, no social feedback controls.`
 - evidence_required:
-  - `Web/source check for whether credible MBTI-specific cinema seat preference percentages exist`
+  - `origin/kmh fetch and diff summary`
   - `Changed file diff`
-  - `node --check frontend/src/js/pages/seatRecommendMbti.js`
-  - `node --check frontend/src/js/pages/script.js`
+  - `node --check for changed frontend JS`
+  - `backend Gradle verification where feasible`
   - `git diff --check`
 
 ## Verification Results
+
+- ai_result_actions_cleanup:
+  - `frontend/src/js/pages/daboyeoAi.js`: `result-card actions now render 예매하기 and 좌석표보기 only; 끌려요/별로예요 feedback buttons were removed from the card renderer.`
+  - `frontend/src/css/daboyeoAi.css`: `replaced obsolete feedback-button result styling with ai-seatmap-button secondary CTA styling.`
+  - `frontend/src/basic/daboyeoAi.html`: `cache-busted the AI page CSS/JS query strings to 20260424-result-actions.`
+  - `verification`: `node --check passed for daboyeoAi.js; git diff --check passed with CRLF warnings only; static search found no 예매보기/끌려요/별로예요/ai-feedback-button references in the AI JS/CSS targets.`
+
+- kmh_selective_integration:
+  - `source`: `fetched origin/kmh at 88cc169 after it advanced from 1434eee.`
+  - `included`: `backend live movie API/controller/service/repository/domain/sync/ingest files, backend tests, db/sql schema docs, ingest PowerShell scripts, frontend liveMovies.js, frontend movies.html, and movies.css.`
+  - `manual_merge`: `kept existing AI recommendation backend config/files while adding validation dependency, ingest Gradle tasks, root .env loader, scheduling, live sync config, and unified error response handling.`
+  - `preserved`: `existing uncommitted AI result-card cleanup remained intact; origin/kmh stale branch-wide frontend/doc/tooling deletions were not accepted.`
+  - `fix`: `restored CGV seat status normalization test strings from mojibake-like ???? to 판매완료/사용불가 and expanded normalizer Korean keywords.`
+  - `verification`: `node --check passed for liveMovies.js and daboyeoAi.js; gradle test passed; git diff --check passed with CRLF warnings only.`
+
+- kmh_utf8_restore:
+  - `cause`: `the GitHub branch content was UTF-8-clean; the earlier local import likely corrupted Korean by streaming git diff through a PowerShell text pipeline.`
+  - `restore_method`: `used git archive --output for origin/kmh and extracted the archive before copying files back, avoiding text-pipeline re-encoding.`
+  - `scope`: `restored imported kmh frontend movies.html/liveMovies.js/movies.css plus newly added backend/db/script files from the archive; kept existing lsh AI cleanup and manual backend config merge.`
+  - `verification`: `literal ?? search returned no matches across imported frontend/backend surfaces; node --check passed for liveMovies.js and daboyeoAi.js; gradle test passed; git diff --check passed with CRLF warnings only.`
 
 - current_task:
   - `classification`: `reclassified from MBTI image exploration into concrete frontend implementation`
@@ -169,28 +194,46 @@
 ## Writer Slot
 
 - writer_slot: `main`
-- write_set: `STATE.md, MULTI_AGENT_LOG.md, frontend/index.html, frontend/src/css/allMovies.css, frontend/src/pages/allMovies.html, frontend/src/css/common.css, frontend/src/css/daboyeoAi.css, frontend/src/js/pages/daboyeoAi.js, ERROR_LOG.md if verification errors materially affect the work`
+- write_set: `STATE.md, frontend/src/js/liveMovies.js, frontend/movies.html, ERROR_LOG.md if verification errors materially affect the work`
 - write_sets:
-  - `main`: `STATE.md, MULTI_AGENT_LOG.md, frontend/index.html, frontend/src/css/allMovies.css, frontend/src/pages/allMovies.html, frontend/src/css/common.css, frontend/src/css/daboyeoAi.css, frontend/src/js/pages/daboyeoAi.js, ERROR_LOG.md if needed`
+  - `main`: `STATE.md, frontend/src/js/liveMovies.js, frontend/movies.html, ERROR_LOG.md if needed`
 - shared_assets_owner: `main`
 - note: `One shared task board is active; no concurrent registry mode.`
 - concurrent_note: `No subagents are used for this narrow follow-up; main owns integration files.`
 
 ## Contract Freeze
 
-- contract_freeze: `Selectively import only the new ksg increments after 78873c7: latest allMovies page/CSS, the main popular-movie route to allMovies, safe common/AI visual tweaks, while excluding patch.js and unrelated xx/temp deletions and preserving local daboyeoAi searchFilters/E4B review fixes.`
-- note: `Keep the generated alias-based PNG sprite and no old SVG dependency while keeping the page static/vanilla and local-demo friendly: no backend dependency, no global top nav, no social feedback controls, one primary CTA, no regression to the existing AI 추천 route, and no false claim that MBTI seat percentages are real measured data.`
+- contract_freeze: `Fix only frontend review findings for the imported live movies page: stop dynamic URL/API values from entering innerHTML, make the group seat chip filter work, and remove the missing kakaoMap.css link.`
+- note: `Do not complete or redesign the unfinished backend live API/collector flow in this turn; backend collector output-drain review remains deferred by user request.`
 - contract_source: `user request`
-- contract_revision: `2026-04-24-import-ksg-frontend-refresh`
-- verification_target: `node --check, git diff --check, and concise implementation summary`
+- contract_revision: `2026-04-24-live-movies-frontend-review-fix`
+- verification_target: `node --check frontend/src/js/liveMovies.js, git diff --check, and static source check for missing stylesheet reference`
 
 ## Reviewer
 
 - reviewer: `main self-review`
-- reviewer_target: `incremental ksg import scope, route compatibility, scratch/deletion exclusion, JS syntax, search-filter payload preservation, precise-mode labeling, and existing MBTI seat route preservation`
-- reviewer_focus: `avoid overwriting the new seat recommendation feature, avoid importing patch.js or deleted xx/temp files, keep allMovies paths coherent, and ensure the AI recommendation API still receives saved search filters`
+- reviewer_target: `dynamic innerHTML risk, group filter behavior, missing stylesheet link, JS syntax, and whitespace`
+- reviewer_focus: `fix frontend risks without expanding incomplete backend API/sync behavior`
 
 ## Last Update
+
+- timestamp: `2026-04-24 17:32:00 +09:00`
+- note: `Fixed live movies frontend review findings while deferring unfinished backend collector/API robustness by user request.`
+
+- timestamp: `2026-04-24 17:12:00 +09:00`
+- note: `Restored kmh files from a git archive to preserve UTF-8 Korean bytes and verified no literal question-mark mojibake remains in the imported surfaces.`
+
+- timestamp: `2026-04-24 17:04:00 +09:00`
+- note: `Reclassified the task into literal mojibake repair after confirming imported kmh files contain saved question marks rather than recoverable encoding bytes.`
+
+- timestamp: `2026-04-24 16:58:00 +09:00`
+- note: `Integrated origin/kmh selectively, preserved current lsh/AI work, fixed the imported seat status test failure, and verified JS plus backend tests.`
+
+- timestamp: `2026-04-24 16:44:00 +09:00`
+- note: `Reclassified the request into selective origin/kmh integration after confirming origin/kmh diverges from early main and would be unsafe as a blanket merge.`
+
+- timestamp: `2026-04-24 16:34:00 +09:00`
+- note: `Reclassified the new browser-comment request into a tiny AI result-card action cleanup and patched the renderer/CSS/cache-bust targets.`
 
 - timestamp: `2026-04-24 16:18:00 +09:00`
 - note: `Imported the latest ksg allMovies refresh selectively and preserved local AI recommendation review fixes.`
