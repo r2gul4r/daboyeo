@@ -23,7 +23,7 @@ body {
   font: 16px/1.7 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--gray100);
   background-color: #000;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('../assets/backgroundImg.avif');
+  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7)), url('../assets/backgroundImg.avif');
   background-size: cover;
   background-position: center top;
   background-attachment: fixed;
