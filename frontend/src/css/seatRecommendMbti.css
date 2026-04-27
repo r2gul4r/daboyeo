@@ -679,18 +679,6 @@ button {
   perspective: 950px;
 }
 
-.theater-map::before {
-  content: "";
-  position: absolute;
-  inset: 116px 48px 36px;
-  border-radius: 44% 44% 18px 18px / 18% 18% 18px 18px;
-  border-top: 2px solid rgba(156, 140, 255, 0.72);
-  background:
-    linear-gradient(90deg, transparent 28%, rgba(255, 255, 255, 0.08) 28% 30%, transparent 30% 70%, rgba(255, 255, 255, 0.08) 70% 72%, transparent 72%),
-    linear-gradient(180deg, rgba(156, 140, 255, 0.1), rgba(0, 0, 0, 0));
-  pointer-events: none;
-}
-
 .screen-line {
   position: relative;
   z-index: 1;

@@ -30,7 +30,7 @@
               <i class="fas fa-map-marker-alt"></i>
               <input type="text" id="regionInput" placeholder="지역 검색(전체)">
             </div>
-            <button class="btn-map" id=""><i class="fas fa-location-dot"></i> 내 위치</button>
+            <a class="btn-map" id="locationMapBtn" href="./src/pages/movieTheaterMap.html?v=20260427-logo"><i class="fas fa-location-dot"></i> 내 위치</a>
           </div>
         </div>
       </div>
@@ -115,7 +115,7 @@
 
       <div class="action-row">
         <button class="btn-search" id="searchBtn"><i class="fas fa-wand-magic-sparkles"></i> AI 추천받기</button>
-        <button class="btn-nearby" id="nearbyBtn">직접 비교하기</button>
+        <a class="btn-nearby" id="nearbyBtn" href="./src/pages/movies.html">직접 비교하기</a>
       </div>
     </div>
 
@@ -262,7 +262,7 @@
           <div class="ai-description-text">
             DABOYEO의 성향별 좌석 추천은 성격 유형과 관람 스타일을 바탕으로 편하게 고를 수 있는 명당 구역을 제안합니다. MBTI별 추천부터 커플 좌석, 단체 좌석, 랜덤 뽑기까지 영화관에서 더 잘 맞는 자리를 찾아보세요.
           </div>
-          <button class="best-seat-cta-btn" type="button" data-seat-flow="mbti" onclick="window.location.href='./src/basic/seatRecommendMbti.html?flow=mbti'"><i class="fas fa-chair"></i> 명당 좌석 찾기</button>
+          <button class="best-seat-cta-btn" type="button" data-seat-flow="mbti" onclick="window.location.href='./src/pages/seatRecommendMbti.html?flow=mbti'"><i class="fas fa-chair"></i> 명당 좌석 찾기</button>
         </div>
       </div>
     </div>

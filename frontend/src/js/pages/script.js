@@ -1,7 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
   const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
   const AI_PAGE_URL = "./src/pages/ai.html";
-  const SEAT_MBTI_PAGE_URL = "./src/basic/seatRecommendMbti.html";
+  const DIRECT_COMPARE_PAGE_URL = "./src/pages/movies.html";
+  const SEAT_MBTI_PAGE_URL = "./src/pages/seatRecommendMbti.html";
+  const TIME_RANGE_PARAMS = {
+    morning: { timeStart: "06:00", timeEnd: "10:59" },
+    brunch: { timeStart: "11:00", timeEnd: "16:59" },
+    night: { timeStart: "17:00", timeEnd: "23:59" },
+  };
 
   const dateInput = document.getElementById("dateInput");
   const calendar = document.getElementById("calendar");
@@ -161,6 +167,26 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = AI_PAGE_URL;
   }
 
+  function buildDirectCompareUrl(searchContext) {
+    const timeRange = TIME_RANGE_PARAMS[searchContext.timeRange] || TIME_RANGE_PARAMS.morning;
+    const params = new URLSearchParams({
+      region: searchContext.region,
+      date: searchContext.date,
+      timeStart: timeRange.timeStart,
+      timeEnd: timeRange.timeEnd,
+      personCount: String(searchContext.personCount),
+    });
+
+    return `${DIRECT_COMPARE_PAGE_URL}?${params.toString()}`;
+  }
+
+  function openDirectCompare(event) {
+    event?.preventDefault();
+    const searchContext = buildSearchContext();
+    saveSearchContext(searchContext);
+    window.location.href = buildDirectCompareUrl(searchContext);
+  }
+
   function openSeatFlow(flow) {
     saveSearchContext(buildSearchContext());
     window.location.href = `${SEAT_MBTI_PAGE_URL}?flow=${encodeURIComponent(flow || "mbti")}`;
@@ -225,9 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (nearbyBtn) {
-    nearbyBtn.addEventListener("click", () => {
-      console.log("근처 극장 직접 비교는 기존 플로우를 유지해.");
-    });
+    nearbyBtn.addEventListener("click", openDirectCompare);
   }
 
   seatFlowTriggers.forEach((trigger) => {

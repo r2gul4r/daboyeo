@@ -2,85 +2,96 @@
 
 ## Current Task
 
-- task: `Fix live movies frontend review findings without completing backend API`
-- phase: `implement`
-- scope: `Apply bounded frontend fixes for reviewed live movies risks: avoid dynamic innerHTML injection, handle group seat filtering, and remove a missing stylesheet link`
-- verification_target: `liveMovies.js passes syntax check, git diff check passes, and backend unfinished API/collector flow is not expanded`
-- previous_task_note: `The kmh backend/API integration remains intentionally incomplete; the user asked not to force-complete backend API work`
+- task: `Normalize frontend page tree`
+- phase: `verify`
+- scope: `Move user-facing subpages under frontend/src/pages, including root movies.html and the current src/basic pages, then update internal links, script constants, component header routes, and page-local asset paths to the new src/pages basis.`
+- verification_target: `index.html remains the only root HTML page, moved pages resolve their CSS/JS/assets from ../ paths, main CTAs route to src/pages, common header routes point at src/pages, and JS/static checks pass.`
+- previous_task_note: `The direct comparison search-condition and 17:00~02:00 review findings are explicitly deferred by the user and must not be solved in this cleanup pass.`
 
 ## Orchestration Profile
 
-- score_total: `4`
-- score_breakdown: `2 frontend XSS safety, 1 filter behavior, 1 verification`
-- hard_triggers: `HTML rendering of URL/API-derived values touches untrusted input; backend API completion explicitly out of scope`
-- selected_rules: `single-session frontend-only hotfix, preserve imported backend as-is, do not complete unfinished API/sync behavior`
-- selected_skills: `none; git/source inspection plus local static/backend verification is enough`
+- score_total: `6`
+- score_breakdown: `2 page moves, 2 route/path rewrites, 1 stale placeholder/log cleanup risk, 1 verification breadth`
+- hard_triggers: `HTML rendering and route structure touched; reclassification required before edits`
+- selected_rules: `single-session frontend restructure, preserve dirty feature work, do not resolve deferred direct-compare behavior findings`
+- selected_skills: `none; this is repo-local vanilla HTML/CSS/JS path surgery`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
-- spawn_decision: `no spawn; the user did not request subagents and the fix is a bounded frontend patch`
-- efficiency_basis: `one coordinator can keep the patch small and avoid drifting into backend completion`
-- selection_reason: `review findings identify direct frontend bugs while backend collector robustness is deferred by user request`
+- spawn_decision: `no spawn; the user did not request subagents and the route edits are tightly coupled across the same pages/components`
+- efficiency_basis: `handoff cost is higher than benefit because page moves and link rewrites must stay globally consistent`
+- selection_reason: `the user approved starting the file-tree cleanup after agreeing movies.html should move with the other subpages`
 
 ## Evaluation Plan
 
-- evaluation_need: `full`
+- evaluation_need: `light`
 - project_invariants:
-  - `Seat-recommendation concepts must still read as part of daboyeo, not as a generic cinema landing page from another brand.`
-  - `The inherited visual baseline is dark-cinema atmosphere, purple-led accenting, glassy bordered cards, and dense sans-serif typography.`
-  - `The implemented page must stay headerless because the current main index has no persistent global header in the first viewport.`
-  - `The requested direction is light MBTI-based seat guidance rather than heavy AI-product framing.`
-  - `The page must visibly read as an internal page reached after pressing the MBTI별 추천 card.`
+  - `Keep the frontend vanilla HTML/CSS/JS structure; no new build tool or framework.`
+  - `Do not change deferred direct-comparison behavior findings in this pass.`
+  - `Preserve current MBTI seat page, AI result page, Kakao map assets, and teammate-imported live movie work.`
 - task_acceptance:
-  - `All 16 Korean aliases are explicit in the asset contract: INTJ 전략가, INTP 논리술사, ENTJ 통솔자, ENTP 변론가, INFJ 옹호자, INFP 중재자, ENFJ 선도자, ENFP 활동가, ISTJ 현실주의자, ISFJ 수호자, ESTJ 경영자, ESFJ 집정관, ISTP 장인, ISFP 모험가, ESTP 사업가, ESFP 연예인.`
-  - `MBTI cards keep code/title text but use alias-based generated image icons rather than the previous generic SVG symbols.`
-  - `The selected profile panel uses the same sprite art as the selected MBTI card.`
-  - `The generated sprite is stored inside the workspace and referenced by the frontend, not left in the default generated-images folder.`
-  - `No frontend source references frontend/src/assets/seat-mbti-sprite.svg after cleanup.`
-  - `The title should intentionally break before 명당 좌석 찾기 instead of wrapping awkwardly after 찾기.`
-  - `The generated PNG sprite should be rendered in a way that reduces browser scaling jaggies.`
-  - `Theater-map semantics must match the visible screen: top rows are front, lower rows are rear.`
-  - `Side-focused zone labels should distinguish 좌측 and 우측 rather than implying one generic side.`
-  - `A front-zone label should be visible by default because the screen is at the top of the theater map.`
-  - `Front-zone labels should not be always visible if they are presented as recommendation tags.`
-  - `Generated PNG icon cutout edges should avoid dark/green transparent-pixel fringe where possible.`
-  - `Micro blur should soften only the icon edge, not make the whole icon visibly out of focus.`
-  - `The page keeps no global top nav/header and remains static vanilla HTML/CSS/JS.`
-  - `Cross-branch imports from ksg should preserve existing local routes unless explicitly replacing them.`
-  - `Scratch/import-helper files such as patch.js should not be brought into the app tree unless they are real runtime assets.`
-  - `The newly committed MBTI seat page must remain reachable from the main seat section.`
+  - `Root frontend keeps index.html as the main entry page; movies.html is moved under frontend/src/pages.`
+  - `Former frontend/src/basic pages are moved under frontend/src/pages and references are updated.`
+  - `Common component header routes point to frontend/src/pages paths.`
+  - `Moved pages use page-local ../css, ../js, ../assets, and ../../favicon paths consistently.`
+  - `No references to frontend/src/basic routes remain in active frontend HTML/JS/component sources except intentional notes if any.`
+  - `Empty placeholder HTML files are not deleted unless a moved page remains reachable under src/pages.`
 - non_goals:
-  - `No blanket replacement of current lsh frontend pages/styles.`
-  - `No deletion of current scripts/docs just because origin/kmh lacks newer lsh work.`
+  - `No backend API completion or direct comparison search semantics fix.`
+  - `No visual redesign.`
   - `No push unless explicitly requested.`
-  - `No fake encoding conversion that pretends literal ? bytes can recover original Korean.`
 - hard_checks:
-  - `Update STATE before product-file edits`
-  - `Keep the implementation vanilla HTML/CSS/JS`
-  - `Run node --check for changed JavaScript and git diff --check`
-  - `Persist the project-bound generated sprite under frontend/src/assets`
-  - `Keep generated sprite PNG references and do not reintroduce the old SVG sprite`
-  - `Make B-row front semantics explicit in scoring and labels`
-  - `Do not duplicate front labels when the selected profile itself uses the front zone`
-  - `Remove obsolete static front duplicate-guard code when the static tag is removed`
-  - `Do not present MBTI seat percentages as externally measured preference data without a cited credible dataset`
-  - `Inspect HEAD...origin/ksg before importing`
-  - `Run node --check on changed JS and git diff --check`
-  - `Preserve the uncommitted AI result-card action cleanup while importing kmh`
-  - `Run backend Gradle tests or compile checks if the integrated backend surface permits`
-  - `Search imported frontend/backend surfaces for remaining literal question-mark mojibake`
+  - `Update STATE before product-file edits.`
+  - `Use safe file moves and preserve user changes.`
+  - `Run node --check for changed JS files.`
+  - `Run git diff --check.`
+  - `Run static route grep for stale src/basic and root movies.html references.`
 - llm_review_rubric:
-  - `The implemented screen should not feel like a settings page; the seat map and cinema background should carry the first viewport.`
-  - `The page should be useful without backend data and explain MBTI seat choices with concise Korean copy.`
-  - `The interaction should stay predictable: one selected MBTI, one primary result CTA, no social feedback controls.`
+  - `The resulting tree should be easier to explain: root entry, src/pages, src/css, src/js, src/assets, src/map.`
+  - `Path changes should be minimal and mechanical, not a hidden behavior rewrite.`
 - evidence_required:
-  - `origin/kmh fetch and diff summary`
-  - `Changed file diff`
-  - `node --check for changed frontend JS`
-  - `backend Gradle verification where feasible`
+  - `Moved file list`
+  - `Route grep result`
+  - `node --check results`
   - `git diff --check`
 
 ## Verification Results
+
+- frontend_page_tree_normalization:
+  - `moved`: `frontend/movies.html and all frontend/src/basic/*.html pages now live under frontend/src/pages/.`
+  - `routes`: `index.html CTAs, components/header.html nav links, and script.js route constants now point at src/pages paths.`
+  - `paths`: `moved movies/map/AI/seat/price pages now use ../css, ../js, ../assets, and ../../favicon paths from src/pages.`
+  - `cleanup`: `removed the now-empty frontend/src/basic directory and ignored/generated http-server-e2e log files from the working tree.`
+  - `deferred`: `direct-comparison location/person-count semantics and 17:00~02:00 handling remain intentionally unresolved per user instruction.`
+  - `verification`: `node --check passed for script.js, daboyeoAi.js, seatRecommendMbti.js, and liveMovies.js; py_compile passed for map helper scripts; static HTML local-link checker found 0 missing local href/src targets across 16 HTML files; stale src/basic route search returned no active source hits; git diff --check passed with CRLF warnings only.`
+
+- mbti_map_overlay_cleanup:
+  - `frontend/src/css/seatRecommendMbti.css`: `removed .theater-map::before, which was drawing the oval guide curve and two translucent vertical overlay columns inside the seat map.`
+  - `frontend/src/basic/seatRecommendMbti.html`: `cache-busted the MBTI seat page stylesheet query to 20260427-map-cleanup.`
+  - `verification`: `static search found no remaining theater-map overlay selector or old column-gradient markers; git diff --check passed with CRLF warnings only.`
+
+- kmh_kakao_map_restore:
+  - `source`: `imported frontend/src/css/kakaoMap.css, frontend/src/map/theaters.json, map/location_service.py, and map/populate_theaters.py from origin/kmh with git archive to preserve file bytes.`
+  - `frontend/movies.html`: `restored the ./src/css/kakaoMap.css stylesheet link before movies.css.`
+  - `security`: `replaced the hardcoded Kakao REST API key in map/populate_theaters.py with KAKAO_REST_API_KEY environment-variable loading.`
+  - `verification`: `python -m py_compile passed for the restored map helper scripts; imported byte hashes matched origin/kmh before the secret-removal patch; git diff --check passed with CRLF warnings only.`
+
+- direct_compare_cta_routing:
+  - `frontend/index.html`: `changed 직접 비교하기 from a button to an anchor with ./movies.html fallback href.`
+  - `frontend/src/js/pages/script.js`: `nearbyBtn now saves the current search context and navigates to movies.html with region, date, timeStart, timeEnd, and personCount query parameters.`
+  - `frontend/src/css/style.css`: `kept the anchor styled like the existing 직접 비교하기 button with no underline and pointer affordance.`
+  - `verification`: `node --check passed for script.js; git diff --check passed with CRLF warnings only.`
+
+- location_cta_routing:
+  - `frontend/index.html`: `changed 내 위치 from an unlinked button to an anchor pointing at ./src/basic/movieTheaterMap.html.`
+  - `frontend/src/css/style.css`: `updated .btn-map so the anchor keeps the previous button-like alignment, color, and pointer behavior.`
+  - `verification`: `node --check passed for script.js; git diff --check passed with CRLF warnings only.`
+
+- location_cta_and_map_logo_polish:
+  - `frontend/src/css/style.css`: `set .btn-map to a fixed 52px button-height flex anchor with stable padding, line-height, no underline, and nowrap text.`
+  - `frontend/src/basic/movieTheaterMap.html`: `changed header and footer logo image paths from /assets/logo.svg to /src/assets/logo.svg?v=20260427-logo and linked logos back to ../../index.html.`
+  - `frontend/index.html`: `cache-busted the 내 위치 map-page link to ./src/basic/movieTheaterMap.html?v=20260427-logo so the app browser reloads the updated map page.`
+  - `verification`: `confirmed http://localhost:5500/src/assets/logo.svg?v=20260427-logo returns 200; node --check passed for script.js; git diff --check passed with CRLF warnings only.`
 
 - ai_result_actions_cleanup:
   - `frontend/src/js/pages/daboyeoAi.js`: `result-card actions now render 예매하기 and 좌석표보기 only; 끌려요/별로예요 feedback buttons were removed from the card renderer.`
