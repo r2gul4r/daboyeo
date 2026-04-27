@@ -7,6 +7,7 @@ import {
 } from "../api/client.js";
 
 const STORAGE_KEY = "daboyeoAnonymousId";
+const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
 const MAIN_PAGE_URL = "../../index.html";
 const LOCAL_PREVIEW_ID_PREFIX = "local-preview-";
 const POSTER_POOL_SIZE = 30;
@@ -57,7 +58,7 @@ const modeOptions = [
     label: "정밀 추천",
     model: "E4B Q4",
     description: "후보를 꼼꼼히 비교하고, 포스터 취향까지\n반영해 더 정확하게 추천해 드립니다.",
-    tags: ["E2B Q4", "빠름", "간단한 이유", "상위 후보"],
+    tags: ["E4B Q4", "정밀 분석", "포스터 취향", "후보 비교"],
     recommended: true,
   },
 ];
@@ -82,6 +83,12 @@ const stepBackMap = {
   mode: "posters",
 };
 
+const timeRangeLabels = {
+  morning: "조조",
+  brunch: "브런치",
+  night: "야간",
+};
+
 const screen = document.getElementById("aiScreen");
 const backButton = document.getElementById("aiBackButton");
 const progress = document.getElementById("aiProgress");
@@ -96,6 +103,7 @@ const state = {
     mood: null,
     avoid: [],
   },
+  searchContext: null,
   posters: {
     status: "idle",
     items: [],
@@ -117,6 +125,8 @@ const state = {
   stepTimer: null,
   toastTimer: null,
 };
+
+state.searchContext = readSearchContext();
 
 function createLocalPreviewId() {
   const randomId = window.crypto?.randomUUID
@@ -187,6 +197,86 @@ function clearChildren(element) {
   while (element.firstChild) {
     element.removeChild(element.firstChild);
   }
+}
+
+function normalizeSearchContext(raw) {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+
+  const personCount = Number(raw.personCount);
+  const normalized = {
+    region: typeof raw.region === "string" ? raw.region.trim() : "",
+    date: typeof raw.date === "string" ? raw.date.trim() : "",
+    timeRange: typeof raw.timeRange === "string" ? raw.timeRange.trim().toLowerCase() : "",
+    personCount: Number.isFinite(personCount) && personCount > 0 ? Math.floor(personCount) : null,
+  };
+
+  return hasSearchContext(normalized) ? normalized : null;
+}
+
+function hasSearchContext(context) {
+  return Boolean(
+    context
+      && (context.region
+        || context.date
+        || context.timeRange
+        || context.personCount),
+  );
+}
+
+function readSearchContext() {
+  try {
+    const raw = sessionStorage.getItem(SEARCH_CONTEXT_KEY);
+    return raw ? normalizeSearchContext(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
+function searchContextRegion(context) {
+  const region = context?.region?.trim() || "";
+  return region && region !== "전체" ? region : "";
+}
+
+function searchContextParts(context) {
+  if (!hasSearchContext(context)) {
+    return [];
+  }
+
+  const parts = [];
+  const region = searchContextRegion(context);
+  if (region) {
+    parts.push(region);
+  }
+  if (context.date) {
+    parts.push(context.date);
+  }
+  if (context.timeRange && timeRangeLabels[context.timeRange]) {
+    parts.push(timeRangeLabels[context.timeRange]);
+  }
+  if (context.personCount) {
+    parts.push(`${context.personCount}명`);
+  }
+  return parts;
+}
+
+function searchContextText(context) {
+  const parts = searchContextParts(context);
+  return parts.length > 0 ? parts.join(" · ") : "";
+}
+
+function buildSearchFiltersPayload() {
+  if (!hasSearchContext(state.searchContext)) {
+    return null;
+  }
+
+  return {
+    region: searchContextRegion(state.searchContext),
+    date: state.searchContext.date || null,
+    timeRange: state.searchContext.timeRange || null,
+    personCount: state.searchContext.personCount || null,
+  };
 }
 
 function optionLabel(options, value) {
@@ -369,7 +459,7 @@ function renderTitle(parts) {
 
 function renderSplitLayout({ kicker, titleParts, description, extraLeft, content }) {
   const section = createElement("section", "ai-split-layout");
-  
+
   const leftPane = createElement("div", "ai-split-left");
 
   if (stepBackMap[state.step]) {
@@ -380,8 +470,9 @@ function renderSplitLayout({ kicker, titleParts, description, extraLeft, content
     leftPane.appendChild(backButton);
   }
 
+  leftPane.appendChild(createElement("p", "ai-kicker", kicker));
   leftPane.appendChild(renderTitle(titleParts));
-  
+
   if (description) {
     leftPane.appendChild(createElement("p", "ai-description", description));
   }
@@ -405,6 +496,12 @@ function renderSplitLayout({ kicker, titleParts, description, extraLeft, content
 
 function renderSummary() {
   const rows = [];
+  const searchText = searchContextText(state.searchContext);
+
+  if (searchText) {
+    rows.push(["상영 조건", searchText]);
+  }
+
   if (state.survey.audience) {
     rows.push(["함께 볼 사람", optionLabel(audienceOptions, state.survey.audience)]);
   }
@@ -440,13 +537,13 @@ function renderOptionList(options, selectedValueOrArray, onSelect, isMulti = fal
   list.style.width = '100%';
 
   options.forEach((option) => {
-    const isSelected = isMulti 
-      ? selectedValueOrArray.includes(option.value) 
+    const isSelected = isMulti
+      ? selectedValueOrArray.includes(option.value)
       : selectedValueOrArray === option.value;
-      
+
     const button = createElement("button", ["ai-glass-btn", "can-hover", isSelected ? "is-selected" : null]);
     button.type = "button";
-    
+
     button.addEventListener("click", (e) => {
       if (window.innerWidth <= 768 && !isMulti) {
         if (!button.classList.contains("is-selected") && !button.classList.contains("is-expanded")) {
@@ -478,7 +575,7 @@ function renderAudienceStep() {
   return renderSplitLayout({
     kicker: "AI GUIDE 01",
     titleParts: [
-      { text: "반가워요, 다보예요!\n", style: "font-size: 40px;" },
+      { text: "반가워요, 다보예요!\n", style: "font-size: 30px;" },
       { text: "누구랑 보실 건가요?" },
     ],
     description: "같이 볼 사람부터 골라볼까요? 지금 상황을 기준으로 추천 기준을 잡을게요.",
@@ -563,9 +660,9 @@ function showPosterBatch(batchIndex) {
 function renderAvoidStep() {
   const panel = createElement("div", "ai-avoid-panel");
   panel.style.width = '100%';
-  
+
   const grid = createElement("div", "ai-avoid-grid");
-  
+
   avoidOptions.forEach((option) => {
     const isSelected = state.survey.avoid.includes(option.value);
     const btn = createElement("button", ["ai-avoid-btn", isSelected ? "is-selected" : null], option.label);
@@ -582,7 +679,7 @@ function renderAvoidStep() {
     });
     grid.appendChild(btn);
   });
-  
+
   panel.appendChild(grid);
 
   const ctaRow = createElement("div", "ai-cta-row");
@@ -592,10 +689,10 @@ function renderAvoidStep() {
     setStep("posters");
   });
   ctaRow.appendChild(completeBtn);
-  
+
   const hint = createElement("p", "ai-avoid-cta-hint", "여러 개 선택하실 수 있습니다. 해당 없음을 선택하시면 바로 다음 단계로 넘어갑니다.");
   ctaRow.appendChild(hint);
-  
+
   panel.appendChild(ctaRow);
 
   return renderSplitLayout({
@@ -689,7 +786,7 @@ function renderPosterStep() {
     return renderLoadingMessage("포스터를 가져오는 중", "잠깐만 기다려줘.");
   }
   if (state.posters.status === "error") {
-    return renderErrorPanel("포스터를 가져오지 못했어", state.posters.error?.message, 
+    return renderErrorPanel("포스터를 가져오지 못했어", state.posters.error?.message,
       [{ label: "다시 시도", onClick: () => ensurePostersLoaded(true) }, { label: "처음부터", onClick: () => setStep("audience"), secondary: true }]);
   }
   if (state.posters.status === "empty") {
@@ -732,11 +829,11 @@ function renderPosterStep() {
   const content = createElement("div", "ai-poster-pane");
   content.style.position = "relative";
   content.style.width = "100%";
-  
+
   const fakeKicker = createElement("p", "ai-kicker", "AI GUIDE 04");
   fakeKicker.style.visibility = "hidden";
   fakeKicker.setAttribute("aria-hidden", "true");
-  
+
   content.appendChild(rightTop);
   content.appendChild(fakeKicker);
   content.appendChild(grid);
@@ -766,19 +863,19 @@ function renderModeCard(option) {
 
   const top = createElement("div");
   top.appendChild(createElement("h3", null, option.label));
-  
+
   top.appendChild(createElement("div", "ai-mode-divider"));
-  
+
   const desc = createElement("p", null, option.description);
   desc.innerHTML = option.description.replace(/\n/g, '<br/>');
   top.appendChild(desc);
-  
+
   const badges = createElement("div", "ai-mode-badges");
   option.tags.forEach(t => {
     badges.appendChild(createElement("span", "ai-mode-badge", t));
   });
   top.appendChild(badges);
-  
+
   card.appendChild(top);
 
   const btn = createElement("button", "ai-mode-action", "보러가기");
@@ -842,6 +939,10 @@ async function runRecommendation(mode) {
       dislikedSeedMovieIds: [],
     },
   };
+  const searchFilters = buildSearchFiltersPayload();
+  if (searchFilters) {
+    payload.searchFilters = searchFilters;
+  }
 
   try {
     const response = await requestRecommendations(payload);
@@ -871,6 +972,14 @@ function createPreviewRecommendationResponse(mode) {
     state.posterChoices.likedSeedMovieIds.includes(String(movie.id))
   ));
   const sourceMovies = liked.length > 0 ? liked : state.posters.items.slice(0, 3);
+  const regionName = searchContextRegion(state.searchContext) || "서울";
+  const showDate = state.searchContext?.date || "오늘";
+  const previewTimesByRange = {
+    morning: ["08:10", "09:40", "10:30"],
+    brunch: ["11:40", "13:20", "15:10"],
+    night: ["18:10", "20:00", "21:40"],
+  };
+  const previewTimes = previewTimesByRange[state.searchContext?.timeRange] || ["14:30", "16:30", "18:30"];
   const recommendations = sourceMovies.slice(0, 3).map((movie, index) => ({
     movieId: 9000 + index,
     showtimeId: 19000 + index,
@@ -879,13 +988,13 @@ function createPreviewRecommendationResponse(mode) {
     reason: "#가볍게 #12세",
     analysisPoint: mode === "precise" ? (index === 0 ? "#애니메이션취향" : "#판타지취향") : "",
     caution: "",
-    valuePoint: "#17:00상영 #좌석여유",
+    valuePoint: `#${previewTimes[index] || previewTimes[previewTimes.length - 1]}상영 #좌석여유`,
     providerCode: index % 2 === 0 ? "CGV" : "MEGABOX",
     theaterName: index % 2 === 0 ? "강남" : "코엑스",
-    regionName: "서울",
+    regionName,
     screenName: `${index + 1}관`,
-    showDate: "오늘",
-    startsAt: `${14 + index * 2}:30`,
+    showDate,
+    startsAt: previewTimes[index] || previewTimes[previewTimes.length - 1],
     minPriceAmount: 12000 + index * 1000,
     currencyCode: "KRW",
     bookingUrl: "https://www.cgv.co.kr/",
@@ -1105,7 +1214,7 @@ function renderResultCard(item, index) {
   if (item.reason) {
     body.appendChild(createElement("p", "ai-result-tags", item.reason));
   }
-  
+
   if (item.analysisPoint) {
     const analysisPoint = createElement("p", "ai-result-tags");
     const label = createElement("strong", "ai-analysis-label", "분석 포인트");
@@ -1164,7 +1273,7 @@ function renderResultsStep() {
   side.appendChild(createElement("p", "ai-result-note", "지금 상황과 취향을 반영해, 바로 볼 수 있는 최적의 영화를 골랐어요."));
 
   const summary = createElement("div", "ai-result-summary");
-  
+
   const addSummaryRow = (label, value) => {
     const row = createElement("div", "ai-result-summary-row");
     row.appendChild(createElement("strong", null, label));
@@ -1172,6 +1281,10 @@ function renderResultsStep() {
     summary.appendChild(row);
   };
 
+  const searchText = searchContextText(state.searchContext);
+  if (searchText) {
+    addSummaryRow("상영 조건", searchText);
+  }
   if (state.survey.audience) {
     addSummaryRow("함께 볼 사람", optionLabel(audienceOptions, state.survey.audience));
   }
@@ -1248,7 +1361,7 @@ function render() {
   clearChildren(screen);
   screen.classList.toggle("is-poster-screen", state.step === "posters");
   progress.textContent = `${progressText[state.step] || ""}${isLocalPreviewSession() ? " " : ""}`;
-  
+
   const subHeader = document.querySelector(".ai-sub-header");
   if (subHeader) {
     const showBatch = state.step === "posters" && posterBatchCount() > 1;

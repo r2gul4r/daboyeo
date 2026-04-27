@@ -245,3 +245,65 @@ Do not rewrite existing entries; append only.
 - summary: `analysisPoint를 precise 전용으로 바꾸면서 fast 기대값 테스트가 실패`
 - details: `기존 품질 테스트 3개가 fast/E2B 응답에도 analysisPoint=#애니메이션취향 이 있다고 기대해 실패했다. 새 계약에 맞춰 fast는 blank analysisPoint, precise/E4B는 selected-poster genre analysisPoint를 기대하도록 테스트를 수정했고 focused/package/full Gradle 테스트를 재실행해 통과했다.`
 - status: `resolved`
+
+- time: `2026-04-21 20:16:00 +09:00`
+  location: `STATE.md`
+  summary: `작업 재분류 중 STATE.md 인코딩 손상`
+  details: `Stitch-led AI 페이지 리뉴얼 태스크로 보드를 갱신하는 중 STATE.md 가 혼합 인코딩으로 깨져 읽기 어려운 상태가 됐다. 현재 보드를 UTF-8로 재구성해 계속 진행한다.`
+  status: `resolved`
+
+- time: `2026-04-21 20:18:00 +09:00`
+  location: `mcp__stitch__.create_design_system, mcp__stitch__.generate_screen_from_text`
+  summary: `Stitch 디자인 시스템/화면 생성 호출 실패`
+  details: `create_design_system 은 invalid argument 를 반환했고, 이어진 generate_screen_from_text 는 service unavailable 을 반환했다. Stitch를 디자인 근거 시도로는 사용했지만 실제 화면 구현은 동일한 브리프를 기반으로 로컬 코드에서 우회했다.`
+  status: `deferred`
+## 2026-04-21 17:17:07 +09:00
+- time: `2026-04-21 17:17:07 +09:00`
+- location: `mcp__stitch__.edit_screens`
+- summary: `Results-screen Stitch regeneration timed out during edit_screens call`
+- details: `A focused dark-layout redesign prompt was sent to Stitch for screen a11a57f615384ba28f95ce67ac495b55 in project 7742688576431333902. The tool timed out after 120 seconds. Per tool instructions, the generation may still have completed server-side, so the next step is to verify with get_screen instead of retrying immediately.`
+- status: `open`
+
+## 2026-04-21 17:17:07 +09:00
+- time: `2026-04-21 17:17:07 +09:00`
+- location: `mcp__stitch__.generate_variants`
+- summary: `Results-screen variant generation rejected the variantOptions argument`
+- details: `Tried to generate one dark-theme variant from screen a11a57f615384ba28f95ce67ac495b55 in project 7742688576431333902, but Stitch returned 'Request contains an invalid argument.' The next fallback is to generate a fresh results screen from text in the same project instead of variant mode.`
+- status: `open`
+
+## 2026-04-21 17:17:07 +09:00
+- time: `2026-04-21 17:17:07 +09:00`
+- location: `mcp__stitch__.generate_screen_from_text`
+- summary: `Results-screen redesign recovered via short prompt fallback`
+- details: `After one timed-out long prompt and one rejected variant call, a shorter direct generation prompt succeeded in project 7742688576431333902 and created screen 8c8ebac647434c24a68f40e105393323 titled AI 추천 결과 (Dark Cinematic Stage). This resolves the immediate need for a dark replacement results screen.`
+- status: `resolved`
+
+- time: `2026-04-22 13:10:11 +09:00`
+  location: `mcp__stitch__.create_design_system`
+  summary: `1440x1026 PPT 새 세션 생성 중 Stitch 디자인 시스템 생성 실패`
+  details: `새 PPT 프로젝트 13482283388031437931 에서 스타일을 먼저 고정하려고 create_design_system 을 호출했지만 'Request contains an invalid argument.' 를 반환했다. 작업은 각 slide generation prompt 에 스타일 규칙을 직접 포함하는 방식으로 우회했다.`
+  status: `resolved`
+
+- time: `2026-04-22 13:10:11 +09:00`
+  location: `mcp__stitch__.generate_screen_from_text`
+  summary: `Stitch가 1440x1026 exact frame size를 보장하지 않음`
+  details: `사용자 요구는 1440x1026 발표 프레임이었지만 생성된 screen 메타데이터는 2560x2052, 2880x2052, 2752x2240 등 더 큰 기본 desktop canvas 로 반환됐다. 내용과 톤은 생성했지만 exact pixel 규격은 현재 Stitch 생성 경로에서 강제되지 않았다.`
+  status: `open`
+
+- time: `2026-04-22 13:10:11 +09:00`
+  location: `mcp__stitch__.list_screens`
+  summary: `생성 후 list_screens 결과가 비어 있음`
+  details: `프로젝트 13482283388031437931 에 여러 screen 생성 호출이 성공했지만 list_screens 는 빈 객체를 반환했다. 이번 턴의 산출물 확인은 각 generate_screen_from_text 성공 응답의 screen id 와 screenshot metadata 를 근거로 했다.`
+  status: `open`
+
+- time: `2026-04-22 14:20:00 +09:00`
+  location: `mcp__stitch__.generate_screen_from_text`
+  summary: `UI/UX 슬라이드 생성 응답이 120초 타임아웃으로 끊김`
+  details: `프로젝트 10979052864160268633 에서 '7. 주요 화면 (UI/UX)' 슬라이드를 생성하던 중 Stitch 호출이 120초 후 타임아웃됐다. 도구 안내상 서버 쪽 생성이 계속됐을 가능성은 있지만, 같은 환경에서 list_screens 도 빈 객체를 반환해 즉시 복구 확인을 하지 못했다.`
+  status: `open`
+
+- time: `2026-04-22 14:38:20 +09:00`
+  location: `tool discovery for Figma resizing`
+  summary: `현 세션에 exact 1440x1026 프레임 리사이즈용 Figma write tool 이 노출되지 않음`
+  details: `사용자가 rebuilt deck 의 정확한 1440x1026 사이즈를 요구해 도구 탐색을 다시 수행했지만, 현재 세션에서는 Stitch generate/edit 와 Figma read/generate 계열만 확인됐고 기존 슬라이드 프레임 크기를 직접 수정하는 write/resize 액션은 찾지 못했다. 이 때문에 현재 자동 경로로는 exact pixel size enforcement 가 막혀 있다.`
+  status: `open`

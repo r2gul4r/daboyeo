@@ -25,6 +25,7 @@ import kr.daboyeo.backend.domain.recommendation.RecommendationModels.Recommendat
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.RecommendationProfile;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.RecommendationRequest;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.RecommendationResponse;
+import kr.daboyeo.backend.domain.recommendation.RecommendationModels.SearchFilters;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ScoredCandidate;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.SessionResponse;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ShowtimeCandidate;
@@ -118,21 +119,37 @@ public class RecommendationService {
             request.posterChoices(),
             storedProfile.tagWeights()
         );
+        SearchFilters searchFilters = request.searchFilters();
         RecommendationRequest normalizedRequest = new RecommendationRequest(
             resolvedAnonymousId,
             mode.wireValue(),
             request.survey(),
-            request.posterChoices()
+            request.posterChoices(),
+            searchFilters
         );
         profileRepository.upsertSurvey(resolvedAnonymousId, normalizedRequest);
 
         String runId = newRunId();
         int startBufferMinutes = properties.minStartBufferMinutes();
         LocalDateTime minStartsAt = LocalDateTime.now().plusMinutes(startBufferMinutes);
-        List<ShowtimeCandidate> candidates = showtimeRepository.findUpcomingCandidates(CANDIDATE_LIMIT, minStartsAt);
+        List<ShowtimeCandidate> candidates = searchFilters != null && searchFilters.active()
+            ? showtimeRepository.findUpcomingCandidates(CANDIDATE_LIMIT, minStartsAt, searchFilters)
+            : showtimeRepository.findUpcomingCandidates(CANDIDATE_LIMIT, minStartsAt);
         String modelName = properties.modelFor(mode);
 
         if (candidates.isEmpty()) {
+            if (searchFilters != null && searchFilters.active()) {
+                return noCandidateResponse(
+                    startedAt,
+                    runId,
+                    resolvedAnonymousId,
+                    mode,
+                    modelName,
+                    normalizedRequest,
+                    "no_filtered_candidates",
+                    "선택한 지역, 날짜, 시간대, 인원수에 맞는 상영이 없어."
+                );
+            }
             boolean hasStoredShowtimes = showtimeRepository.countStoredShowtimes() > 0;
             String status = hasStoredShowtimes ? "no_usable_showtimes" : "no_showtime_data";
             String message = hasStoredShowtimes
@@ -150,7 +167,7 @@ public class RecommendationService {
             );
         }
 
-        List<ScoredCandidate> scored = scorer.score(tagProfile, candidates);
+        List<ScoredCandidate> scored = scorer.score(tagProfile, candidates, searchFilters);
         if (scored.isEmpty()) {
             return noCandidateResponse(
                 startedAt,
@@ -164,9 +181,7 @@ public class RecommendationService {
             );
         }
 
-        List<ScoredCandidate> aiCandidates = scored.stream()
-            .limit(properties.aiCandidateLimitFor(mode))
-            .toList();
+        List<ScoredCandidate> aiCandidates = selectDistinctMovieItems(scored, properties.aiCandidateLimitFor(mode));
         var aiResult = localModelClient.rankAndExplain(mode, tagProfile, aiCandidates);
         List<RecommendationItem> items = aiResult
             .map(result -> itemsFromAi(scored, result.picks(), tagProfile, mode))
@@ -559,11 +574,15 @@ public class RecommendationService {
     }
 
     private List<ScoredCandidate> selectDistinctMovieItems(List<ScoredCandidate> rankedCandidates) {
+        return selectDistinctMovieItems(rankedCandidates, RESULT_LIMIT);
+    }
+
+    private List<ScoredCandidate> selectDistinctMovieItems(List<ScoredCandidate> rankedCandidates, int limit) {
         List<ScoredCandidate> selected = new ArrayList<>();
         List<ScoredCandidate> deferred = new ArrayList<>();
         Set<String> seenMovies = new LinkedHashSet<>();
         for (ScoredCandidate scored : rankedCandidates) {
-            if (selected.size() >= RESULT_LIMIT) {
+            if (selected.size() >= limit) {
                 break;
             }
             String movieKey = movieKey(scored);
@@ -573,9 +592,9 @@ public class RecommendationService {
                 deferred.add(scored);
             }
         }
-        if (selected.size() < RESULT_LIMIT) {
+        if (selected.size() < limit) {
             for (ScoredCandidate scored : deferred) {
-                if (selected.size() >= RESULT_LIMIT) {
+                if (selected.size() >= limit) {
                     break;
                 }
                 selected.add(scored);

@@ -55,7 +55,7 @@ class RecommendationServiceQualityTests {
         );
         when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class))).thenReturn(candidates);
         when(showtimeRepository.countStoredShowtimes()).thenReturn(4);
-        when(scorer.score(any(TagProfile.class), anyList())).thenReturn(scored);
+        when(scorer.score(any(TagProfile.class), anyList(), any())).thenReturn(scored);
         when(localModelClient.rankAndExplain(eq(RecommendationMode.FAST), any(TagProfile.class), anyList()))
             .thenReturn(Optional.of(new AiResult(
                 "{\"recommendations\":[]}",
@@ -89,7 +89,7 @@ class RecommendationServiceQualityTests {
         );
         when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class))).thenReturn(candidates);
         when(showtimeRepository.countStoredShowtimes()).thenReturn(4);
-        when(scorer.score(any(TagProfile.class), anyList())).thenReturn(scored);
+        when(scorer.score(any(TagProfile.class), anyList(), any())).thenReturn(scored);
         when(localModelClient.rankAndExplain(any(), any(), anyList())).thenReturn(Optional.empty());
 
         RecommendationResponse response = service.recommend(request());
@@ -115,7 +115,7 @@ class RecommendationServiceQualityTests {
         );
         when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class))).thenReturn(candidates);
         when(showtimeRepository.countStoredShowtimes()).thenReturn(4);
-        when(scorer.score(any(TagProfile.class), anyList())).thenReturn(scored);
+        when(scorer.score(any(TagProfile.class), anyList(), any())).thenReturn(scored);
         when(localModelClient.rankAndExplain(eq(RecommendationMode.FAST), any(TagProfile.class), anyList()))
             .thenReturn(Optional.of(new AiResult(
                 "{\"recommendations\":[]}",
@@ -141,7 +141,7 @@ class RecommendationServiceQualityTests {
         List<ScoredCandidate> scored = List.of(scored(first, 94));
         when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class))).thenReturn(candidates);
         when(showtimeRepository.countStoredShowtimes()).thenReturn(1);
-        when(scorer.score(any(TagProfile.class), anyList())).thenReturn(scored);
+        when(scorer.score(any(TagProfile.class), anyList(), any())).thenReturn(scored);
         when(localModelClient.rankAndExplain(eq(RecommendationMode.FAST), any(TagProfile.class), anyList()))
             .thenReturn(Optional.of(new AiResult(
                 "{\"recommendations\":[]}",
@@ -173,7 +173,7 @@ class RecommendationServiceQualityTests {
         List<ScoredCandidate> scored = List.of(scored(first, 94));
         when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class))).thenReturn(candidates);
         when(showtimeRepository.countStoredShowtimes()).thenReturn(1);
-        when(scorer.score(any(TagProfile.class), anyList())).thenReturn(scored);
+        when(scorer.score(any(TagProfile.class), anyList(), any())).thenReturn(scored);
         when(localModelClient.rankAndExplain(eq(RecommendationMode.FAST), any(TagProfile.class), anyList()))
             .thenReturn(Optional.of(new AiResult(
                 "{\"r\":[]}",
@@ -204,7 +204,7 @@ class RecommendationServiceQualityTests {
         List<ScoredCandidate> scored = List.of(scored(first, 94));
         when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class))).thenReturn(candidates);
         when(showtimeRepository.countStoredShowtimes()).thenReturn(1);
-        when(scorer.score(any(TagProfile.class), anyList())).thenReturn(scored);
+        when(scorer.score(any(TagProfile.class), anyList(), any())).thenReturn(scored);
         when(localModelClient.rankAndExplain(eq(RecommendationMode.FAST), any(TagProfile.class), anyList()))
             .thenReturn(Optional.of(new AiResult(
                 "{\"r\":[]}",
@@ -232,7 +232,7 @@ class RecommendationServiceQualityTests {
         List<ScoredCandidate> scored = List.of(scored(first, 94));
         when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class))).thenReturn(candidates);
         when(showtimeRepository.countStoredShowtimes()).thenReturn(1);
-        when(scorer.score(any(TagProfile.class), anyList())).thenReturn(scored);
+        when(scorer.score(any(TagProfile.class), anyList(), any())).thenReturn(scored);
         when(localModelClient.rankAndExplain(eq(RecommendationMode.FAST), any(TagProfile.class), anyList()))
             .thenReturn(Optional.of(new AiResult(
                 "{\"r\":[]}",
@@ -261,7 +261,7 @@ class RecommendationServiceQualityTests {
         List<ScoredCandidate> scored = List.of(scored(first, 94));
         when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class))).thenReturn(candidates);
         when(showtimeRepository.countStoredShowtimes()).thenReturn(1);
-        when(scorer.score(any(TagProfile.class), anyList())).thenReturn(scored);
+        when(scorer.score(any(TagProfile.class), anyList(), any())).thenReturn(scored);
         when(localModelClient.rankAndExplain(eq(RecommendationMode.PRECISE), any(TagProfile.class), anyList()))
             .thenReturn(Optional.of(new AiResult(
                 "{\"r\":[1]}",

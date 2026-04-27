@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ScoredCandidate;
+import kr.daboyeo.backend.domain.recommendation.RecommendationModels.SearchFilters;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ShowtimeCandidate;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.TagProfile;
 import org.springframework.stereotype.Component;
@@ -16,15 +17,26 @@ public class RecommendationScorer {
     private static final int BASE_SCORE = 50;
 
     public List<ScoredCandidate> score(TagProfile profile, List<ShowtimeCandidate> candidates) {
+        return score(profile, candidates, null);
+    }
+
+    public List<ScoredCandidate> score(TagProfile profile, List<ShowtimeCandidate> candidates, SearchFilters filters) {
         return candidates.stream()
-            .map(candidate -> scoreOne(profile, candidate))
+            .map(candidate -> scoreOne(profile, candidate, filters))
             .flatMap(Optional::stream)
             .sorted(Comparator.comparingInt(ScoredCandidate::score).reversed())
             .toList();
     }
 
     public Optional<ScoredCandidate> scoreOne(TagProfile profile, ShowtimeCandidate candidate) {
+        return scoreOne(profile, candidate, null);
+    }
+
+    public Optional<ScoredCandidate> scoreOne(TagProfile profile, ShowtimeCandidate candidate, SearchFilters filters) {
         if (isBlockedForChild(profile, candidate)) {
+            return Optional.empty();
+        }
+        if (hasTooFewSeats(filters, candidate)) {
             return Optional.empty();
         }
 
@@ -41,8 +53,8 @@ public class RecommendationScorer {
         }
 
         score += priceBonus(candidate);
-        score += seatBonus(candidate);
-        score += timeBonus(profile, candidate);
+        score += seatBonus(candidate, filters);
+        score += timeBonus(profile, candidate, filters);
         score -= avoidPenalty(profile, candidate, penalties);
 
         if (candidate.runtimeMinutes() != null && candidate.runtimeMinutes() <= 110) {
@@ -104,22 +116,43 @@ public class RecommendationScorer {
     }
 
     private int seatBonus(ShowtimeCandidate candidate) {
+        return seatBonus(candidate, null);
+    }
+
+    private int seatBonus(ShowtimeCandidate candidate, SearchFilters filters) {
         Integer remaining = candidate.remainingSeatCount();
         Integer total = candidate.totalSeatCount();
+        int value = 0;
         if (remaining == null || total == null || total <= 0) {
-            return 0;
+            if (filters != null && filters.hasPersonCount()) {
+                value -= 2;
+            }
+            return value;
         }
         double ratio = remaining / (double) total;
         if (ratio >= 0.4) {
-            return 5;
+            value += 5;
+        } else if (ratio >= 0.2) {
+            value += 2;
+        } else {
+            value -= 3;
         }
-        if (ratio >= 0.2) {
-            return 2;
+
+        if (filters != null && filters.hasPersonCount()) {
+            if (remaining >= filters.personCount() * 4) {
+                value += 2;
+            } else if (remaining == filters.personCount()) {
+                value -= 1;
+            }
         }
-        return -3;
+        return value;
     }
 
     private int timeBonus(TagProfile profile, ShowtimeCandidate candidate) {
+        return timeBonus(profile, candidate, null);
+    }
+
+    private int timeBonus(TagProfile profile, ShowtimeCandidate candidate, SearchFilters filters) {
         if (candidate.startsAt() == null) {
             return 0;
         }
@@ -142,7 +175,30 @@ public class RecommendationScorer {
         if ("calm".equals(profile.mood()) && hour >= 9 && hour <= 18) {
             value += 2;
         }
+        if (filters != null && filters.hasTimeRange()) {
+            if ("morning".equals(filters.timeRange()) && "light".equals(profile.mood())) {
+                value += 2;
+            }
+            if ("night".equals(filters.timeRange())) {
+                if ("immersive".equals(profile.mood()) || "tense".equals(profile.mood())) {
+                    value += 2;
+                }
+                if ("child".equals(profile.audience())) {
+                    value -= 4;
+                }
+                if (profile.avoids("too_long")) {
+                    value -= 3;
+                }
+            }
+        }
         return value;
+    }
+
+    private boolean hasTooFewSeats(SearchFilters filters, ShowtimeCandidate candidate) {
+        return filters != null
+            && filters.hasPersonCount()
+            && candidate.remainingSeatCount() != null
+            && candidate.remainingSeatCount() < filters.personCount();
     }
 
     private int avoidPenalty(TagProfile profile, ShowtimeCandidate candidate, List<String> penalties) {

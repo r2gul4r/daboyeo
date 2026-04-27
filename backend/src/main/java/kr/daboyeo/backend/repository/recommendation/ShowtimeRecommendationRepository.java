@@ -3,12 +3,16 @@ package kr.daboyeo.backend.repository.recommendation;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import kr.daboyeo.backend.domain.recommendation.RecommendationModels.SearchFilters;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ShowtimeCandidate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -23,7 +27,16 @@ public class ShowtimeRecommendationRepository {
     }
 
     public List<ShowtimeCandidate> findUpcomingCandidates(int limit, LocalDateTime minStartsAt) {
-        String sql = """
+        return findUpcomingCandidates(limit, minStartsAt, null);
+    }
+
+    public List<ShowtimeCandidate> findUpcomingCandidates(int limit, LocalDateTime minStartsAt, SearchFilters filters) {
+        SearchFilters activeFilters = filters != null && filters.active() ? filters : null;
+        LocalDateTime lowerBound = activeFilters != null && activeFilters.hasDate() && activeFilters.hasTimeRange()
+            ? max(minStartsAt, timeRangeLowerBound(activeFilters))
+            : minStartsAt;
+
+        StringBuilder sql = new StringBuilder("""
             SELECT
               s.id AS showtime_id,
               s.movie_id AS movie_id,
@@ -56,10 +69,18 @@ public class ShowtimeRecommendationRepository {
              AND mt.external_movie_id = COALESCE(s.external_movie_id, m.external_movie_id)
             WHERE s.starts_at IS NOT NULL
               AND s.starts_at >= ?
+            """);
+        List<Object> params = new ArrayList<>();
+        params.add(Timestamp.valueOf(lowerBound));
+
+        appendSearchFilters(sql, params, activeFilters);
+
+        sql.append("""
             ORDER BY s.starts_at ASC, s.show_date ASC, s.id ASC
             LIMIT ?
-            """;
-        return jdbcTemplate.query(sql, rs -> {
+            """);
+        params.add(Math.max(1, limit));
+        return jdbcTemplate.query(sql.toString(), rs -> {
             Map<Long, CandidateBuilder> builders = new LinkedHashMap<>();
             while (rs.next()) {
                 long showtimeId = rs.getLong("showtime_id");
@@ -92,7 +113,7 @@ public class ShowtimeRecommendationRepository {
                 }
             }
             return builders.values().stream().map(CandidateBuilder::build).toList();
-        }, Timestamp.valueOf(minStartsAt), Math.max(1, limit));
+        }, params.toArray());
     }
 
     public int countStoredShowtimes() {
@@ -188,6 +209,67 @@ public class ShowtimeRecommendationRepository {
 
     private LocalDateTime toLocalDateTime(Timestamp timestamp) {
         return timestamp == null ? null : timestamp.toLocalDateTime();
+    }
+
+    private void appendSearchFilters(StringBuilder sql, List<Object> params, SearchFilters filters) {
+        if (filters == null) {
+            return;
+        }
+
+        if (filters.hasRegion()) {
+            sql.append("  AND (LOWER(s.region_name) LIKE ? OR LOWER(s.theater_name) LIKE ?)\n");
+            String pattern = "%" + filters.region().toLowerCase(Locale.ROOT) + "%";
+            params.add(pattern);
+            params.add(pattern);
+        }
+
+        if (filters.hasDate()) {
+            if (filters.hasTimeRange()) {
+                sql.append("  AND s.starts_at < ?\n");
+                params.add(Timestamp.valueOf(timeRangeUpperBound(filters)));
+            } else {
+                sql.append("  AND s.show_date = ?\n");
+                params.add(filters.date());
+            }
+        } else if (filters.hasTimeRange()) {
+            sql.append("  AND ").append(genericTimeRangeSql(filters.timeRange())).append('\n');
+        }
+
+        if (filters.hasPersonCount()) {
+            sql.append("  AND (s.remaining_seat_count IS NULL OR s.remaining_seat_count >= ?)\n");
+            params.add(filters.personCount());
+        }
+    }
+
+    private LocalDateTime timeRangeLowerBound(SearchFilters filters) {
+        return switch (filters.timeRange()) {
+            case "morning" -> filters.date().atTime(LocalTime.of(6, 0));
+            case "brunch" -> filters.date().atTime(LocalTime.of(11, 0));
+            case "night" -> filters.date().atTime(LocalTime.of(17, 0));
+            default -> filters.date().atStartOfDay();
+        };
+    }
+
+    private LocalDateTime timeRangeUpperBound(SearchFilters filters) {
+        return switch (filters.timeRange()) {
+            case "morning" -> filters.date().atTime(LocalTime.of(11, 0));
+            case "brunch" -> filters.date().atTime(LocalTime.of(17, 0));
+            case "night" -> filters.date().plusDays(1).atTime(LocalTime.of(2, 0));
+            default -> filters.date().plusDays(1).atStartOfDay();
+        };
+    }
+
+    private String genericTimeRangeSql(String timeRange) {
+        return switch (timeRange) {
+            case "morning" -> "TIME(s.starts_at) >= '06:00:00' AND TIME(s.starts_at) < '11:00:00'";
+            case "brunch" -> "TIME(s.starts_at) >= '11:00:00' AND TIME(s.starts_at) < '17:00:00'";
+            case "night" -> "(TIME(s.starts_at) >= '17:00:00' OR TIME(s.starts_at) < '02:00:00')";
+            default -> "1 = 1";
+        };
+    }
+
+    private LocalDateTime max(LocalDateTime left, LocalDateTime right) {
+        return left.isAfter(right) ? left : right;
     }
 
     private static final class CandidateBuilder {

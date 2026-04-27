@@ -22,6 +22,7 @@ import kr.daboyeo.backend.domain.recommendation.RecommendationModels.Recommendat
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.RecommendationResponse;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.RecommendationSurvey;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ScoredCandidate;
+import kr.daboyeo.backend.domain.recommendation.RecommendationModels.SearchFilters;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ShowtimeCandidate;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.TagProfile;
 import kr.daboyeo.backend.repository.recommendation.RecommendationProfileRepository;
@@ -102,7 +103,7 @@ class RecommendationServiceCandidateFilterTests {
         );
         when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class)))
             .thenReturn(List.of(first, second, third, fourth));
-        when(scorer.score(any(TagProfile.class), any())).thenReturn(scored);
+        when(scorer.score(any(TagProfile.class), any(), any())).thenReturn(scored);
         when(localModelClient.rankAndExplain(any(), any(), any())).thenReturn(Optional.empty());
 
         service.recommend(request());
@@ -132,7 +133,7 @@ class RecommendationServiceCandidateFilterTests {
         );
         when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class)))
             .thenReturn(List.of(first, second, third, fourth, fifth, sixth));
-        when(scorer.score(any(TagProfile.class), any())).thenReturn(scored);
+        when(scorer.score(any(TagProfile.class), any(), any())).thenReturn(scored);
         when(localModelClient.rankAndExplain(any(), any(), any())).thenReturn(Optional.empty());
 
         service.recommend(request("precise"));
@@ -141,6 +142,29 @@ class RecommendationServiceCandidateFilterTests {
         ArgumentCaptor<List<ScoredCandidate>> aiCandidates = ArgumentCaptor.forClass(List.class);
         verify(localModelClient).rankAndExplain(eq(RecommendationMode.PRECISE), any(TagProfile.class), aiCandidates.capture());
         assertThat(aiCandidates.getValue()).hasSize(5);
+    }
+
+    @Test
+    void passesSearchFiltersToCandidateQueryWhenPresent() {
+        RecommendationService service = service(20);
+        SearchFilters filters = new SearchFilters("Gangnam", LocalDate.of(2026, 4, 17), "night", 2);
+        when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class), eq(filters))).thenReturn(List.of());
+
+        service.recommend(request("fast", filters));
+
+        verify(showtimeRepository).findUpcomingCandidates(anyInt(), any(LocalDateTime.class), eq(filters));
+    }
+
+    @Test
+    void noFilteredCandidatesStatusWhenSearchFiltersReturnNoResults() {
+        RecommendationService service = service(20);
+        SearchFilters filters = new SearchFilters("Gangnam", LocalDate.of(2026, 4, 17), "night", 2);
+        when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class), eq(filters))).thenReturn(List.of());
+
+        RecommendationResponse response = service.recommend(request("fast", filters));
+
+        assertThat(response.status()).isEqualTo("no_filtered_candidates");
+        assertThat(response.message()).contains("지역", "날짜", "시간대", "인원수");
     }
 
     private RecommendationService service(int minStartBufferMinutes) {
@@ -210,11 +234,16 @@ class RecommendationServiceCandidateFilterTests {
     }
 
     private RecommendationRequest request(String mode) {
+        return request(mode, null);
+    }
+
+    private RecommendationRequest request(String mode, SearchFilters filters) {
         return new RecommendationRequest(
             "anon_test",
             mode,
             new RecommendationSurvey("friends", "light", List.of("too_long")),
-            new PosterChoices(List.of("barbie", "aladdin_2019", "inside_out_2"), List.of())
+            new PosterChoices(List.of("barbie", "aladdin_2019", "inside_out_2"), List.of()),
+            filters
         );
     }
 }

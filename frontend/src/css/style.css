@@ -456,6 +456,7 @@ button:hover {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .movie-cards-grid {
@@ -677,6 +678,10 @@ button:hover {
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+}
+
+.ai-card[data-seat-flow] {
+  cursor: pointer;
 }
 
 /* ============================================
