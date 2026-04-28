@@ -91,7 +91,11 @@ def megabox_showtime_key(row: dict[str, Any]) -> str:
 def normalize_seat_status(provider: str, status_code: Any, raw: dict[str, Any] | None = None) -> str:
     code = str(status_code or "").upper()
     if provider == "LOTTE_CINEMA":
-        return "available" if code == "0" else "sold"
+        if code in {"50", "OK", "AVAILABLE"}:
+            return "available"
+        if code in {"0", "SALE_END", "BOOKED", "SOLD"}:
+            return "sold"
+        return "unavailable" if "BLOCK" in code or "DISABLE" in code else "unknown"
     if provider == "MEGABOX":
         if code in {"GERN_SELL", "A"}:
             return "available"

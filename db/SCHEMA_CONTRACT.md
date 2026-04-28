@@ -252,3 +252,82 @@ These tables must not store names, emails, phone numbers, auth tokens, cookies, 
 | `recommendation_feedback` | `like`, `dislike`, `booking_view` feedback | until user reset |
 
 Stable API-facing key is `anonymous_id`. It is an opaque random ID, not a login identity.
+
+## Migration 005 Team Sharing Extensions
+
+Migration `005_collection_contract_extensions.sql` freezes the tables that are needed after the fresh 3-provider crawl classification. These tables are part of the shared schema contract even if some ingest paths do not populate all of them yet.
+
+| table | role | write policy |
+|---|---|---|
+| `collection_runs` | one collector execution, scope, counts, status, and error summary | insert/update per run |
+| `canonical_movies` | provider-independent movie identity candidate | upsert/manual review |
+| `movie_provider_links` | link one canonical movie to provider-specific movie rows | upsert |
+| `seat_layouts` | stable auditorium layout for one provider/theater/screen/fingerprint | upsert |
+| `seat_layout_items` | stable seats inside one layout | upsert with layout |
+| `provider_status_codes` | provider raw status code to normalized status mapping | upsert |
+| `provider_raw_payloads` | raw response or R2 object index | append/index |
+
+`showtime_price_options` is not a separate table name in this schema. Price options use the existing `showtime_prices` table.
+
+## Migration 005 Stable Keys
+
+| table | unique key | meaning |
+|---|---|---|
+| `collection_runs` | `run_key` | one logical collector run |
+| `canonical_movies` | `canonical_key` | normalized movie identity candidate |
+| `movie_provider_links` | `provider_code`, `external_movie_id` | one provider movie maps to one canonical movie |
+| `seat_layouts` | `provider_code`, `external_theater_id`, `external_screen_id`, `layout_fingerprint` | one stable screen layout |
+| `seat_layout_items` | `seat_layout_id`, `seat_key` | one stable seat inside a layout |
+| `provider_status_codes` | `provider_code`, `status_domain`, `provider_status_code` | one raw status mapping |
+
+## Showtime Midnight Rule
+
+Provider raw times can cross midnight. CGV can return compact values such as `2400` or `2609`; Lotte can return values such as `24:17`.
+
+- Keep `start_time_raw` and `end_time_raw` exactly as the provider returned them.
+- Normalize `starts_at` and `ends_at` to real `DATETIME` values for sorting and filtering.
+- `2400` means next day `00:00`.
+- `2609` means next day `02:09`.
+- `24:17` means next day `00:17`.
+- If the normalized end time is not after the start time, treat the end time as next day.
+
+This rule is required for night searches, AI recommendation time filters, and seat snapshot lookahead.
+
+## Provider Status Code Contract
+
+Provider-specific seat or booking status codes should not be hardcoded only in application logic once they are observed in real data. Record observed mappings in `provider_status_codes` with:
+
+- `status_domain`: for example `seat`, `booking`, or `showtime`
+- `provider_status_code`: raw provider code, for example `00`, `50`, `GERN_SELL`, `SCT04`
+- `provider_status_name`: raw display label when available
+- `normalized_status`: `available`, `sold`, `unavailable`, `special`, or `unknown`
+- `sample_json`: small redacted example only, with no cookies, tokens, or account data
+
+Migration 005 seeds the mappings observed in the fresh 2026-04-27 crawl:
+
+| provider | domain | code | normalized_status | evidence |
+|---|---|---|---|---|
+| `CGV` | `seat` | `00` | `available` | 144 observed seats; sale flag available |
+| `CGV` | `seat` | `01` | `sold` | existing normalizer sold code |
+| `LOTTE_CINEMA` | `seat` | `0` | `sold` | 140 observed seats while remaining seats were 2 |
+| `LOTTE_CINEMA` | `seat` | `50` | `available` | 2 observed seats matching remaining seats |
+| `MEGABOX` | `seat` | `GERN_SELL` | `available` | 102 observed seats matching remaining seats |
+| `MEGABOX` | `seat` | `SCT04` | `unavailable` | 14 observed seats excluded from remaining seats |
+
+## Seat Layout Contract
+
+Use `seat_layouts` and `seat_layout_items` for stable screen geometry. Use `seat_snapshots` and `seat_snapshot_items` for changing sale state.
+
+- Layout tables answer: where seats are and what zones/types they belong to.
+- Snapshot tables answer: which seats are currently available, sold, blocked, or special.
+- `seat_layouts.layout_fingerprint` should be derived from stable seat geometry, not from sale state.
+- `seat_snapshot_items.seat_key` should match `seat_layout_items.seat_key` when the provider gives a stable key.
+
+## Raw Payload Contract
+
+Large provider responses should stay out of committed files and should not expose credentials. Use `provider_raw_payloads` to point at either row-level `raw_json` or an external object key.
+
+- `object_key`, `object_etag`, and `object_size` are for R2 or equivalent raw archive storage.
+- `raw_json` is optional and should be used only for bounded, safe payloads.
+- Never store provider account IDs, passwords, cookies, API secrets, or bearer tokens in `raw_json`.
+- `collection_run_id` links raw payload indexes back to the run that produced them.

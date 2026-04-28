@@ -2,60 +2,90 @@
 
 ## Current Task
 
-- task: `Normalize frontend page tree`
-- phase: `verify`
-- scope: `Move user-facing subpages under frontend/src/pages, including root movies.html and the current src/basic pages, then update internal links, script constants, component header routes, and page-local asset paths to the new src/pages basis.`
-- verification_target: `index.html remains the only root HTML page, moved pages resolve their CSS/JS/assets from ../ paths, main CTAs route to src/pages, common header routes point at src/pages, and JS/static checks pass.`
-- previous_task_note: `The direct comparison search-condition and 17:00~02:00 review findings are explicitly deferred by the user and must not be solved in this cleanup pass.`
+- task: `Finalize team-shareable DB schema contract`
+- phase: `verify_and_publish`
+- scope: `Add DB README application instructions, then commit and push the completed team-shareable DB schema contract package.`
+- verification_target: `db/README.md explains migration application and verification commands; existing migration/docs/ingest/status-mapping checks remain valid before commit and push.`
+- previous_task_note: `Fresh 3-provider crawl output remains ignored under .local/api-responses/fresh-all-20260427-174156 and is not written to TiDB in this pass.`
 
 ## Orchestration Profile
 
-- score_total: `6`
-- score_breakdown: `2 page moves, 2 route/path rewrites, 1 stale placeholder/log cleanup risk, 1 verification breadth`
-- hard_triggers: `HTML rendering and route structure touched; reclassification required before edits`
-- selected_rules: `single-session frontend restructure, preserve dirty feature work, do not resolve deferred direct-compare behavior findings`
-- selected_skills: `none; this is repo-local vanilla HTML/CSS/JS path surgery`
+- score_total: `8`
+- score_breakdown: `2 schema migration, 2 ingest behavior change, 1 fresh data shape dependency, 1 security/raw-payload boundary, 1 docs/contract update, 1 verification breadth`
+- hard_triggers: `data_fidelity_risk, schema_contract_change, implementation_depends_on_discovery_result, external data raw payload handling`
+- selected_rules: `single-session schema/ingest/docs finalization, preserve existing migrations, no real credential exposure, no TiDB write, do not complete unrelated backend API work`
+- selected_skills: `none; repo-local Java/SQL/docs update`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
-- spawn_decision: `no spawn; the user did not request subagents and the route edits are tightly coupled across the same pages/components`
-- efficiency_basis: `handoff cost is higher than benefit because page moves and link rewrites must stay globally consistent`
-- selection_reason: `the user approved starting the file-tree cleanup after agreeing movies.html should move with the other subpages`
+- spawn_decision: `no spawn; the user did not request subagents and SQL, Java parser, tests, and docs must stay tightly consistent`
+- efficiency_basis: `handoff would add drift risk because migration fields, Java ingest semantics, and team docs describe the same contract`
+- selection_reason: `the user asked to finish the DB sharing package after the fresh 3-provider classification exposed additional table candidates and post-midnight showtime risk`
 
 ## Evaluation Plan
 
-- evaluation_need: `light`
+- evaluation_need: `full`
 - project_invariants:
-  - `Keep the frontend vanilla HTML/CSS/JS structure; no new build tool or framework.`
-  - `Do not change deferred direct-comparison behavior findings in this pass.`
-  - `Preserve current MBTI seat page, AI result page, Kakao map assets, and teammate-imported live movie work.`
+  - `Do not commit or document real secrets, passwords, tokens, cookies, or API keys.`
+  - `Keep db/migrations as the schema source of truth.`
+  - `Do not write fresh crawl output into TiDB in this pass.`
+  - `Preserve start_time_raw/end_time_raw exactly while normalizing starts_at/ends_at.`
 - task_acceptance:
-  - `Root frontend keeps index.html as the main entry page; movies.html is moved under frontend/src/pages.`
-  - `Former frontend/src/basic pages are moved under frontend/src/pages and references are updated.`
-  - `Common component header routes point to frontend/src/pages paths.`
-  - `Moved pages use page-local ../css, ../js, ../assets, and ../../favicon paths consistently.`
-  - `No references to frontend/src/basic routes remain in active frontend HTML/JS/component sources except intentional notes if any.`
-  - `Empty placeholder HTML files are not deleted unless a moved page remains reachable under src/pages.`
+  - `Add migration 005 for agreed team-shareable schema extensions that are needed before broader DB ingest.`
+  - `Include collection run tracking and provider status code mapping.`
+  - `Seed or document observed provider seat status mappings from the fresh crawl, including CGV 00, Lotte 0/50, and Megabox GERN_SELL/SCT04.`
+  - `Separate stable seat layout structure from per-run seat snapshots.`
+  - `Keep canonical movie linking documented as optional/deferred if not implemented in 005.`
+  - `Fix Java bundle ingest for CGV/Lotte post-midnight raw times such as 2400, 2609, and 24:17.`
+  - `Update team setup and schema contract docs so teammates know exactly what to apply.`
 - non_goals:
-  - `No backend API completion or direct comparison search semantics fix.`
-  - `No visual redesign.`
-  - `No push unless explicitly requested.`
+  - `No real DB credential distribution.`
+  - `No live DB writes from .local crawl data.`
+  - `No unrelated API feature completion.`
+  - `No R2 upload or public raw-payload sharing.`
 - hard_checks:
   - `Update STATE before product-file edits.`
-  - `Use safe file moves and preserve user changes.`
-  - `Run node --check for changed JS files.`
+  - `Use placeholders for all credentials.`
+  - `Run relevant Java tests if Gradle is usable in this environment.`
   - `Run git diff --check.`
-  - `Run static route grep for stale src/basic and root movies.html references.`
+  - `Review docs/migration for accidental secret-like concrete values.`
 - llm_review_rubric:
-  - `The resulting tree should be easier to explain: root entry, src/pages, src/css, src/js, src/assets, src/map.`
-  - `Path changes should be minimal and mechanical, not a hidden behavior rewrite.`
+  - `A teammate should be able to apply migrations 001-005 to their own DB and understand which tables are common, tracking, layout, and deferred.`
+  - `The ingest time contract should be explicit enough to prevent midnight sorting bugs.`
 - evidence_required:
-  - `Moved file list`
-  - `Route grep result`
-  - `node --check results`
+  - `Migration path and table list`
+  - `Java test result or clear environment gap`
+  - `Security placeholder review`
   - `git diff --check`
 
 ## Verification Results
+
+- fresh_three_provider_crawl:
+  - `output_dir`: `.local/api-responses/fresh-all-20260427-174156`
+  - `CGV`: `movies=59, attributes=13, regions=9, sites=177, dates=7, schedules=13, seats=144; sample=CGV 강남 / 악마는 프라다를 입는다 2 / 20260429 / 1관 (Laser) / 2400-2609`
+  - `LOTTE_CINEMA`: `movies=43, cinemas=239, play_dates=28, schedules=2, seats=142; sample=가산디지털 / 왕과 사는 남자 / 2026-04-27 / 2관 / 22:10-24:17`
+  - `MEGABOX`: `movies=68, area_branches=116, schedules=240, seats=116; sample=강남 / 살목지 / 20260427 / 르 리클라이너 1관 / 18:20-20:05`
+  - `classification`: `classification_summary.json separates common movies/theaters/screens/showtimes/seat snapshot fields from provider-specific raw/meta fields and candidate separate tables: collection_runs, canonical_movies/movie_provider_links, seat_layouts, provider_status_codes, raw payload archive index, showtime_price_options.`
+  - `notable_data_shape`: `CGV and Lotte can return post-midnight raw times such as 2400-2609 or 24:17, so ingest must normalize starts_at/ends_at across date boundaries while preserving start_time_raw/end_time_raw.`
+  - `security`: `CGV_API_SECRET was used from local environment/.env path and was not printed.`
+  - `errors`: `none`
+
+- team_db_setup_doc:
+  - `docs/TEAM_DB_SETUP.md`: `added a team guide for per-person DB names with shared db/migrations schema alignment, canonical internal table names, placeholder-only .env examples, setup commands, schema-change rules, data-vs-schema distinction, security notes, and a short team-share summary.`
+  - `table_names`: `documented the 20 canonical tables expected by the backend, collectors, and verification scripts: schema_migrations, providers, collection_runs, movies, canonical_movies, movie_provider_links, theaters, screens, showtimes, showtime_prices, seat_layouts, seat_layout_items, seat_snapshots, seat_snapshot_items, provider_status_codes, provider_raw_payloads, movie_tags, recommendation_profiles, recommendation_runs, recommendation_feedback.`
+  - `table_grouping`: `clarified that provider-specific data is not stored in cgv_*, lotte_*, or megabox_* tables; shared tables use provider_code/external_* keys and raw_json/provider_meta_json for provider-specific payloads.`
+  - `security`: `checked the new doc for password/secret/token/host patterns; only placeholders such as your-db-host, your-db-user, and your-db-password are present.`
+  - `verification`: `static table-name and grouping search found all canonical table names plus the common/provider-specific clarification in the guide; scripts/verify/verify_tidb_ingest.py now checks the same 20-table contract and required migrations 001-005.`
+
+- team_db_contract_finalization:
+  - `db/migrations/005_collection_contract_extensions.sql`: `adds collection_runs, canonical_movies, movie_provider_links, seat_layouts, seat_layout_items, provider_status_codes, and provider_raw_payloads, then records schema_migrations version 005.`
+  - `provider_status_seed`: `seeds observed seat mappings from the fresh crawl: CGV 00=available, CGV 01=sold, Lotte 0=sold, Lotte 50=available, Megabox GERN_SELL=available, Megabox SCT04=unavailable.`
+  - `collectors/common/normalize.py`: `updated Lotte seat status normalization to match the fresh sample where 50 matched the 2 remaining seats and 0 matched the 140 non-remaining seats.`
+  - `db/SCHEMA_CONTRACT.md`: `documents migration 005 roles, stable keys, midnight time rules, provider status seed evidence, seat layout separation, and raw payload constraints.`
+  - `scripts/verify/verify_tidb_ingest.py`: `now fails fast when required schema tables or migrations 001-005 are missing before printing ingest table counts.`
+  - `java_ingest_time_rule`: `CollectorBundleIngestCommand now preserves start_time_raw/end_time_raw while normalizing 2400, 2609, and 24:17 into cross-date starts_at/ends_at values for CGV/Lotte/Megabox bundles.`
+  - `verification`: `py_compile passed for normalize.py and verify_tidb_ingest.py; normalize assertions passed for CGV/Lotte/Megabox observed status codes; migration dry-run listed 001-005; migration 005 split into 10 SQL statements; static contract search found all 20 table names in docs and verifier; security placeholder scan found no concrete secrets; git diff --check passed with CRLF warnings only.`
+  - `gradle_gap`: `gradle test --tests kr.daboyeo.backend.ingest.CollectorBundleIngestCommandTests could not start because local Gradle failed to load native-platform.dll; logged in ERROR_LOG.md as an environment/runtime issue.`
 
 - frontend_page_tree_normalization:
   - `moved`: `frontend/movies.html and all frontend/src/basic/*.html pages now live under frontend/src/pages/.`
@@ -205,28 +235,37 @@
 ## Writer Slot
 
 - writer_slot: `main`
-- write_set: `STATE.md, frontend/src/js/liveMovies.js, frontend/movies.html, ERROR_LOG.md if verification errors materially affect the work`
+- write_set: `STATE.md, db/migrations/005_collection_contract_extensions.sql, db/SCHEMA_CONTRACT.md, docs/TEAM_DB_SETUP.md, scripts/verify/verify_tidb_ingest.py, collectors/common/normalize.py, backend/src/main/java/kr/daboyeo/backend/ingest/CollectorBundleIngestCommand.java, backend/src/test/java/kr/daboyeo/backend/ingest/CollectorBundleIngestCommandTests.java, ERROR_LOG.md if verification errors materially affect the work`
 - write_sets:
-  - `main`: `STATE.md, frontend/src/js/liveMovies.js, frontend/movies.html, ERROR_LOG.md if needed`
+  - `main`: `STATE.md, db/migrations/005_collection_contract_extensions.sql, db/SCHEMA_CONTRACT.md, docs/TEAM_DB_SETUP.md, scripts/verify/verify_tidb_ingest.py, collectors/common/normalize.py, backend/src/main/java/kr/daboyeo/backend/ingest/CollectorBundleIngestCommand.java, backend/src/test/java/kr/daboyeo/backend/ingest/CollectorBundleIngestCommandTests.java, ERROR_LOG.md if needed`
 - shared_assets_owner: `main`
 - note: `One shared task board is active; no concurrent registry mode.`
-- concurrent_note: `No subagents are used for this narrow follow-up; main owns integration files.`
+- concurrent_note: `No subagents are used; migration, docs, verifier, and ingest parser semantics must stay synchronized.`
 
 ## Contract Freeze
 
-- contract_freeze: `Fix only frontend review findings for the imported live movies page: stop dynamic URL/API values from entering innerHTML, make the group seat chip filter work, and remove the missing kakaoMap.css link.`
-- note: `Do not complete or redesign the unfinished backend live API/collector flow in this turn; backend collector output-drain review remains deferred by user request.`
+- contract_freeze: `Finalize a team-shareable DB schema contract: migrations 001-005 define identical internal table names and columns for every teammate DB, migration 005 adds collection/canonical/layout/status/raw-payload support, Java ingest normalizes post-midnight provider times while preserving raw strings, and docs/verifier explain the common contract.`
+- note: `Do not write the fresh .local crawl bundle into TiDB and do not force-complete unfinished backend API work in this turn.`
 - contract_source: `user request`
-- contract_revision: `2026-04-24-live-movies-frontend-review-fix`
-- verification_target: `node --check frontend/src/js/liveMovies.js, git diff --check, and static source check for missing stylesheet reference`
+- contract_revision: `2026-04-28-team-db-contract`
+- verification_target: `migration dry-run, Python verifier syntax check, Java ingest test where Gradle is usable, static contract/security checks, and git diff --check`
 
 ## Reviewer
 
 - reviewer: `main self-review`
-- reviewer_target: `dynamic innerHTML risk, group filter behavior, missing stylesheet link, JS syntax, and whitespace`
-- reviewer_focus: `fix frontend risks without expanding incomplete backend API/sync behavior`
+- reviewer_target: `migration idempotence, stable table names, post-midnight time normalization, no leaked credentials, and team docs clarity`
+- reviewer_focus: `make the DB contract shareable without inserting live crawl data or inventing unfinished backend API behavior`
 
 ## Last Update
+
+- timestamp: `2026-04-28 00:20:00 +09:00`
+- note: `Completed the team-shareable DB contract package with migration 005, docs, verifier updates, observed provider status mappings, and midnight showtime normalization checks; Gradle remains blocked by local native-platform.dll loading.`
+
+- timestamp: `2026-04-28 00:35:00 +09:00`
+- note: `User requested DB README application instructions plus commit and push; staying on branch lsh and publishing the completed DB contract package.`
+
+- timestamp: `2026-04-28 00:00:00 +09:00`
+- note: `Reframed writer slot and contract freeze around the team DB schema-sharing package before final verifier/docs close-out.`
 
 - timestamp: `2026-04-24 17:32:00 +09:00`
 - note: `Fixed live movies frontend review findings while deferring unfinished backend collector/API robustness by user request.`
@@ -728,3 +767,15 @@
 - reviewer_findings: `AI page refresh and Top3/discovery pages were imported while patch.js was excluded; main AI and popular-movie entry points now route to imported pages; MBTI seat routing remains intact`
 - verification_outcome: `node --check passed for daboyeoAi.js and script.js; git diff --check passed with CRLF warnings only`
 - next_gate_adjustment: `future ksg imports should continue inspecting scratch/helper files before accepting all branch changes`
+
+- task: `Team-shareable DB schema contract finalization`
+- score_total: `8`
+- evaluation_fit: `full fit; the output is a shared DB contract spanning migrations, ingest semantics, verifier behavior, and team-facing docs`
+- orchestration_fit: `single-session fit; SQL, Java time normalization, Python status mapping, and docs all describe the same contract and were safer in one lane`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `fresh provider seat-status evidence expanded the scope from table creation into seeded status-code mapping and Lotte normalizer correction`
+- reviewer_findings: `the shareable contract now covers migrations 001-005, 20 canonical table names, post-midnight showtime normalization, observed seat-status mapping, layout-vs-snapshot separation, and raw-payload safety`
+- verification_outcome: `migration dry-run, py_compile, status-normalizer assertions, migration split check, static contract search, secret placeholder scan, and git diff --check passed; Gradle test could not start due local native-platform.dll loading`
+- next_gate_adjustment: `when fresh crawl classification exposes status-code counts, compare them against existing normalizers before freezing the DB contract`

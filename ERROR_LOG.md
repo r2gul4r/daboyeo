@@ -307,3 +307,9 @@ Do not rewrite existing entries; append only.
   summary: `현 세션에 exact 1440x1026 프레임 리사이즈용 Figma write tool 이 노출되지 않음`
   details: `사용자가 rebuilt deck 의 정확한 1440x1026 사이즈를 요구해 도구 탐색을 다시 수행했지만, 현재 세션에서는 Stitch generate/edit 와 Figma read/generate 계열만 확인됐고 기존 슬라이드 프레임 크기를 직접 수정하는 write/resize 액션은 찾지 못했다. 이 때문에 현재 자동 경로로는 exact pixel size enforcement 가 막혀 있다.`
   status: `open`
+
+- time: `2026-04-28 00:00:00 +09:00`
+  location: `backend gradle verification`
+  summary: `팀 DB 스키마 마무리 중 Gradle 테스트 시작 실패`
+  details: `gradle test --tests kr.daboyeo.backend.ingest.CollectorBundleIngestCommandTests 를 backend 디렉터리에서 실행했지만 Gradle native-platform.dll 로딩 실패로 빌드가 시작되지 않았다. 코드 테스트 결과가 아니라 로컬 Gradle 런타임 문제이며, 가능한 정적 검증과 diff 검증으로 대체한다.`
+  status: `open`

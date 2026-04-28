@@ -24,7 +24,6 @@ import kr.daboyeo.backend.config.RootDotenvLoader;
 public class CollectorBundleIngestCommand {
 
     private static final DateTimeFormatter COMPACT_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
-    private static final DateTimeFormatter COMPACT_TIME = DateTimeFormatter.ofPattern("HHmm");
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final String providerCode;
@@ -121,14 +120,46 @@ public class CollectorBundleIngestCommand {
     }
 
     static LocalTime parseTime(String value) {
+        ParsedShowtimeTime parsed = parseShowtimeTime(value);
+        return parsed == null ? null : parsed.time();
+    }
+
+    static ParsedShowtimeTime parseShowtimeTime(String value) {
         if (value == null || value.isBlank()) {
             return null;
         }
-        String normalized = value.replace(":", "").trim();
-        if (normalized.length() < 4) {
+        String text = value.trim();
+        try {
+            int hour;
+            int minute;
+            int second = 0;
+            if (text.contains(":")) {
+                String[] parts = text.split(":");
+                if (parts.length < 2) {
+                    return null;
+                }
+                hour = Integer.parseInt(parts[0]);
+                minute = Integer.parseInt(parts[1]);
+                if (parts.length >= 3 && !parts[2].isBlank()) {
+                    second = Integer.parseInt(parts[2]);
+                }
+            } else {
+                String normalized = text.replaceAll("\\D", "");
+                if (normalized.length() < 4) {
+                    return null;
+                }
+                hour = Integer.parseInt(normalized.substring(0, normalized.length() - 2));
+                minute = Integer.parseInt(normalized.substring(normalized.length() - 2));
+            }
+            if (minute > 59 || second > 59) {
+                return null;
+            }
+            int dayOffset = Math.floorDiv(hour, 24);
+            int hourOfDay = Math.floorMod(hour, 24);
+            return new ParsedShowtimeTime(LocalTime.of(hourOfDay, minute, second), dayOffset);
+        } catch (NumberFormatException exception) {
             return null;
         }
-        return LocalTime.parse(normalized.substring(0, 4), COMPACT_TIME);
     }
 
     private void upsertMovies(List<MovieRow> movies) throws Exception {
@@ -460,8 +491,18 @@ public class CollectorBundleIngestCommand {
         }
     }
 
-    private static LocalDateTime toDateTime(LocalDate date, LocalTime time) {
-        return date == null || time == null ? null : LocalDateTime.of(date, time);
+    private static TimeRange toDateTimeRange(LocalDate date, String startTimeRaw, String endTimeRaw) {
+        LocalDateTime startsAt = toDateTime(date, startTimeRaw);
+        LocalDateTime endsAt = toDateTime(date, endTimeRaw);
+        if (startsAt != null && endsAt != null && !endsAt.isAfter(startsAt)) {
+            endsAt = endsAt.plusDays(1);
+        }
+        return new TimeRange(startsAt, endsAt);
+    }
+
+    private static LocalDateTime toDateTime(LocalDate date, String timeRaw) {
+        ParsedShowtimeTime parsed = parseShowtimeTime(timeRaw);
+        return date == null || parsed == null ? null : LocalDateTime.of(date.plusDays(parsed.dayOffset()), parsed.time());
     }
 
     private static Integer soldSeatCount(Integer totalSeatCount, Integer remainingSeatCount, Integer bookedSeatCount) {
@@ -555,8 +596,9 @@ public class CollectorBundleIngestCommand {
                     String screenNo = text(schedule.get("screen_no"));
                     String sequence = text(schedule.get("screen_sequence"));
                     LocalDate showDate = parseDate(text(schedule.get("screening_date")));
-                    LocalTime startTime = parseTime(text(schedule.get("start_time")));
-                    LocalTime endTime = parseTime(text(schedule.get("end_time")));
+                    String startTimeRaw = text(schedule.get("start_time"));
+                    String endTimeRaw = text(schedule.get("end_time"));
+                    TimeRange timeRange = toDateTimeRange(showDate, startTimeRaw, endTimeRaw);
                     Integer totalSeatCount = integerOrNull(schedule.get("total_seat_count"));
                     Integer remainingSeatCount = integerOrNull(schedule.get("available_seat_count"));
                     Integer soldSeatCount = soldSeatCount(totalSeatCount, remainingSeatCount, null);
@@ -577,10 +619,10 @@ public class CollectorBundleIngestCommand {
                         firstNonBlank(schedule.get("screen_grade_name"), schedule.get("format_name")),
                         firstNonBlank(schedule.get("format_name"), schedule.get("screen_grade_name"), schedule.get("screen_name")),
                         showDate,
-                        toDateTime(showDate, startTime),
-                        toDateTime(showDate, endTime),
-                        text(schedule.get("start_time")),
-                        text(schedule.get("end_time")),
+                        timeRange.startsAt(),
+                        timeRange.endsAt(),
+                        startTimeRaw,
+                        endTimeRaw,
                         totalSeatCount,
                         remainingSeatCount,
                         soldSeatCount,
@@ -657,8 +699,9 @@ public class CollectorBundleIngestCommand {
                     String screenId = text(schedule.get("screen_id"));
                     String sequence = text(schedule.get("play_sequence"));
                     LocalDate showDate = parseDate(text(schedule.get("play_date")));
-                    LocalTime startTime = parseTime(text(schedule.get("start_time")));
-                    LocalTime endTime = parseTime(text(schedule.get("end_time")));
+                    String startTimeRaw = text(schedule.get("start_time"));
+                    String endTimeRaw = text(schedule.get("end_time"));
+                    TimeRange timeRange = toDateTimeRange(showDate, startTimeRaw, endTimeRaw);
                     Integer totalSeatCount = integerOrNull(schedule.get("total_seat_count"));
                     Integer remainingSeatCount = integerOrNull(schedule.get("remaining_seat_count"));
                     Integer bookedSeatCount = integerOrNull(schedule.get("booked_seat_count"));
@@ -680,10 +723,10 @@ public class CollectorBundleIngestCommand {
                         firstNonBlank(schedule.get("screen_division_name"), schedule.get("film_name"), schedule.get("sound_type_name")),
                         firstNonBlank(schedule.get("screen_division_name"), schedule.get("film_name"), schedule.get("translation_division_name"), schedule.get("sound_type_name")),
                         showDate,
-                        toDateTime(showDate, startTime),
-                        toDateTime(showDate, endTime),
-                        text(schedule.get("start_time")),
-                        text(schedule.get("end_time")),
+                        timeRange.startsAt(),
+                        timeRange.endsAt(),
+                        startTimeRaw,
+                        endTimeRaw,
                         totalSeatCount,
                         remainingSeatCount,
                         soldSeatCount,
@@ -761,8 +804,9 @@ public class CollectorBundleIngestCommand {
                     String playScheduleNo = text(schedule.get("play_schedule_no"));
                     String sequence = text(schedule.get("play_sequence"));
                     LocalDate showDate = parseDate(text(schedule.get("play_date")));
-                    LocalTime startTime = parseTime(text(schedule.get("start_time")));
-                    LocalTime endTime = parseTime(text(schedule.get("end_time")));
+                    String startTimeRaw = text(schedule.get("start_time"));
+                    String endTimeRaw = text(schedule.get("end_time"));
+                    TimeRange timeRange = toDateTimeRange(showDate, startTimeRaw, endTimeRaw);
                     Integer totalSeatCount = integerOrNull(schedule.get("total_seat_count"));
                     Integer remainingSeatCount = integerOrNull(schedule.get("remaining_seat_count"));
                     Integer soldSeatCount = soldSeatCount(totalSeatCount, remainingSeatCount, null);
@@ -787,10 +831,10 @@ public class CollectorBundleIngestCommand {
                         firstNonBlank(schedule.get("screen_type"), schedule.get("times_division_name")),
                         firstNonBlank(schedule.get("screen_type"), schedule.get("times_division_name")),
                         showDate,
-                        toDateTime(showDate, startTime),
-                        toDateTime(showDate, endTime),
-                        text(schedule.get("start_time")),
-                        text(schedule.get("end_time")),
+                        timeRange.startsAt(),
+                        timeRange.endsAt(),
+                        startTimeRaw,
+                        endTimeRaw,
                         totalSeatCount,
                         remainingSeatCount,
                         soldSeatCount,
@@ -832,6 +876,12 @@ public class CollectorBundleIngestCommand {
         List<ScreenRow> screens,
         List<ShowtimeRow> showtimes
     ) {
+    }
+
+    static record ParsedShowtimeTime(LocalTime time, int dayOffset) {
+    }
+
+    static record TimeRange(LocalDateTime startsAt, LocalDateTime endsAt) {
     }
 
     static record MovieRow(

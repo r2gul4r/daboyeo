@@ -17,6 +17,9 @@ class CollectorBundleIngestCommandTests {
         assertThat(CollectorBundleIngestCommand.parseDate("20260423")).isEqualTo(LocalDate.of(2026, 4, 23));
         assertThat(CollectorBundleIngestCommand.parseTime("0915")).isEqualTo(LocalTime.of(9, 15));
         assertThat(CollectorBundleIngestCommand.parseTime("09:15")).isEqualTo(LocalTime.of(9, 15));
+        assertThat(CollectorBundleIngestCommand.parseTime("2400")).isEqualTo(LocalTime.of(0, 0));
+        assertThat(CollectorBundleIngestCommand.parseShowtimeTime("2609").dayOffset()).isEqualTo(1);
+        assertThat(CollectorBundleIngestCommand.parseShowtimeTime("24:17").time()).isEqualTo(LocalTime.of(0, 17));
     }
 
     @Test
@@ -71,6 +74,86 @@ class CollectorBundleIngestCommandTests {
         assertThat(showtime.endsAt()).isEqualTo(LocalDateTime.of(2026, 4, 23, 12, 30));
         assertThat(showtime.soldSeatCount()).isEqualTo(65);
         assertThat(showtime.seatOccupancyRate()).isEqualByComparingTo(new BigDecimal("0.650"));
+    }
+
+    @Test
+    void normalizesPostMidnightCgvTimesAcrossDateBoundary() {
+        CollectorBundleIngestCommand.NormalizedBundle bundle = CollectorBundleIngestCommand.normalizeBundle(
+            "CGV",
+            Map.of(
+                "movies", List.of(Map.of(
+                    "movie_no", "30001089",
+                    "movie_name", "Late Movie",
+                    "raw", Map.of("movie_no", "30001089")
+                )),
+                "sites", List.of(Map.of(
+                    "site_no", "0056",
+                    "site_name", "CGV Gangnam",
+                    "raw", Map.of("site_no", "0056")
+                )),
+                "schedules", List.of(Map.ofEntries(
+                    Map.entry("site_no", "0056"),
+                    Map.entry("site_name", "CGV Gangnam"),
+                    Map.entry("movie_no", "30001089"),
+                    Map.entry("movie_name", "Late Movie"),
+                    Map.entry("screen_no", "001"),
+                    Map.entry("screen_name", "1"),
+                    Map.entry("screen_sequence", "8"),
+                    Map.entry("screening_date", "20260429"),
+                    Map.entry("start_time", "2400"),
+                    Map.entry("end_time", "2609"),
+                    Map.entry("total_seat_count", "144"),
+                    Map.entry("available_seat_count", "144"),
+                    Map.entry("raw", Map.of("scnsrtTm", "2400"))
+                ))
+            )
+        );
+
+        CollectorBundleIngestCommand.ShowtimeRow showtime = bundle.showtimes().get(0);
+        assertThat(showtime.startsAt()).isEqualTo(LocalDateTime.of(2026, 4, 30, 0, 0));
+        assertThat(showtime.endsAt()).isEqualTo(LocalDateTime.of(2026, 4, 30, 2, 9));
+        assertThat(showtime.startTimeRaw()).isEqualTo("2400");
+        assertThat(showtime.endTimeRaw()).isEqualTo("2609");
+    }
+
+    @Test
+    void normalizesPostMidnightLotteEndTimesAcrossDateBoundary() {
+        CollectorBundleIngestCommand.NormalizedBundle bundle = CollectorBundleIngestCommand.normalizeBundle(
+            "LOTTE_CINEMA",
+            Map.of(
+                "movies", List.of(Map.of(
+                    "movie_no", "23816",
+                    "movie_name", "Late Lotte",
+                    "raw", Map.of("movie_no", "23816")
+                )),
+                "cinemas", List.of(Map.of(
+                    "cinema_id", "1013",
+                    "cinema_name", "Gasan",
+                    "raw", Map.of("cinema_id", "1013")
+                )),
+                "schedules", List.of(Map.ofEntries(
+                    Map.entry("movie_no", "23816"),
+                    Map.entry("movie_name", "Late Lotte"),
+                    Map.entry("cinema_id", "1013"),
+                    Map.entry("cinema_name", "Gasan"),
+                    Map.entry("screen_id", "101302"),
+                    Map.entry("screen_name", "2"),
+                    Map.entry("play_date", "2026-04-27"),
+                    Map.entry("play_sequence", "6"),
+                    Map.entry("start_time", "22:10"),
+                    Map.entry("end_time", "24:17"),
+                    Map.entry("total_seat_count", 142),
+                    Map.entry("remaining_seat_count", 2),
+                    Map.entry("booked_seat_count", 140),
+                    Map.entry("raw", Map.of("EndTime", "24:17"))
+                ))
+            )
+        );
+
+        CollectorBundleIngestCommand.ShowtimeRow showtime = bundle.showtimes().get(0);
+        assertThat(showtime.startsAt()).isEqualTo(LocalDateTime.of(2026, 4, 27, 22, 10));
+        assertThat(showtime.endsAt()).isEqualTo(LocalDateTime.of(2026, 4, 28, 0, 17));
+        assertThat(showtime.endTimeRaw()).isEqualTo("24:17");
     }
 
     @Test
