@@ -545,13 +545,7 @@ function renderOptionList(options, selectedValueOrArray, onSelect, isMulti = fal
     button.type = "button";
 
     button.addEventListener("click", (e) => {
-      if (window.innerWidth <= 768 && !isMulti) {
-        if (!button.classList.contains("is-selected") && !button.classList.contains("is-expanded")) {
-          document.querySelectorAll('.ai-glass-btn').forEach(btn => btn.classList.remove("is-expanded"));
-          button.classList.add("is-expanded");
-          return;
-        }
-      }
+      // Single click to select and proceed
       onSelect(option.value);
     });
 

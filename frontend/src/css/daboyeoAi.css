@@ -18,7 +18,7 @@ body.ai-guide-page {
   overflow-x: hidden;
 }
 
-a > img {
+a>img {
   width: 160px;
   margin-right: 10px;
 }
@@ -452,7 +452,7 @@ body.ai-guide-page a {
 
 .ai-poster-card {
   position: relative;
-  aspect-ratio: 2/3;
+  /* aspect-ratio: 2/3; */
   border-radius: 12px;
   overflow: hidden;
   background: #e0e0e0;
@@ -681,13 +681,11 @@ body.ai-guide-page a {
     max-width: 100%;
     padding-right: 28px;
     flex-wrap: wrap;
-    /* in case desc gets long */
   }
 
   .ai-glass-btn-desc {
     max-width: 100%;
     opacity: 1;
-    /* Always show or show only on active? User requested: "모바??hover ?�음 -> ?�릭 ???�장, ?�명 ??�� ?�출" */
     transform: none;
     margin-left: 0;
     margin-top: 6px;
@@ -696,24 +694,42 @@ body.ai-guide-page a {
     width: 100%;
   }
 
-  /* if user wants click expansion, we hide it until expanded. Let's do that: */
-  .ai-glass-btn-desc {
-    max-height: 0;
-    opacity: 0;
-    margin-top: 0;
-    transition: all 0.3s;
-    overflow: hidden;
-  }
-
   .ai-glass-btn.is-expanded .ai-glass-btn-desc,
   .ai-glass-btn.is-selected .ai-glass-btn-desc {
-    max-height: 100px;
+    max-height: none;
     opacity: 1;
     margin-top: 8px;
   }
 
-  .ai-poster-grid {
+  body.ai-guide-page .ai-poster-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Always show desc on tablet and mobile */
+  body.ai-guide-page .ai-glass-btn .ai-glass-btn-desc {
+    max-width: 100%;
+    opacity: 1;
+    transform: none;
+    margin-left: 0;
+    margin-top: 6px;
+    white-space: normal;
+    display: block;
+    width: 100%;
+  }
+
+  body.ai-guide-page .ai-glass-btn.is-expanded .ai-glass-btn-desc,
+  body.ai-guide-page .ai-glass-btn.is-selected .ai-glass-btn-desc {
+    max-height: none;
+    opacity: 1;
+    margin-top: 6px;
+  }
+}
+
+/* Extra small screens - still 2 columns */
+@media (max-width: 480px) {
+  body.ai-guide-page .ai-poster-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 }
 
@@ -1052,6 +1068,9 @@ body.ai-guide-page a {
 }
 
 @media (max-width: 940px) {
+  .ai-back-button {
+    margin-top: 38px;
+  }
 
   .ai-step,
   .ai-result-layout {
@@ -1153,7 +1172,7 @@ body.ai-guide-page a {
 
   .ai-screen {
     min-height: calc(100vh - 66px);
-    padding: 30px 0 48px;
+    padding: 60px 0 48px;
   }
 
   .ai-title,
@@ -1184,7 +1203,7 @@ body.ai-guide-page a {
   }
 
   .ai-poster-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 2fr));
     gap: 12px;
   }
 
@@ -1202,6 +1221,15 @@ body.ai-guide-page a {
 
   .ai-movie-title {
     font-size: 20px;
+  }
+
+  .ai-avoid-cta-hint {
+    font-size: 0.6rem;
+  }
+
+  .ai-kicker,
+  .ai-poster-right-top {
+    margin-bottom: 0 !important;
   }
 }
 
@@ -1228,6 +1256,6 @@ body.ai-guide-page a {
   }
 
   .ai-poster-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 2fr;
   }
 }
