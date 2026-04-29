@@ -103,7 +103,7 @@ function initSearchParams() {
         currentSearchConfig.timeEnd = '16:59';
       } else if (context.timeRange === 'night') {
         currentSearchConfig.timeStart = '17:00';
-        currentSearchConfig.timeEnd = '23:59'; // API handles wrap-around if needed
+        currentSearchConfig.timeEnd = '06:00'; 
       }
     }
   } catch (e) {
@@ -125,14 +125,17 @@ function updateSearchInfoUI() {
   const infoArea = document.getElementById('search-info-text');
   if (!infoArea) return;
 
-  const region = createElement('strong', null, currentSearchConfig.regionName);
-  const date = createElement('strong', null, currentSearchConfig.date);
-
-  infoArea.replaceChildren();
+  infoArea.innerHTML = '';
+  
+  const region = createElement('strong', 'highlight-text', currentSearchConfig.regionName || '전체');
+  const date = createElement('strong', 'highlight-text', currentSearchConfig.date);
+  
   infoArea.appendChild(region);
-  appendText(infoArea, ' 주변, ');
+  infoArea.appendChild(document.createTextNode(' 주변, '));
   infoArea.appendChild(date);
-  appendText(infoArea, ` 기준 (시간: ${currentSearchConfig.timeStart} ~ ${currentSearchConfig.timeEnd})`);
+  
+  const timeText = ` 기준 (시간: ${currentSearchConfig.timeStart} ~ ${currentSearchConfig.timeEnd})`;
+  infoArea.appendChild(document.createTextNode(timeText));
 }
 
 function hasExplicitCoordinates() {
@@ -320,6 +323,15 @@ function applyFilters() {
     : '';
 
   const filtered = allRawSchedules.filter((item) => {
+    // 0. Filter out past showtimes for today
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    if (currentSearchConfig.date === todayStr) {
+      const currentH = now.getHours();
+      const currentM = now.getMinutes();
+      const currentTimeStr = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
+      if (item.normalized.start_time < currentTimeStr) return false;
+    }
     const norm = item.normalized;
     const matchProvider = providerFilters.includes('all') || providerFilters.includes(norm.provider);
     const matchTheater = theaterFilters.includes('all') || theaterFilters.some((filterValue) => norm.format.toUpperCase().includes(filterValue.toUpperCase()));

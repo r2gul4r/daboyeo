@@ -54,10 +54,6 @@ public record LiveMovieSearchCriteria(
         LocalTime resolvedTimeStart = timeStart == null ? LocalTime.of(6, 0) : timeStart;
         LocalTime resolvedTimeEnd = timeEnd == null ? LocalTime.of(23, 59) : timeEnd;
 
-        if (resolvedTimeStart.isAfter(resolvedTimeEnd)) {
-            throw new IllegalArgumentException("timeStart must be earlier than or equal to timeEnd.");
-        }
-
         BigDecimal resolvedRadiusKm = radiusKm == null ? DEFAULT_RADIUS_KM : radiusKm;
         if (resolvedRadiusKm.signum() <= 0 || resolvedRadiusKm.doubleValue() > 50) {
             throw new IllegalArgumentException("radiusKm must be greater than 0 and at most 50.");
