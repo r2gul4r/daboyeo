@@ -648,7 +648,7 @@ button:hover {
 
 .ai-section-label {
   font-size: 12px;
-  color: var(--purple0);
+  color: var(--purple60);
   margin-bottom: 30px;
   letter-spacing: 1px;
 }
@@ -831,4 +831,190 @@ button:hover {
   right: -50px;
   font-size: 24px;
   color: var(--gray100);
+}
+
+@media (max-width: 1024px) {
+
+  .main-content {
+    padding: 0 20px;
+  }
+
+  h1 {
+    font-size: 34px;
+  }
+
+  /* 검색 카드 */
+  .search-card {
+    padding: 25px;
+  }
+
+  /* form 2열 */
+  .form-row {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .form-group {
+    flex: 1 1 calc(50% - 10px);
+  }
+
+  /* 영화 카드 3 → 2 */
+  .movie-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* AI */
+  .ai-content-wrapper {
+    gap: 30px;
+  }
+
+  /* step 4 → 2 */
+  .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+  }
+
+  .step-arrow {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+
+  h1 {
+    font-size: 26px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    margin-bottom: 30px;
+  }
+
+  /* 검색 카드 */
+  .search-card {
+    padding: 20px 16px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .form-group {
+    flex: 1;
+  }
+
+  /* 시간 선택 */
+  .time-selection-group {
+    height: auto;
+    flex-wrap: wrap;
+  }
+
+  .time-option {
+    flex: 1 1 30%;
+  }
+
+  /* 버튼 영역 */
+  .action-row {
+    flex-direction: column;
+  }
+
+  .btn-search,
+  .btn-nearby {
+    width: 100%;
+  }
+
+  .btn-nearby {
+    padding: 14px;
+  }
+
+  /* 영화 카드 2 → 1 */
+  .movie-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* AI */
+  .ai-content-wrapper {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .ai-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* step */
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .three-step-container {
+    padding: 40px 20px;
+  }
+}
+
+@media (max-width: 576px) {
+
+  h1 {
+    font-size: 22px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  /* 카드 */
+  .search-card {
+    border-radius: 12px;
+  }
+
+  /* input */
+  .input-wrapper input {
+    font-size: 13px;
+    height: 48px;
+  }
+
+  /* 인원 선택 */
+  .person-counter {
+    height: 48px;
+  }
+
+  .counter-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* 영화 카드 */
+  .movie-poster {
+    height: 200px;
+  }
+
+  .movie-title {
+    font-size: 14px;
+  }
+
+  /* 가격 영역 줄이기 */
+  .price-list {
+    height: auto;
+  }
+
+  /* AI */
+  .ai-description-title {
+    font-size: 22px;
+  }
+
+  .ai-card {
+    padding: 20px;
+  }
+
+  /* step */
+  .step-icon {
+    width: 70px;
+    height: 70px;
+    font-size: 28px;
+  }
+
+  .step-title {
+    font-size: 16px;
+  }
 }

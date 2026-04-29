@@ -14,6 +14,34 @@
   padding: var(--basic-page-top-gap) 24px 80px;
 }
 
+.seat-back-link,
+.seat-breadcrumb,
+.mini-help {
+  border: 1px solid var(--gray100);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(14px);
+}
+
+.seat-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 16px;
+  color: var(--gray100);
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.seat-back-link:hover {
+  color: var(--purple60);
+  border-color: var(--purple60);
+  transform: translateY(-1px);
+}
+
 /* ============================================
    발견 히어로 헤더
    ============================================ */
@@ -22,7 +50,6 @@
   padding: 20px 0 40px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   margin-bottom: 60px;
-  text-align: center;
 }
 
 .section-label {
@@ -58,7 +85,6 @@
   font-size: 15px;
   color: var(--gray100);
   line-height: 1.7;
-  text-align: center;
 }
 
 /* ============================================
@@ -93,8 +119,17 @@
   flex-shrink: 0;
 }
 
-.section-top3 { background: rgba(255, 255, 255, 0.02); margin: 0 -100vw; padding: 80px 100vw; }
-.top3-icon { background: rgba(255, 215, 0, 0.1); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3); }
+.section-top3 {
+  background: rgba(255, 255, 255, 0.02);
+  margin: 0 -100vw;
+  padding: 80px 100vw;
+}
+
+.top3-icon {
+  background: rgba(255, 215, 0, 0.1);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
 
 .gem-icon {
   background: linear-gradient(135deg, rgba(0, 200, 200, 0.2), rgba(0, 150, 200, 0.15));
@@ -1243,50 +1278,89 @@
 /* ============================================
    반응형
    ============================================ */
-@media (max-width: 1100px) {
+@media (max-width: 1024px) {
+
+  .main-content {
+    padding: var(--basic-page-top-gap) 20px 60px;
+  }
+
+  /* 제목 축소 */
+  .discovery-title {
+    font-size: 36px;
+  }
+
+  /* 숨은 명작 3 → 2 */
+  .gem-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* 혼자보기 4 → 2 */
   .mood-cards-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  /* 연인 추천 하단 4 → 2 */
   .couple-sub-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .gem-cards-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
+  /* AI Pick 구조 세로화 준비 */
   .ai-pick-card {
-    flex-direction: column;
-    align-items: center;
+    gap: 32px;
   }
 
-  .ai-pick-poster-wrap {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 20px;
-  }
-
-  .ai-pick-reason-bubble {
-    width: auto;
-    flex: 1;
-  }
-
-  .ai-pick-prices {
-    flex-wrap: wrap;
+  .ai-pick-inner {
+    padding: 40px 32px;
   }
 }
+@media (max-width: 768px) {
 
-@media (max-width: 820px) {
-  .header-nav {
-    display: none;
+  .main-content {
+    padding: var(--basic-page-top-gap) 16px 50px;
   }
 
   .discovery-title {
-    font-size: 32px;
+    font-size: 28px;
   }
 
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  /* =========================
+     트렌딩 리스트
+     ========================= */
+  .trending-item {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .movie-side-action {
+    margin-top: 20px;
+    width: 100%;
+  }
+
+  /* =========================
+     숨은 명작
+     ========================= */
   .gem-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* =========================
+     장르
+     ========================= */
+  .genre-movie-card {
+    width: 140px;
+  }
+
+  /* =========================
+     혼자 / 연인
+     ========================= */
+  .mood-cards-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1299,46 +1373,87 @@
     height: 200px;
   }
 
+  .couple-banner-text {
+    padding: 28px;
+  }
+
   .couple-sub-grid {
     grid-template-columns: 1fr;
   }
 
-  .ai-pick-inner {
-    padding: 28px 20px;
-  }
-
-  .ai-pick-poster-wrap {
+  /* =========================
+     AI PICK
+     ========================= */
+  .ai-pick-card {
     flex-direction: column;
     align-items: center;
   }
 
-  .ai-pick-reason-bubble {
-    width: 220px;
+  .ai-pick-poster {
+    width: 180px;
+    height: 260px;
+  }
+
+  .ai-pick-detail {
+    width: 100%;
   }
 
   .ai-pick-actions {
     flex-direction: column;
   }
-}
 
-@media (max-width: 600px) {
-  .mood-cards-grid {
-    grid-template-columns: 1fr;
+  .ai-pick-prices {
+    flex-direction: column;
   }
+}
+@media (max-width: 576px) {
 
   .discovery-title {
-    font-size: 26px;
+    font-size: 24px;
+  }
+
+  .discovery-desc {
+    font-size: 13px;
   }
 
   .section-title {
-    font-size: 20px;
+    font-size: 18px;
+  }
+
+  /* 버튼 꽉 채우기 */
+  .btn-view-now {
+    width: 100%;
+  }
+
+  /* 영화 제목 줄이기 */
+  .movie-title {
+    font-size: 18px;
+  }
+
+  /* 가격 줄이기 */
+  .price-tag strong {
+    font-size: 16px;
+  }
+
+  /* AI 영역 축소 */
+  .ai-pick-inner {
+    padding: 28px 20px;
   }
 
   .ai-pick-title {
     font-size: 24px;
   }
 
-  .ai-pick-movie-title {
-    font-size: 22px;
+  .ai-analysis {
+    padding: 16px;
+  }
+
+  /* 스크롤 UX 개선 */
+  .genre-movie-row {
+    gap: 10px;
+  }
+
+  .genre-movie-card {
+    width: 120px;
   }
 }
