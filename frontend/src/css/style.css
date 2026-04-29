@@ -929,13 +929,23 @@ button:hover {
   }
 
   /* 영화 카드 2 → 1 */
+  .now-playing-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
   .movie-cards-grid {
     grid-template-columns: 1fr;
   }
 
+  .now-playing-title {
+    font-size: 24px;
+  }
+
   /* AI */
   .ai-content-wrapper {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2fr);
     gap: 30px;
   }
 

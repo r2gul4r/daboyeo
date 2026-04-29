@@ -801,7 +801,7 @@ body.ai-guide-page a {
 
 .ai-result-note {
   margin: 20px 0 0;
-  color: var(--ai-muted);
+  color: var(--white50);
   font-size: 16px;
   line-height: 1.7;
   word-break: keep-all;
@@ -1069,6 +1069,68 @@ body.ai-guide-page a {
 
   .ai-poster-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ai-glass-btn.can-hover {
+    padding-right: 28px;
+  }
+
+  .ai-glass-btn-desc {
+    max-width: none;
+    opacity: 1;
+    transform: none;
+    margin-left: 12px;
+  }
+
+  /* hover 무력화 */
+  .ai-glass-btn.can-hover:hover {
+    background: var(--ai-glass-bg);
+    padding-right: 28px;
+  }
+
+  .ai-glass-btn.can-hover:hover .ai-glass-btn-desc {
+    max-width: none;
+    transform: none;
+    margin-left: 12px;
+  }
+
+  .ai-glass-btn:active {
+    transform: scale(0.97);
+  }
+
+  .ai-glass-btn {
+    width: 100%;
+    min-height: 64px;
+    border-radius: 16px;
+    padding: 18px 20px;
+    flex-direction: column;
+    align-items: normal;
+    gap: 6px;
+  }
+
+  .ai-glass-btn-title {
+    font-size: 16px;
+  }
+
+  .ai-glass-btn-desc {
+    max-width: 100%;
+    opacity: 1;
+    transform: none;
+    margin-left: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: normal;
+  }
+
+  /* hover 완전 제거 */
+  .ai-glass-btn.can-hover:hover {
+    background: var(--ai-glass-bg);
+    transform: none;
+  }
+
+  /* 선택 상태만 강조 */
+  .ai-glass-btn.is-selected {
+    box-shadow: 0 0 18px var(--purple0-glow);
   }
 }
 

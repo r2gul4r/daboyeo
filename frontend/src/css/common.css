@@ -503,24 +503,132 @@ body.basic-page .main-content {
   color: var(--white0);
 }
 
-@media (max-width: 768px) {
-  .footer-main {
-    flex-direction: column;
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 1024px) {
 
-  .footer-nav-top {
-    gap: 10px;
+  .footer-main {
+    gap: 30px;
   }
 
   .footer-right {
     align-items: flex-start;
-    margin-top: 20px;
   }
 
-  .footer-search,
-  .footer-dropdown {
+  .custom-dropdown,
+  .theater-search-btn {
+    width: 180px;
+  }
+
+  .overlay-inner {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  #footer {
+    padding: 50px 16px 30px;
+  }
+
+  /* 상단 메뉴 */
+  .footer-nav-top {
+    gap: 16px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* 핵심: 가로 → 세로 */
+  .footer-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 30px;
+  }
+
+  .footer-right {
     width: 100%;
+    align-items: flex-start;
+  }
+
+  /* 드롭다운 / 버튼 풀너비 */
+  .custom-dropdown,
+  .theater-search-btn {
+    width: 100%;
+  }
+
+  /* SNS 중앙 정렬 */
+  .footer-socials {
+    justify-content: flex-start;
+  }
+
+  /* =========================
+     극장 오버레이 (중요)
+     ========================= */
+  .theater-overlay {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 70vh;
+    overflow-y: auto;
+  }
+
+  .overlay-inner {
+    padding: 20px;
+  }
+
+  /* 지역 구조 세로화 */
+  .region-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .region-name {
+    width: auto;
+  }
+}
+
+@media (max-width: 576px) {
+
+  /* 텍스트 축소 */
+  .footer-info,
+  .footer-copyright {
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  /* 링크 줄 간격 */
+  .footer-nav-top a {
+    font-size: 11px;
+  }
+
+  /* 아이콘 축소 */
+  .social-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+
+  /* 오버레이 높이 */
+  .theater-overlay {
+    height: 75vh;
+  }
+
+  /* 탭 줄이기 */
+  .overlay-tabs {
+    gap: 12px;
+    overflow-x: auto;
+  }
+
+  .overlay-tab-item {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  /* 극장 리스트 가독성 개선 */
+  .theater-list {
+    gap: 8px 14px;
+  }
+
+  .theater-item {
+    font-size: 12px;
   }
 }
 
