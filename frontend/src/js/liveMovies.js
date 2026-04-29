@@ -48,11 +48,21 @@ function providerColor(provider) {
 
 function showMessage(container, message, inlineStyle = '') {
   container.replaceChildren();
-  const messageEl = createElement('p', 'loading-spinner', message);
-  if (inlineStyle) {
-    messageEl.setAttribute('style', inlineStyle);
-  }
-  container.appendChild(messageEl);
+  const emptyBox = createElement('div', 'loading-container');
+  if (inlineStyle) emptyBox.setAttribute('style', inlineStyle);
+  
+  const icon = createElement('i', 'fas fa-magnifying-glass-chart');
+  icon.style.fontSize = '3rem';
+  icon.style.color = 'var(--purple50)';
+  icon.style.marginBottom = '20px';
+  icon.style.opacity = '0.5';
+  
+  const text = createElement('p', 'loading-title', message);
+  text.style.fontSize = '1.2rem';
+  text.style.opacity = '0.8';
+  
+  emptyBox.append(icon, text);
+  container.appendChild(emptyBox);
 }
 
 const MOCK_DEFAULTS = {
@@ -75,7 +85,32 @@ let currentTab = 'ALL';
 
 function initSearchParams() {
   const params = new URLSearchParams(window.location.search);
+  
+  // 1. Try to load from sessionStorage (saved by script.js)
+  try {
+    const rawContext = sessionStorage.getItem('daboyeoSearchContext');
+    if (rawContext) {
+      const context = JSON.parse(rawContext);
+      if (context.date) currentSearchConfig.date = context.date;
+      if (context.region) currentSearchConfig.regionName = context.region;
+      
+      // Map timeRange to actual hours
+      if (context.timeRange === 'morning') {
+        currentSearchConfig.timeStart = '06:00';
+        currentSearchConfig.timeEnd = '10:59';
+      } else if (context.timeRange === 'brunch') {
+        currentSearchConfig.timeStart = '11:00';
+        currentSearchConfig.timeEnd = '16:59';
+      } else if (context.timeRange === 'night') {
+        currentSearchConfig.timeStart = '17:00';
+        currentSearchConfig.timeEnd = '23:59'; // API handles wrap-around if needed
+      }
+    }
+  } catch (e) {
+    console.error('Failed to parse search context', e);
+  }
 
+  // 2. Override with URL params if they exist
   if (params.has('lat')) currentSearchConfig.lat = parseFloat(params.get('lat'));
   if (params.has('lng')) currentSearchConfig.lng = parseFloat(params.get('lng'));
   if (params.has('region')) currentSearchConfig.regionName = params.get('region');
@@ -206,9 +241,25 @@ async function loadLiveMovies() {
   if (!movieGrid) return;
 
   movieGrid.innerHTML = `
-    <div class="loading-spinner">
-      <i class="fas fa-circle-notch fa-spin"></i>
-      <p>실시간 상영 정보를 불러오는 중이야..</p>
+    <div class="loading-container">
+      <div class="loader-visual">
+        <div class="loader-circle"></div>
+        <div class="loader-pulse"></div>
+        <i class="fas fa-satellite-dish loader-icon"></i>
+      </div>
+      <div class="loading-text-group">
+        <div class="loading-title">지금 <span>전국 시네마 데이터</span>를</div>
+        <div class="loading-title">실시간으로 연결하고 있어요</div>
+        <p class="loading-subtitle">
+          조금만 기다려주세요! 더미 데이터가 아닌, <br>
+          전국의 실제 상영 시간을 꼼꼼하게 수집하고 있습니다.
+        </p>
+      </div>
+      <div class="data-stream-icons">
+        <i class="fas fa-film"></i>
+        <i class="fas fa-ticket"></i>
+        <i class="fas fa-map-location-dot"></i>
+      </div>
     </div>
   `;
 

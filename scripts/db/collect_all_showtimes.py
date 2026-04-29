@@ -63,14 +63,28 @@ def sanitize_datetime(date_str, time_str):
     if not date_str or not time_str:
         return None
     try:
-        hour, minute = map(int, time_str.split(':'))
+        # Handle formats like "2424" or "24:24"
+        t = str(time_str).replace(':', '').strip()
+        if len(t) == 4:
+            hour = int(t[:2])
+            minute = int(t[2:])
+        elif len(t) == 3:
+            hour = int(t[:1])
+            minute = int(t[1:])
+        else:
+            # Fallback to splitting by colon if possible
+            hour, minute = map(int, time_str.split(':'))
+        
         dt = datetime.strptime(date_str, "%Y-%m-%d")
         if hour >= 24:
-            dt += timedelta(days=hour // 24)
+            days_to_add = hour // 24
+            dt += timedelta(days=days_to_add)
             hour %= 24
-        return dt.replace(hour=hour, minute=minute).strftime("%Y-%m-%d %H:%M:%00")
-    except:
-        return f"{date_str} {time_str}:00" # Fallback
+            
+        return dt.replace(hour=hour, minute=minute).strftime("%Y-%m-%d %H:%M:00")
+    except Exception as e:
+        # If still failing, try to at least return a valid MySQL format or None
+        return None
 
 def upsert_showtimes(conn, records):
     if not records: return
