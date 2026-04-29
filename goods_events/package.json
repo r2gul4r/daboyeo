@@ -1,0 +1,15 @@
+{
+  "name": "daboyeo-goods-events-crawler",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Public page crawler for cinema goods and GV/stage greeting events.",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/crawler.js",
+    "check": "node --check src/crawler.js"
+  },
+  "dependencies": {
+    "axios": "latest",
+    "cheerio": "latest"
+  }
+}

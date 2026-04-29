@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>&#50689;&#54868; &#44415;&#51592; &amp; &#51060;&#48292;&#53944; &#54788;&#54889;&#54032;</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <main class="page_shell">
+    <section class="hero_section">
+      <div class="hero_copy">
+        <p class="page_eyebrow">DABOYEO GOODS RADAR</p>
+        <h1 class="hero_title">&#45459;&#52824;&#47732; &#50500;&#44620;&#50868; &#50689;&#54868; &#44415;&#51592;&#50752; GV&#47484; &#54620; &#44275;&#50640;</h1>
+        <p class="hero_description">&#49345;&#50689;&#44288;&#48324; &#44277;&#44060; &#51060;&#48292;&#53944; &#50836;&#50557;&#51012; &#47784;&#50500; &#51648;&#44552; &#54869;&#51064;&#54624; &#44415;&#51592;, &#50696;&#51221;&#46108; &#47924;&#45824;&#51064;&#49324;, GV &#51068;&#51221;&#51012; &#48736;&#47476;&#44172; &#48708;&#44368;&#54644;&#48372;&#49464;&#50836;.</p>
+        <div class="hero_actions">
+          <a class="primary_button" href="#dashboard_section">&#51648;&#44552; &#54869;&#51064;&#54616;&#44592;</a>
+          <span class="hero_note" id="data_updated">&#49688;&#51665; &#51221;&#48372; &#54869;&#51064; &#51473;</span>
+        </div>
+      </div>
+      <div class="hero_panel" aria-label="data summary">
+        <div class="hero_metric hero_metric_wide">
+          <span class="metric_label">&#51652;&#54665;&#51473; &#44415;&#51592;</span>
+          <strong class="metric_value" id="active_goods_metric">0</strong>
+        </div>
+        <div class="hero_metric">
+          <span class="metric_label">&#50696;&#51221; &#51060;&#48292;&#53944;</span>
+          <strong class="metric_value" id="upcoming_events_metric">0</strong>
+        </div>
+        <div class="hero_metric">
+          <span class="metric_label">&#49345;&#50689;&#44288;</span>
+          <strong class="metric_value">3</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="spotlight_section" aria-labelledby="spotlight_title">
+      <div class="section_header">
+        <div>
+          <p class="section_eyebrow">Now tracking</p>
+          <h2 class="section_title" id="spotlight_title">&#51648;&#44552; &#51064;&#44592; &#51080;&#45716; &#51060;&#48292;&#53944;</h2>
+        </div>
+      </div>
+      <div class="spotlight_grid" id="popular_events_list">
+        <div class="skeleton_card"></div>
+        <div class="skeleton_card"></div>
+        <div class="skeleton_card"></div>
+      </div>
+    </section>
+
+    <section class="spotlight_section" aria-labelledby="active_goods_title">
+      <div class="section_header">
+        <div>
+          <p class="section_eyebrow">Goods open now</p>
+          <h2 class="section_title" id="active_goods_title">&#51652;&#54665;&#51473; &#44415;&#51592;</h2>
+        </div>
+      </div>
+      <div class="poster_rail" id="active_goods_list">
+        <div class="skeleton_poster"></div>
+        <div class="skeleton_poster"></div>
+        <div class="skeleton_poster"></div>
+        <div class="skeleton_poster"></div>
+      </div>
+    </section>
+
+    <section class="dashboard_section" id="dashboard_section">
+      <nav class="tab_bar" aria-label="data view">
+        <button class="tab_button is_active" type="button" data-tab-target="goods_panel">&#44415;&#51592;</button>
+        <button class="tab_button" type="button" data-tab-target="events_panel">&#52888;&#47536;&#45908;</button>
+      </nav>
+
+      <section class="panel is_active" id="goods_panel" aria-labelledby="goods_title">
+        <div class="panel_header">
+          <div>
+            <p class="section_eyebrow">Goods board</p>
+            <h2 class="panel_title" id="goods_title">&#44415;&#51592; &#54788;&#54889;&#54032;</h2>
+            <p class="panel_description">&#50689;&#54868;&#48324;&#47196; &#47926;&#50612;&#49436; &#51652;&#54665;&#51473; / &#51333;&#47308; &#44415;&#51592;&#47484; &#54869;&#51064;&#54624; &#49688; &#51080;&#50612;.</p>
+          </div>
+          <p class="panel_count" id="goods_count">0&#44148;</p>
+        </div>
+
+        <div class="control_bar">
+          <label class="field_group">
+            <span class="field_label">&#50689;&#54868; &#44160;&#49353;</span>
+            <input class="text_input" id="goods_search" type="search" placeholder="movie or goods title">
+          </label>
+          <label class="field_group field_group_small">
+            <span class="field_label">&#49345;&#53468;</span>
+            <select class="select_input" id="goods_status_filter">
+              <option value="all">&#51204;&#52404;</option>
+              <option value="active">&#51652;&#54665;&#51473;</option>
+              <option value="ended">&#51333;&#47308;</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="state_box" id="goods_loading">
+          <span class="state_icon"></span>
+          <strong>&#44415;&#51592; &#45936;&#51060;&#53552;&#47484; &#48520;&#47084;&#50724;&#45716; &#51473;</strong>
+          <small>&#44277;&#44060; &#51060;&#48292;&#53944; &#50836;&#50557;&#51012; &#54869;&#51064;&#54616;&#44256; &#51080;&#50612;.</small>
+          <div class="loading_card_grid" aria-hidden="true">
+            <span class="loading_card"></span>
+            <span class="loading_card"></span>
+            <span class="loading_card"></span>
+          </div>
+        </div>
+        <div class="state_box state_box_error is_hidden" id="goods_error">
+          <span class="state_icon state_icon_error"></span>
+          <strong>&#45936;&#51060;&#53552;&#47484; &#48520;&#47084;&#50732; &#49688; &#50630;&#49845;&#45768;&#45796;</strong>
+          <small>goods.json&#51012; &#54869;&#51064;&#54624; &#49688; &#50630;&#50612;. &#47196;&#52972; &#49436;&#48260;&#47484; &#49892;&#54665;&#54616;&#44256; &#45796;&#49884; &#49352;&#47196;&#44256;&#52840;&#54644;&#48372;&#49464;&#50836;.</small>
+        </div>
+        <div class="state_box is_hidden" id="goods_empty">
+          <span class="state_icon state_icon_empty"></span>
+          <strong>&#54364;&#49884;&#54624; &#44415;&#51592;&#51060; &#50630;&#50612;</strong>
+          <small>&#44160;&#49353;&#50612;&#45208; &#49345;&#53468; &#54596;&#53552;&#47484; &#51312;&#51221;&#54644;&#48372;&#49464;&#50836;. &#51204;&#52404; &#49345;&#53468;&#47196; &#46028;&#47532;&#47732; &#45908; &#47566;&#51008; &#44415;&#51592;&#51060; &#48372;&#51068; &#49688; &#51080;&#50612;.</small>
+        </div>
+        <div class="group_list" id="goods_list"></div>
+      </section>
+
+      <section class="panel" id="events_panel" aria-labelledby="events_title">
+        <div class="panel_header">
+          <div>
+            <p class="section_eyebrow">Calendar</p>
+            <h2 class="panel_title" id="events_title">&#47924;&#45824;&#51064;&#49324; / GV &#52888;&#47536;&#45908;</h2>
+            <p class="panel_description">&#45216;&#51676; &#52572;&#49888;&#49692;&#51004;&#47196; GV&#50752; &#47924;&#45824;&#51064;&#49324; &#51068;&#51221;&#51012; &#54869;&#51064;&#54624; &#49688; &#51080;&#50612;.</p>
+          </div>
+          <p class="panel_count" id="events_count">0&#44148;</p>
+        </div>
+
+        <div class="control_bar">
+          <label class="field_group field_group_small">
+            <span class="field_label">&#44537;&#51109;</span>
+            <select class="select_input" id="events_theater_filter">
+              <option value="all">&#51204;&#52404;</option>
+              <option value="cgv">CGV</option>
+              <option value="lotte">&#47215;&#45936;&#49884;&#45348;&#47560;</option>
+              <option value="megabox">&#47700;&#44032;&#48149;&#49828;</option>
+            </select>
+          </label>
+          <label class="field_group field_group_small">
+            <span class="field_label">&#50976;&#54805;</span>
+            <select class="select_input" id="events_type_filter">
+              <option value="all">&#51204;&#52404;</option>
+              <option value="GV">GV</option>
+              <option value="&#47924;&#45824;&#51064;&#49324;">&#47924;&#45824;&#51064;&#49324;</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="state_box" id="events_loading">
+          <span class="state_icon"></span>
+          <strong>&#52888;&#47536;&#45908; &#45936;&#51060;&#53552;&#47484; &#48520;&#47084;&#50724;&#45716; &#51473;</strong>
+          <small>&#45216;&#51676;&#48324; &#51060;&#48292;&#53944;&#47484; &#51221;&#47532;&#54616;&#44256; &#51080;&#50612;.</small>
+          <div class="loading_card_grid" aria-hidden="true">
+            <span class="loading_card"></span>
+            <span class="loading_card"></span>
+            <span class="loading_card"></span>
+          </div>
+        </div>
+        <div class="state_box state_box_error is_hidden" id="events_error">
+          <span class="state_icon state_icon_error"></span>
+          <strong>&#45936;&#51060;&#53552;&#47484; &#48520;&#47084;&#50732; &#49688; &#50630;&#49845;&#45768;&#45796;</strong>
+          <small>events.json&#51012; &#54869;&#51064;&#54624; &#49688; &#50630;&#50612;. &#54028;&#51068; &#44221;&#47196;&#45208; &#47196;&#52972; &#49436;&#48260; &#49345;&#53468;&#47484; &#54869;&#51064;&#54644;&#48372;&#49464;&#50836;.</small>
+        </div>
+        <div class="state_box is_hidden" id="events_empty">
+          <span class="state_icon state_icon_empty"></span>
+          <strong>&#54364;&#49884;&#54624; &#51060;&#48292;&#53944;&#44032; &#50630;&#50612;</strong>
+          <small>&#44537;&#51109;&#51060;&#45208; &#50976;&#54805; &#54596;&#53552;&#47484; &#45796;&#49884; &#49440;&#53469;&#54644;&#48372;&#49464;&#50836;. &#45216;&#51676;&#44032; &#50630;&#45716; &#54637;&#47785;&#51008; &#47560;&#51648;&#47561;&#50640; &#51221;&#47532;&#46104;&#50612;.</small>
+        </div>
+        <div class="card_grid" id="events_list"></div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

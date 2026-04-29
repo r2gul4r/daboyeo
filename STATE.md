@@ -2,25 +2,25 @@
 
 ## Current Task
 
-- task: `Finalize selective ksg frontend import after review`
-- phase: `review-fix`
-- scope: `Fix review findings from the ksg frontend import, verify the final diff, then commit and push the lsh branch`
-- verification_target: `AI recommendation requests include saved search filters again, precise-mode labels match E4B Q4 behavior, imported routing stays intact, and JS/diff checks pass before commit and push`
-- previous_task_note: `The MBTI seat recommendation page was committed as c3e96ec; the user now asked to bring teammate work from ksg`
+- task: `Create goods/events static frontend`
+- phase: `implement`
+- scope: `Add a static HTML/CSS/JS frontend under goods_events that loads goods.json and events.json and renders goods dashboard plus GV/stage greeting calendar`
+- verification_target: `Static files exist in requested structure, JSON loads via fetch paths, UI supports loading/empty/null display, filters/search/sort/grouping, and HTML/CSS/JS static checks pass where possible`
+- previous_task_note: `Existing dirty worktree has user/frontend changes in frontend/src/css/common.css; this task will not touch that file.`
 
 ## Orchestration Profile
 
-- score_total: `7`
-- score_breakdown: `2 cross-branch frontend import, 1 route integration with existing seat flow, 1 scratch-file exclusion, 1 AI page compatibility risk, 1 verification, 1 clean working tree baseline`
-- hard_triggers: `none`
-- selected_rules: `single-session review fix, preserve existing MBTI seat recommendation route, no destructive reset/checkout/clean, exclude scratch files, no backend/model integration`
-- selected_skills: `none; git/source inspection plus local static verification is enough`
+- score_total: `5`
+- score_breakdown: `2 new static frontend surface, 1 JSON data rendering, 1 responsive UI, 1 verification`
+- hard_triggers: `none; local static frontend only using existing sample JSON`
+- selected_rules: `single-session static frontend, preserve crawler and sample data, no framework, no external assets`
+- selected_skills: `none; direct repository inspection and official public page source checks are enough`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
-- spawn_decision: `no spawn; the user did not request subagents and the asset/code wiring is tightly coupled to one page`
-- efficiency_basis: `the import has one tight frontend integration surface and no safe disjoint write sets; main can inspect and integrate faster than delegating`
-- selection_reason: `the user accepted the code review findings and requested fixing them, final review, commit, and push for the current selective ksg import`
+- spawn_decision: `no spawn; the user did not request subagents and the crawler is one compact write set`
+- efficiency_basis: `one isolated folder plus STATE logging is faster and clearer than delegation`
+- selection_reason: `the user asked for a HTML/CSS/JavaScript-only movie info webpage using goods.json and events.json`
 
 ## Evaluation Plan
 
@@ -76,6 +76,22 @@
   - `git diff --check`
 
 ## Verification Results
+
+- goods_events_crawler:
+  - `implementation`: `Added goods_events/package.json, goods_events/src/crawler.js, and goods_events/README.md.`
+  - `crawler_contract`: `TARGET_URLS constants cover CGV mobile/current-event page plus CGV desktop fallback, Lotte Cinema event page, and Megabox desktop/mobile event pages; cgvCrawler, lotteCrawler, and megaboxCrawler are separate functions.`
+  - `data_outputs`: `runCrawler writes goods_events/goods.json and goods_events/events.json with the requested minimal schemas after dedupe.`
+  - `request_policy`: `axios + cheerio are primary; Playwright is optional and only used as dynamic fallback if installed; delayBetweenRequests now adds 1-3 second randomized delay before requests; MAX_REQUESTS_PER_HOST limits one-run host load.`
+  - `safety`: `No credentials, cookies, tokens, login flow, or private APIs are used; robots.txt is checked per origin before target fetches; login/member/auth/reservation/payment/coupon-like URLs are skipped; only summary fields plus source URL are written.`
+  - `verification`: `package.json parsed with ConvertFrom-Json; Select-String found no non-ASCII literals in crawler.js after Unicode-escape hardening; compliance guardrail source checks passed; git diff --check passed with CRLF warnings only.`
+  - `verification_gap`: `node --check goods_events/src/crawler.js could not run because node is not available in this shell PATH.`
+  - `compliance_recheck`: `Removed Playwright optional dependency and browser fallback because it can trigger secondary script/image/tracking requests; removed detail-page enrichment because it made extra requests and processed full detail text; reduced configured crawl targets to one explicit public event-list URL per theater; lowered MAX_REQUESTS_PER_HOST to 6.`
+  - `schema_refinement`: `Output records now include stable sha1-based id, source_page_url, collected_at, null optional values, active/ended status, goods start_date/end_date, and event date values that include time as YYYY-MM-DDTHH:mm:ss when inferred.`
+  - `frontend_sample_data`: `Added goods_events/goods.json and goods_events/events.json with 12 development records each; data mixes cgv/lotte/megabox, active/ended status, GV/stage greeting types, varied dates, and null optional values.`
+  - `static_frontend`: `Added goods_events/index.html, css/style.css, js/main.js, js/goods.js, and js/events.js. The page fetches goods/events JSON, renders loading/empty states, goods grouping/search/status filter/latest collection sorting, events theater/type filters/date-desc sorting with null dates last, source links, and responsive card layouts.`
+  - `static_frontend_verification`: `goods.json and events.json parsed with ConvertFrom-Json; static source checks found fetch paths and UI hooks; git diff --check passed with CRLF warnings only; Python http.server served index.html, goods.json, and events.json at HTTP 200 on 127.0.0.1:8765.`
+  - `static_frontend_ux`: `Rebuilt the static page with an OTT-style hero, CTA, summary metrics, popular events spotlight, active goods rail, stronger movie-name emphasis, richer badges/detail rows, improved hover lift, and guided empty/loading states. Source files were rewritten ASCII-safe using HTML entities/Unicode escapes to avoid PowerShell mojibake.`
+  - `static_frontend_loading_error`: `Added panel-level fetch failure UI for goods/events, skeleton loading cards, MIN_LOADING_MS=700 to avoid flicker, richer empty-state copy, and error-preserving filter callbacks.`
 
 - current_task:
   - `classification`: `reclassified from MBTI image exploration into concrete frontend implementation`
@@ -163,20 +179,20 @@
 ## Writer Slot
 
 - writer_slot: `main`
-- write_set: `STATE.md, MULTI_AGENT_LOG.md, frontend/src/js/pages/daboyeoAi.js, frontend/src/js/pages/script.js, frontend/index.html, frontend/src/css/daboyeoAi.css, frontend/src/css/style.css, frontend/src/pages/**, frontend/src/assets/AIbackgroundImg.jpg, ERROR_LOG.md if verification errors materially affect the work`
+- write_set: `STATE.md, goods_events/index.html, goods_events/css/**, goods_events/js/**, ERROR_LOG.md if verification errors materially affect the work`
 - write_sets:
-  - `main`: `STATE.md, MULTI_AGENT_LOG.md, frontend/src/js/pages/daboyeoAi.js, frontend/src/js/pages/script.js, frontend/index.html, frontend/src/css/daboyeoAi.css, frontend/src/css/style.css, frontend/src/pages/**, frontend/src/assets/AIbackgroundImg.jpg, ERROR_LOG.md if needed`
+  - `main`: `STATE.md, goods_events/index.html, goods_events/css/**, goods_events/js/**, ERROR_LOG.md if needed`
 - shared_assets_owner: `main`
 - note: `One shared task board is active; no concurrent registry mode.`
-- concurrent_note: `No subagents are used for this narrow follow-up; main owns integration files.`
+- concurrent_note: `No subagents are used; main owns the isolated crawler folder.`
 
 ## Contract Freeze
 
-- contract_freeze: `Selectively import ksg frontend work: include the new AI page/assets, AI CSS/JS refresh, and Top3/discovery pages; exclude patch.js; preserve the committed MBTI seat recommendation page and route; connect main AI/view-all entry points to imported pages; fix review findings before commit/push.`
-- note: `Keep the generated alias-based PNG sprite and no old SVG dependency while keeping the page static/vanilla and local-demo friendly: no backend dependency, no global top nav, no social feedback controls, one primary CTA, no regression to the existing AI 추천 route, and no false claim that MBTI seat percentages are real measured data.`
+- contract_freeze: `Create goods_events static frontend with index.html, css/style.css, js/main.js, js/goods.js, and js/events.js using fetch-loaded goods.json and events.json.`
+- note: `Implement top tabs, card lists, loading/empty states, null display, goods grouping/search/status filter/latest collection sort, events date-desc sort with null dates last, theater/type filters, responsive breakpoints, underscore class names, and source URL navigation.`
 - contract_source: `user request`
-- contract_revision: `2026-04-24-import-ksg-frontend-refresh`
-- verification_target: `node --check, git diff --check, and concise implementation summary`
+- contract_revision: `2026-04-29-goods-events-crawler`
+- verification_target: `node --check goods_events/src/crawler.js, npm package metadata review, git diff --check`
 
 ## Reviewer
 
@@ -185,6 +201,43 @@
 - reviewer_focus: `avoid overwriting the new seat recommendation feature, avoid importing patch.js, keep main page navigation coherent, and ensure the AI recommendation API receives saved search filters`
 
 ## Last Update
+
+- task: `Create goods/events Node crawler`
+- score_total: `8`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `No reclassification; Korean literals were converted to Unicode escapes after PowerShell output showed mojibake risk, then compliance guardrails were tightened after the user's explicit crawler conditions.`
+- reviewer_findings: `The crawler keeps public-only request boundaries, checks robots before fetches, separates theater functions and target URLs, writes only summary JSON fields with source URLs, dedupes records, rate-limits host requests, and uses optional Playwright fallback without requiring private state.`
+- verification_outcome: `package JSON parse, ASCII literal scan, compliance source checks, and git diff --check passed; node --check was not runnable because node is not on PATH.`
+- next_rule_change: `For Node crawler files in this workspace, prefer ASCII Unicode escapes for Korean parser keywords when PowerShell encoding may obscure source review.`
+
+- timestamp: `2026-04-29 17:31:00 +09:00`
+- note: `Applied explicit crawler compliance guardrails: robots.txt precheck, login/auth URL skip, 1-3 second delay, per-host request cap, summary-only output policy, and README documentation.`
+
+- timestamp: `2026-04-29 17:45:00 +09:00`
+- note: `Re-reviewed crawler against stricter compliance conditions, removed Playwright fallback and detail-page enrichment, restricted TARGET_URLS to one public event-list page per theater, and verified no removed symbols remain.`
+
+- timestamp: `2026-04-29 18:02:00 +09:00`
+- note: `Refined crawler output schema for frontend use: nulls instead of empty strings, stable ids, source_page_url, collected_at, normalized status, goods date ranges, and event datetime extraction.`
+
+- timestamp: `2026-04-29 18:18:00 +09:00`
+- note: `Created frontend development sample goods.json and events.json, rewrote them as ASCII-safe JSON after PowerShell mojibake invalidated the first Korean-literal draft, and verified counts plus enum constraints.`
+
+- timestamp: `2026-04-29 18:38:00 +09:00`
+- note: `Implemented the static goods/events frontend and verified JSON parsing, source hooks, diff whitespace, and local HTTP serving on port 8765.`
+
+- timestamp: `2026-04-29 18:55:00 +09:00`
+- note: `Improved goods_events UI/UX with hero, CTA, spotlight sections, active goods rail, stronger OTT card styling, improved empty states, and verified local HTTP 200 responses for page/CSS/JS.`
+
+- timestamp: `2026-04-29 19:08:00 +09:00`
+- note: `Improved fetch failure and loading UX with per-panel error states, skeleton loading cards, minimum loading duration, and verified HTTP 200 for page and JS modules.`
+
+- timestamp: `2026-04-29 17:18:00 +09:00`
+- note: `Implemented the isolated goods_events crawler and verified package JSON, ASCII-safe crawler source, and git diff whitespace checks; Node runtime syntax check is blocked because node is not on PATH.`
+
+- timestamp: `2026-04-29 17:00:00 +09:00`
+- note: `Opened goods/events crawler task, classified external public request and HTML parsing risk, froze the isolated goods_events write set before implementation.`
 
 - timestamp: `2026-04-24 15:36:00 +09:00`
 - note: `Fixed the accepted review findings by restoring saved search filters in the AI recommendation payload and correcting precise-mode labels.`
