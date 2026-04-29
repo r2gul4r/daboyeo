@@ -123,9 +123,9 @@ body.header-visible {
   padding-top: 60px;
 }
 
-/* body.basic-page {
+body.basic-page {
   padding-top: var(--fixed-header-height);
-} */
+}
 
 body.basic-page.header-visible {
   padding-top: var(--fixed-header-height);
