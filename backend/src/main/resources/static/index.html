@@ -1,0 +1,315 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다보여 | DABOYEO</title>
+  <!-- favicon -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="45x45" href="favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="./src/css/style.css">
+</head>
+
+<body>
+  <!-- main -->
+  <div class="main-content">
+    <h1 class="logo-top"><a href="/"><img src="./src/assets/logo.svg" alt="LOGO"></a></h1>
+
+    <h1>지금, 가장 <span>싸게</span> 볼 수 있는 영화 찾기</h1>
+    <p class="subtitle">CGV, 롯데시네마, 메가박스 — 한 번에 비교하고 최저가로 예매하세요</p>
+
+    <!-- Search Card -->
+    <div class="search-card">
+      <div class="form-row">
+        <div class="form-group">
+          <label>지역</label>
+          <div class="wrapper">
+            <div class="input-wrapper">
+              <i class="fas fa-map-marker-alt"></i>
+              <input type="text" id="regionInput" placeholder="지역 검색(전체)">
+            </div>
+            <a class="btn-map" id="locationMapBtn" href="./src/pages/movieTheaterMap.html?v=20260427-logo"><i class="fas fa-location-dot"></i> 내 위치</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <!-- ============================================
+             3. 날짜 입력 기능 개선
+             ============================================ -->
+        <div class="form-group">
+          <label>날짜</label>
+
+          <div class="input-wrapper">
+            <i class="fas fa-calendar"></i>
+            <input type="text" id="dateInput" readonly placeholder="날짜 선택">
+          </div>
+
+          <!-- 커스텀 달력 -->
+          <div class="calendar" id="calendar">
+            <div class="calendar-header">
+              <button id="prevMonth">&lt;</button>
+              <span id="monthYear"></span>
+              <button id="nextMonth">&gt;</button>
+            </div>
+
+            <div class="calendar-days">
+              <div>일</div>
+              <div>월</div>
+              <div>화</div>
+              <div>수</div>
+              <div>목</div>
+              <div>금</div>
+              <div>토</div>
+            </div>
+
+            <div class="calendar-dates" id="calendarDates"></div>
+          </div>
+        </div>
+
+        <!-- ============================================
+             4. 시간 선택 슬라이더 (핵심)
+             ============================================ -->
+        <div class="form-group">
+          <label>시간</label>
+          <div class="time-selection-group">
+            <div class="time-option">
+              <input type="radio" name="timeRange" id="time-morning" value="morning" checked>
+              <label for="time-morning">
+                <span class="time-name">조조</span>
+                <span class="time-range">(06:00~10:59)</span>
+              </label>
+            </div>
+            <div class="time-option">
+              <input type="radio" name="timeRange" id="time-brunch" value="brunch">
+              <label for="time-brunch">
+                <span class="time-name">브런치</span>
+                <span class="time-range">(11:00~16:59)</span>
+              </label>
+            </div>
+            <div class="time-option">
+              <input type="radio" name="timeRange" id="time-night" value="night">
+              <label for="time-night">
+                <span class="time-name">야간</span>
+                <span class="time-range">(17:00~02:00)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================
+             5. 인원 선택 기능
+             ============================================ -->
+        <div class="form-group">
+          <label>인원</label>
+          <div class="person-counter">
+            <button class="counter-btn" id="decreaseBtn">−</button>
+            <div class="counter-value" id="personCount">1</div>
+            <button class="counter-btn" id="increaseBtn">+</button>
+            <span>명</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-search" id="searchBtn"><i class="fas fa-wand-magic-sparkles"></i> AI 추천받기</button>
+        <a class="btn-nearby" id="nearbyBtn" href="./src/pages/movies.html">직접 비교하기</a>
+      </div>
+    </div>
+
+    <div class="footer-stats">
+      <span>현재 <b class="blue" id="movieCount">1,234</b>개 영화 상영 중</span>
+      <span>최저가 절감액 <b class="blue" id="savingsAmount">₩2,456,789</b></span>
+    </div>
+
+    <!-- Now Playing Movies Section -->
+    <div class="now-playing-section" id="movies">
+      <div class="now-playing-header">
+        <div>
+          <div class="now-playing-title">지금 가장 인기 있는 영화</div>
+          <div class="now-playing-subtitle">실시간 예매율과 평점을 바탕으로 선정된 인기작입니다.</div>
+        </div>
+        <a class="view-all" href="./src/pages/allMovies.html">모두 보기 <i class="fas fa-arrow-right"></i></a>
+      </div>
+
+      <div class="movie-cards-grid">
+        <!-- Movie Card 1 -->
+        <div class="movie-card">
+          <div class="movie-poster">
+            <div class="movie-rating"><img src="./src/assets/ico_age_03.png" alt="movie age"></div>
+            <div class="movie-rank">1</div>
+            영화 포스터 이미지
+          </div>
+          <div class="movie-info">
+            <div class="movie-title">프로젝트 헤일메리</div>
+            <div class="price-list">
+              <div class="price-item">
+                <span class="price-cinema cgv"><img src="./src/assets/CGV_logo.svg" alt="CGV LOGO"> CGV</span>
+                <span class="price-amount">₩14,000</span>
+              </div>
+              <div class="price-item lowest-price">
+                <span class="price-cinema lotte"><img src="./src/assets/LOTTECINEMA_logo.jpg" alt="LOTTECINEMA LOGO">
+                  롯데시네마</span>
+                <span class="price-amount">₩12,000</span>
+              </div>
+              <div class="price-item">
+                <span class="price-cinema mega"><img src="./src/assets/MEGABOX_logo.jpg" alt="MEGABOX LOGO"> 메가박스</span>
+                <span class="price-amount">₩13,000</span>
+              </div>
+            </div>
+            <div class="movie-time-info">
+              <p>예매율: 28.5%</p>
+              <p>SF/모험ㆍ<span>14:30</span> ~16:48</p>
+            </div>
+            <button class="booking-btn">예매하기</button>
+          </div>
+        </div>
+
+        <!-- Movie Card 2 -->
+        <div class="movie-card">
+          <div class="movie-poster">
+            <div class="movie-rating"><img src="./src/assets/ico_age_03.png" alt="age"></div>
+            <div class="movie-rank">2</div>
+            영화 포스터 이미지
+          </div>
+          <div class="movie-info">
+            <div class="movie-title">위 리브 인 타임</div>
+            <div class="price-list">
+              <div class="price-item">
+                <span class="price-cinema cgv"><img src="./src/assets/CGV_logo.svg" alt="CGV LOGO"> CGV</span>
+                <span class="price-amount">₩14,000</span>
+              </div>
+              <div class="price-item">
+                <span class="price-cinema lotte"><img src="./src/assets/LOTTECINEMA_logo.jpg" alt="LOTTECINEMA LOGO">
+                  롯데시네마</span>
+                <span class="price-amount">₩12,000</span>
+              </div>
+              <div class="price-item lowest-price">
+                <span class="price-cinema mega"><img src="./src/assets/MEGABOX_logo.jpg" alt="MEGABOX LOGO"> 메가박스</span>
+                <span class="price-amount">₩11,000</span>
+              </div>
+            </div>
+            <div class="movie-time-info">
+              <p>예매율: 28.5%</p>
+              <p>SF/모험ㆍ<span>14:30</span> ~16:48</p>
+            </div>
+            <button class="booking-btn">예매하기</button>
+          </div>
+        </div>
+
+        <!-- Movie Card 3 -->
+        <div class="movie-card">
+          <div class="movie-poster">
+            <div class="movie-rating"><img src="./src/assets/ico_age_03.png" alt="age"></div>
+            <div class="movie-rank">3</div>
+            영화 포스터 이미지
+          </div>
+          <div class="movie-info">
+            <div class="movie-title">왕과 사는 남자</div>
+            <div class="price-list">
+              <div class="price-item lowest-price">
+                <span class="price-cinema cgv"><img src="./src/assets/CGV_logo.svg" alt="CGV LOGO"> CGV</span>
+                <span class="price-amount">₩13,000</span>
+              </div>
+              <div class="price-item">
+                <span class="price-cinema lotte"><img src="./src/assets/LOTTECINEMA_logo.jpg" alt="LOTTECINEMA LOGO">
+                  롯데시네마</span>
+                <span class="price-amount">₩14,000</span>
+              </div>
+              <div href="#" class="price-item">
+                <span class="price-cinema mega"><img src="./src/assets/MEGABOX_logo.jpg" alt="MEGABOX LOGO"> 메가박스</span>
+                <span class="price-amount">₩13,500</span>
+              </div>
+            </div>
+            <div class="movie-time-info">
+              <p>예매율: 28.5%</p>
+              <p>SF/모험ㆍ<span>14:30</span> ~16:48</p>
+            </div>
+            <button class="booking-btn">예매하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seat Recommendation Section -->
+    <div class="ai-recommendation-section" id="ai">
+      <div class="ai-section-label">성향 좌석 추천</div>
+
+      <div class="ai-content-wrapper">
+        <div class="ai-grid" id="aiGrid">
+          <div class="ai-card featured" role="button" tabindex="0" data-seat-flow="mbti">
+            <div class="ai-card-emoji"><i class="fas fa-user-tie"></i></div>
+            <div class="ai-card-title">MBTI별 추천</div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-emoji"><i class="fas fa-heart"></i></div>
+            <div class="ai-card-title">커플 추천 좌석</div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-emoji"><i class="fas fa-users"></i></div>
+            <div class="ai-card-title">단체 추천 좌석</div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-emoji"><i class="fas fa-dice"></i></div>
+            <div class="ai-card-title">좌석 랜덤 뽑기</div>
+          </div>
+        </div>
+
+        <div class="ai-description">
+          <div class="ai-description-title">당신의 성향에 맞는<br> <span>명당 좌석</span>을 추천합니다</div>
+          <div class="ai-description-text">
+            DABOYEO의 성향별 좌석 추천은 성격 유형과 관람 스타일을 바탕으로 편하게 고를 수 있는 명당 구역을 제안합니다. MBTI별 추천부터 커플 좌석, 단체 좌석, 랜덤 뽑기까지 영화관에서 더 잘 맞는 자리를 찾아보세요.
+          </div>
+          <button class="best-seat-cta-btn" type="button" data-seat-flow="mbti" onclick="window.location.href='./src/pages/seatRecommendMbti.html?flow=mbti'"><i class="fas fa-chair"></i> 명당 좌석 찾기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4-Step Section -->
+    <div class="three-step-section">
+      <h2 class="three-step-title">DABOYEO? 4단계로 끝!</h2>
+      <div class="three-step-container">
+        <div class="steps-grid">
+          <div class="step-item">
+            <div class="step-icon"><i class="fas fa-search"></i></div>
+            <div class="step-title">영화 선택</div>
+            <div class="step-description">검색하거나 추천을 받거나, 지금 바로<br>볼 수 있는 영화를 탐색하세요.</div>
+            <div class="step-arrow">→</div>
+          </div>
+          <div class="step-item">
+            <div class="step-icon"><i class="fas fa-chart-simple"></i></div>
+            <div class="step-title">가격 비교</div>
+            <div class="step-description">cgvㆍ롯데시네마ㆍ메가박스 3사의 가격, 시간<br>좌석 현황을 카드 한 장으로 비교하세요.</div>
+            <div class="step-arrow">→</div>
+          </div>
+          <div class="step-item">
+            <div class="step-icon"><i class="fas fa-chair"></i></div>
+            <div class="step-title">좌석 선택</div>
+            <div class="step-description">성향에 맞는 명당 좌석으로<br>최고의 관람 경험을 누리세요.</div>
+            <div class="step-arrow">→</div>
+          </div>
+          <div class="step-item">
+            <div class="step-icon"><i class="fas fa-ticket"></i></div>
+            <div class="step-title">최저가 예매</div>
+            <div class="step-description">최저가 버튼 하나로 해당 영화관<br>페이지로 바로 이동해요.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer"></div>
+
+  <!-- Kakao SDK -->
+  <script
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0520b1a822c33d45a0a7075152d340fa&libraries=services"></script>
+
+  <script src="./src/js/include.js"></script>
+  <script src="./src/js/pages/common.js"></script>
+  <script src="./src/js/pages/script.js"></script>
+  <script src="./src/js/api/kakaoMap.js"></script>
+</body>
+
+</html>

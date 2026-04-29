@@ -313,3 +313,21 @@ Do not rewrite existing entries; append only.
   summary: `팀 DB 스키마 마무리 중 Gradle 테스트 시작 실패`
   details: `gradle test --tests kr.daboyeo.backend.ingest.CollectorBundleIngestCommandTests 를 backend 디렉터리에서 실행했지만 Gradle native-platform.dll 로딩 실패로 빌드가 시작되지 않았다. 코드 테스트 결과가 아니라 로컬 Gradle 런타임 문제이며, 가능한 정적 검증과 diff 검증으로 대체한다.`
   status: `open`
+
+- time: `2026-04-28 13:18:00 +09:00`
+  location: `backend Spring startup for AI recommendation smoke`
+  summary: `Spring bootRun 시작 전 Gradle native-platform.dll 로딩 실패`
+  details: `AI 추천 백엔드 확인을 위해 backend 디렉터리에서 gradle --version 을 먼저 실행했지만 Gradle native services 초기화 중 native-platform.dll 로딩 실패가 재현됐다. bootRun은 같은 Gradle 런타임에 의존하므로 실행하지 못했고, 기존 build/libs jar 실행으로 우회해 8080 health를 확인한다.`
+  status: `open`
+
+- time: `2026-04-28 14:26:00 +09:00`
+  location: `AI recommendation backend smoke`
+  summary: `Spring health는 정상이나 recommendation session API가 타임아웃`
+  details: `기존 build/libs jar를 숨김 PowerShell 프로세스로 실행하면 /api/health 는 status=ok 를 반환한다. 하지만 /api/recommendation/sessions POST 는 8초 안에 응답하지 않아 프론트가 로컬 프리뷰 세션으로 fallback 된다. /api/recommendation/poster-seed 는 200을 반환하므로 서버 전체 다운이 아니라 세션 저장소 또는 DB 연결 경로를 우선 확인해야 한다.`
+  status: `open`
+
+- time: `2026-04-28 17:00:40 +09:00`
+  location: `backend static mirror runtime`
+  summary: `샌드박스 내부 Start-Process 로 띄운 Spring 서버가 명령 종료 후 유지되지 않음`
+  details: `Spring boot jar 자체는 약 13초 후 정상 시작하고 static/index.html 도 잡히지만, 기본 샌드박스 내부에서 분리 실행한 Java 프로세스는 앱 브라우저 확인 전에 정리되어 ERR_CONNECTION_REFUSED 로 보였다. 샌드박스 밖에서 같은 jar를 실행하자 /api/health, /, /src/pages/daboyeoAi.html 모두 200으로 확인됐다.`
+  status: `resolved`

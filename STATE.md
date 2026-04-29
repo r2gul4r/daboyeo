@@ -2,63 +2,167 @@
 
 ## Current Task
 
-- task: `Finalize team-shareable DB schema contract`
-- phase: `verify_and_publish`
-- scope: `Add DB README application instructions, then commit and push the completed team-shareable DB schema contract package.`
-- verification_target: `db/README.md explains migration application and verification commands; existing migration/docs/ingest/status-mapping checks remain valid before commit and push.`
-- previous_task_note: `Fresh 3-provider crawl output remains ignored under .local/api-responses/fresh-all-20260427-174156 and is not written to TiDB in this pass.`
+- task: `Codex OAuth deployment architecture plan`
+- phase: `documentation`
+- scope: `Record the agreed portfolio-demo architecture where the site is deployed on Oracle Cloud, recommendation data stays in the Spring/TiDB backend, and Codex OAuth is used through a temporary AI gateway during presentation.`
+- verification_target: `A detailed Markdown plan exists under docs/ with the target architecture, API flow, security guardrails, implementation phases, deployment checklist, and verification plan.`
+- previous_task_note: `The provider future-date ingest work is complete enough for this turn; this request changes scope to deployment/AI architecture documentation.`
 
 ## Orchestration Profile
 
-- score_total: `8`
-- score_breakdown: `2 schema migration, 2 ingest behavior change, 1 fresh data shape dependency, 1 security/raw-payload boundary, 1 docs/contract update, 1 verification breadth`
-- hard_triggers: `data_fidelity_risk, schema_contract_change, implementation_depends_on_discovery_result, external data raw payload handling`
-- selected_rules: `single-session schema/ingest/docs finalization, preserve existing migrations, no real credential exposure, no TiDB write, do not complete unrelated backend API work`
-- selected_skills: `none; repo-local Java/SQL/docs update`
+- score_total: `5`
+- score_breakdown: `2 auth/OAuth and account-token handling, 1 cloud deployment architecture, 1 external AI gateway dependency, 1 repository documentation write`
+- hard_triggers: `auth_token_boundary, external_runtime_connection, deployment_configuration`
+- selected_rules: `single-session; documentation-only; do not write secrets; do not expose openai-oauth /v1 directly; preserve existing dirty worktree changes`
+- selected_skills: `none`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
-- spawn_decision: `no spawn; the user did not request subagents and SQL, Java parser, tests, and docs must stay tightly consistent`
-- efficiency_basis: `handoff would add drift risk because migration fields, Java ingest semantics, and team docs describe the same contract`
-- selection_reason: `the user asked to finish the DB sharing package after the fresh 3-provider classification exposed additional table candidates and post-midnight showtime risk`
+- spawn_decision: `no spawn; the deliverable is one architecture plan and does not have separable implementation write sets`
+- efficiency_basis: `current Spring recommendation flow, frontend API path, and deployment assumptions can be documented from the already inspected code without parallel work`
+- selection_reason: `user asked to save the conversation as a detailed implementation plan; the decisive trigger is auth/OAuth deployment documentation, not runtime implementation`
 
 ## Evaluation Plan
 
-- evaluation_need: `full`
+- evaluation_need: `light`
 - project_invariants:
-  - `Do not commit or document real secrets, passwords, tokens, cookies, or API keys.`
-  - `Keep db/migrations as the schema source of truth.`
-  - `Do not write fresh crawl output into TiDB in this pass.`
-  - `Preserve start_time_raw/end_time_raw exactly while normalizing starts_at/ends_at.`
+  - `Do not document real secrets, passwords, OAuth tokens, cookies, API keys, or tunnel tokens.`
+  - `Keep the deployed-site recommendation pipeline grounded in DB candidates; AI must not invent showtimes outside backend-provided candidates.`
+  - `Do not overwrite unrelated frontend/backend user edits.`
+  - `Do not require exposing openai-oauth /v1 directly to the public internet.`
 - task_acceptance:
-  - `Add migration 005 for agreed team-shareable schema extensions that are needed before broader DB ingest.`
-  - `Include collection run tracking and provider status code mapping.`
-  - `Seed or document observed provider seat status mappings from the fresh crawl, including CGV 00, Lotte 0/50, and Megabox GERN_SELL/SCT04.`
-  - `Separate stable seat layout structure from per-run seat snapshots.`
-  - `Keep canonical movie linking documented as optional/deferred if not implemented in 005.`
-  - `Fix Java bundle ingest for CGV/Lotte post-midnight raw times such as 2400, 2609, and 24:17.`
-  - `Update team setup and schema contract docs so teammates know exactly what to apply.`
+  - `Create a detailed Markdown implementation plan under docs/.`
+  - `Explain the agreed Oracle Cloud deployed-site flow and the Codex OAuth gateway alternatives.`
+  - `Record the API boundary, required environment variables, fallback strategy, security guardrails, and verification checklist.`
+  - `Make clear that AI reranks/explains backend DB candidates rather than directly querying the database.`
 - non_goals:
-  - `No real DB credential distribution.`
-  - `No live DB writes from .local crawl data.`
-  - `No unrelated API feature completion.`
-  - `No R2 upload or public raw-payload sharing.`
+  - `No Java, JavaScript, gateway, or deployment code changes in this turn.`
+  - `No real tunnel URL, account token, or private key in documentation.`
+  - `No public-runtime smoke checks unless explicitly requested.`
 - hard_checks:
-  - `Update STATE before product-file edits.`
-  - `Use placeholders for all credentials.`
-  - `Run relevant Java tests if Gradle is usable in this environment.`
-  - `Run git diff --check.`
-  - `Review docs/migration for accidental secret-like concrete values.`
+  - `Update STATE before writing docs.`
+  - `Markdown plan is present and readable.`
+  - `git diff --check passes or remaining warnings are explained.`
 - llm_review_rubric:
-  - `A teammate should be able to apply migrations 001-005 to their own DB and understand which tables are common, tracking, layout, and deferred.`
-  - `The ingest time contract should be explicit enough to prevent midnight sorting bugs.`
+  - `The plan should be understandable to a teammate preparing the portfolio presentation.`
+  - `Security tradeoffs should be concrete enough to prevent accidentally exposing OAuth-backed /v1 endpoints.`
 - evidence_required:
-  - `Migration path and table list`
-  - `Java test result or clear environment gap`
-  - `Security placeholder review`
-  - `git diff --check`
+  - `Plan path`
+  - `Architecture summary`
+  - `Verification command result`
+
+## Contract Freeze
+
+- status: `frozen`
+- source_basis: `Conversation agreement: deploy the portfolio site/backend on Oracle Cloud or similar cloud, keep recommendation candidate selection in Spring/TiDB, and use Codex OAuth only through a presentation-time AI gateway or local demo adapter.`
+- output_document: `docs/AI_CODEX_OAUTH_DEPLOYMENT_PLAN.md`
+- write_sets: `STATE.md, docs/AI_CODEX_OAUTH_DEPLOYMENT_PLAN.md`
+- writer_slot: `main`
 
 ## Verification Results
+
+- korea_boxoffice_top50_poster_webp_seed:
+  - `timestamp`: `2026-04-28 16:23:00 +09:00`
+  - `classification`: `score_total 8; full evaluation; single-session; no spawn because ranking, poster lookup, conversion, and manifest verification were one coupled generated-data pipeline.`
+  - `source`: `KOBIS official former/all-time box-office HTML saved locally at .local/boxoffice-posters/kobis-former-boxoffice.html; filtered to releaseDate 2010-01-01 through 2026-12-31 and re-ranked 1-50 by admissions.`
+  - `output_metadata`: `backend/src/main/resources/recommendation/korea-boxoffice-top50-posters.json contains 50 movies with rank, KOBIS all-time rank, movieCd, Korean title, release date, admissions, gross, screens, poster source URL, local poster path, dimensions, and sha256.`
+  - `output_assets`: `frontend/src/assets/R2/posters contains 50 generated .webp poster files referenced by the metadata.`
+  - `poster_source`: `each poster was resolved from the KOBIS movie detail popup endpoint /kobis/business/mast/mvie/searchMovieDtl.do using the movieCd from the official ranking row, then converted locally to WEBP with Pillow quality=86.`
+  - `verification`: `python -m json.tool passed for korea-boxoffice-top50-posters.json; manifest check found 50 movies, 50 unique ranks, and 0 missing .webp files; poster directory has 50 .webp files; git diff --check passed with existing CRLF warnings only.`
+  - `data_note`: `KOBIS cumulative admissions can change due to rereleases and ongoing 2026 releases, so the ranking is a 2026-04-28 local snapshot.`
+
+- canonical_ai_recommendation_smoke:
+  - `frontend_route`: `frontend/src/js/pages/script.js now routes the main AI 추천받기 CTA to ./src/pages/daboyeoAi.html; other AI links already point to daboyeoAi.html.`
+  - `duplicate_page`: `frontend/src/pages/ai.html still exists pending explicit action-time confirmation before local file deletion.`
+  - `model_config`: `application.yml keeps fast-model=gemma-4-e2b-it and precise-model=gemma-4-e4b-it; frontend mode labels still show E2B Q4 and E4B Q4.`
+  - `local_model_endpoint`: `http://127.0.0.1:1234/v1/models was initially unreachable; LM Studio was started with lms server start and now returns the configured model list.`
+  - `local_model_loaded`: `LM Studio server is now running on 127.0.0.1:1234; gemma-4-e2b-it and gemma-4-e4b-it are both listed by /v1/models, loaded by lms ps, and returned HTTP 200 from /v1/chat/completions with a ping response.`
+  - `spring_backend`: `Gradle cannot start because native-platform.dll loading fails, but the existing build/libs jar starts with Java 21 when launched in a sandbox-external hidden PowerShell process.`
+  - `health`: `/api/health returned status=ok from localhost:8080 after the jar launch.`
+  - `recommendation_api`: `/api/recommendation/poster-seed?limit=3 returned 200, but POST /api/recommendation/sessions timed out after 8 seconds; the frontend therefore still falls back to local preview mode.`
+  - `browser`: `App browser opened http://localhost:5500/src/pages/daboyeoAi.html?v=backend-live; the visible page is the canonical AI recommendation flow at 1 / 5 상황.`
+  - `verification`: `node --check passed for script.js and daboyeoAi.js; git diff --check passed with CRLF warnings only.`
+
+- ai_browser_comment_polish:
+  - `timestamp`: `2026-04-28 15:15:52 +09:00`
+  - `classification`: `score_total 3; single-session; no spawn; browser comments are a narrow frontend rendering/layout polish on the canonical AI page.`
+  - `scope`: `Remove option description text from glass buttons and move the poster batch button close to the poster grid with stronger visibility.`
+  - `write_sets`: `frontend/src/pages/daboyeoAi.html, frontend/src/js/pages/daboyeoAi.js, frontend/src/css/daboyeoAi.css`
+  - `verification_target`: `node --check daboyeoAi.js, git diff --check, and browser DOM/style sanity for the commented elements.`
+  - `implementation`: `Option buttons now render only their title span; poster batch navigation is inside .ai-poster-stage as .ai-poster-next-button, styled as a visible circular button over the poster grid; daboyeoAi.html cache-bust query was updated so the app browser loads the patched JS/CSS.`
+  - `verification`: `node --check passed for daboyeoAi.js; git diff --check passed with CRLF warnings only; app browser confirmed .ai-glass-btn-desc count 0, old selected description text count 0, .ai-poster-right-top count 0, .ai-poster-next-button count 1 and visible.`
+
+- ai_single_click_option_flow:
+  - `timestamp`: `2026-04-28 15:32:01 +09:00`
+  - `classification`: `score_total 3; single-session; no spawn; one narrow interaction fix on the AI option buttons.`
+  - `scope`: `Remove the mobile first-click expansion gate so option buttons advance on one click, while keeping the expanded visual affordance as hover/focus styling.`
+  - `write_sets`: `frontend/src/pages/daboyeoAi.html, frontend/src/js/pages/daboyeoAi.js, frontend/src/css/daboyeoAi.css`
+  - `verification_target`: `node --check daboyeoAi.js, git diff --check, and browser one-click progression from audience to mood.`
+  - `implementation`: `Removed the mobile innerWidth/is-expanded click gate from renderOptionList, deleted obsolete is-expanded CSS/mobile description rules, added focus-visible styling matching hover affordance, and bumped the AI page CSS/JS cache-bust query.`
+  - `verification`: `node --check passed for daboyeoAi.js; git diff --check passed with CRLF warnings only; static search found no is-expanded or mobile innerWidth gate; app browser confirmed one click changes from audience to mood, with desc count 0 and expanded count 0.`
+
+- ai_poster_bidirectional_buttons:
+  - `timestamp`: `2026-04-28 15:41:31 +09:00`
+  - `classification`: `score_total 3; single-session; no spawn; narrow poster-step control placement change.`
+  - `scope`: `Move the next poster batch button to the comment-ping position at the right side of the poster grid and add a matching previous button on the opposite side.`
+  - `write_sets`: `frontend/src/pages/daboyeoAi.html, frontend/src/js/pages/daboyeoAi.js, frontend/src/css/daboyeoAi.css`
+  - `verification_target`: `node --check daboyeoAi.js, git diff --check, and browser DOM sanity for left/right poster batch controls.`
+  - `implementation`: `Poster stage now renders previous and next batch buttons; next sits to the right of the grid, previous sits to the opposite left, with responsive fallback inside the grid area on narrow viewports.`
+  - `verification`: `node --check passed for daboyeoAi.js; git diff --check passed with CRLF warnings only; app browser confirmed .ai-poster-nav-button count 2, prev count 1, next count 1, old top control count 0, and both controls visible.`
+
+- ai_poster_exact_five_manual_continue:
+  - `timestamp`: `2026-04-28 15:49:51 +09:00`
+  - `classification`: `score_total 3; single-session; no spawn; narrow poster-step interaction logic change.`
+  - `scope`: `Disable poster completion until exactly five posters are selected and prevent automatic transition when the fifth poster is selected.`
+  - `write_sets`: `frontend/src/pages/daboyeoAi.html, frontend/src/js/pages/daboyeoAi.js, frontend/src/css/daboyeoAi.css`
+  - `verification_target`: `node --check daboyeoAi.js, git diff --check, and browser poster-step sanity for disabled-before-five and enabled-at-five behavior.`
+  - `implementation`: `Removed poster auto-advance scheduling, changed completion readiness from minimum 3 to exactly 5 selected posters, set the poster completion button disabled/aria-disabled until ready, added disabled CTA styling, and bumped daboyeoAi.html cache-bust query.`
+  - `verification`: `node --check passed for daboyeoAi.js; git diff --check passed with CRLF warnings only; static search found no MIN_LIKE_COUNT, POSTER_AUTO_ADVANCE_MS, schedulePosterProgress, or isPosterDiagnosisComplete; app browser confirmed button disabled at 0/3/4 selected, enabled at 5 selected, and the page remains on the poster step after the fifth selection.`
+
+- local_r2_poster_folder_placeholder:
+  - `timestamp`: `2026-04-28 15:57:16 +09:00`
+  - `classification`: `score_total 2; single-session; no spawn; placeholder folder only after user corrected scope.`
+  - `scope`: `Create only a local R2-like poster folder placeholder; do not keep downloaded or generated poster assets yet.`
+  - `write_sets`: `frontend/src/assets/R2/posters/.gitkeep, backend/src/main/resources/recommendation/poster-seed.json`
+  - `implementation`: `Removed 53 generated/downloaded poster image files from frontend/src/assets/R2/posters, restored poster-seed.json to the previous external posterUrl state from the existing backend bin resource copy, and left frontend/src/assets/R2/posters/.gitkeep so the folder exists in git.`
+  - `verification_target`: `poster folder exists with only .gitkeep; poster-seed.json parses and no longer points at /src/assets/R2/posters.`
+
+- ai_remove_local_preview_fallbacks:
+  - `timestamp`: `2026-04-28 16:24:56 +09:00`
+  - `classification`: `score_total 4; single-session; no spawn; frontend recommendation flow cleanup after real poster assets were added.`
+  - `scope`: `Remove local preview poster and recommendation fallbacks so the AI flow depends on real poster seed/API responses instead of generated picsum preview data.`
+  - `write_sets`: `frontend/src/js/pages/daboyeoAi.js, frontend/src/pages/daboyeoAi.html`
+  - `verification_target`: `node --check daboyeoAi.js, static search confirms no preview/picsum fallback path, and poster API failure paths show errors instead of synthetic preview data.`
+  - `implementation`: `Removed local preview session ids, generated picsum poster seeds, local preview recommendation response generation, preview feedback bypass, and preview fallback branches; poster API failures now render the poster error state and recommendation failures render the recommendation error state.`
+  - `verification`: `node --check passed for daboyeoAi.js; git diff --check passed with CRLF warnings only; static search found no preview fallback code in daboyeoAi.js, with only the no-preview cache-bust token remaining in daboyeoAi.html.`
+
+- backend_static_frontend_mirror:
+  - `timestamp`: `2026-04-28 16:37:00 +09:00`
+  - `classification`: `score_total 5; single-session; no spawn; frontend static mirror into Spring resources and immediate local backend viewing.`
+  - `scope`: `Mirror the current frontend static tree into Spring static resources so the AI page can be opened from localhost:8080 instead of the frontend-only 5500 server.`
+  - `write_sets`: `backend/src/main/resources/static/**, backend/build/resources/main/static/**, backend/build/libs/daboyeo-backend-0.1.0-SNAPSHOT.jar`
+  - `verification_target`: `localhost:8080/ and localhost:8080/src/pages/daboyeoAi.html serve the mirrored frontend after backend restart; API health still returns ok.`
+  - `verification`: `Spring startup from the existing boot jar takes about 13 seconds; launching it outside the sandbox keeps the process alive. 127.0.0.1:8080/api/health returned status=ok, / returned 200, /src/pages/daboyeoAi.html returned 200, and the app browser opened http://127.0.0.1:8080/src/pages/daboyeoAi.html?v=backend-static-live3 with title DABOYEO AI 영화 취향 가이드.`
+
+- ai_backend_same_origin_and_map_fallback:
+  - `timestamp`: `2026-04-28 17:20:00 +09:00`
+  - `classification`: `score_total 5; single-session; no spawn; runtime bugfix across same-origin API calls, Spring static mirror, and movie theater map fallback.`
+  - `scope`: `Fix AI recommendation Failed to fetch from the 127.0.0.1:8080 app browser page and keep movieTheaterMap usable when Kakao/geolocation fails.`
+  - `write_sets`: `frontend/src/js/api/client.js, frontend/src/pages/daboyeoAi.html, frontend/src/pages/movieTheaterMap.html, frontend/src/js/pages/movieTheaterMap.js, frontend/src/css/movieTheaterMap.css, backend/src/main/resources/static/**, backend/build/resources/main/static/**, backend/build/libs/daboyeo-backend-0.1.0-SNAPSHOT.jar`
+  - `implementation`: `API client now uses window.location.origin when served from port 8080, avoiding localhost vs 127.0.0.1 CORS mismatch; movieTheaterMap legacy inline logic was removed and replaced with a standalone fallback-safe script and styled result cards; static resources and the boot jar were refreshed.`
+  - `runtime`: `Spring is running as PID 6892 with TiDB mapped from local .env to DABOYEO_DB_* plus connectTimeout/socketTimeout=8000; secrets were not printed.`
+  - `verification`: `JDBC probe reached TiDB and counted recommendation_profiles; POST /api/recommendation/sessions now returns 200 in about 1.3s instead of 30s 503; /src/pages/daboyeoAi.html and /src/pages/movieTheaterMap.html return 200 with updated assets; node --check passed for client.js and movieTheaterMap.js; git diff --check passed with CRLF warnings only; app browser confirmed AI page loaded and no Failed to fetch log was produced on the refreshed AI page.`
+
+- provider_future_date_showtime_ingest:
+  - `timestamp`: `2026-04-28 17:38:00 +09:00`
+  - `classification`: `score_total 7; single-session; no spawn; external provider date discovery and TiDB write verification were one coupled ingest loop.`
+  - `scope`: `Add all-provider future-date ingest support and run a bounded 3-date ingest to restore AI recommendation candidates.`
+  - `write_sets`: `scripts/ingest/collect_all_to_tidb.py, STATE.md`
+  - `implementation`: `collect_all_to_tidb.py now supports --all-provider-dates, --max-provider-dates, and --megabox-date-days; Lotte uses provider-exposed future play dates, while Megabox uses a bounded future playDe range because the API path is date-param based.`
+  - `dry_run`: `python scripts/ingest/collect_all_to_tidb.py --provider all --all-provider-dates --max-provider-dates 3 --dry-run selected Lotte dates 2026-04-28..2026-04-30 from 28 provider dates and Megabox dates 20260428..20260430.`
+  - `runtime`: `PyMySQL was installed after user approval; sandbox Python could not see Roaming site-packages, so the ingest ran with sandbox-external Python. Secrets were not printed.`
+  - `ingest_result`: `Bounded run --provider all --all-provider-dates --max-provider-dates 3 --limit-movies 8 --limit-theaters 8 --limit-schedules 80 inserted/upserted 80 Lotte showtimes and 80 Megabox showtimes.`
+  - `verification`: `DB showtimes increased to 474 total, current/future starts_at rows increased to 160, max starts_at is 2026-04-28 23:10:00, and POST /api/recommendations returned 3 recommendation items instead of the empty candidate response; python py_compile passed and git diff --check passed with CRLF warnings only.`
 
 - fresh_three_provider_crawl:
   - `output_dir`: `.local/api-responses/fresh-all-20260427-174156`
@@ -235,28 +339,34 @@
 ## Writer Slot
 
 - writer_slot: `main`
-- write_set: `STATE.md, db/migrations/005_collection_contract_extensions.sql, db/SCHEMA_CONTRACT.md, docs/TEAM_DB_SETUP.md, scripts/verify/verify_tidb_ingest.py, collectors/common/normalize.py, backend/src/main/java/kr/daboyeo/backend/ingest/CollectorBundleIngestCommand.java, backend/src/test/java/kr/daboyeo/backend/ingest/CollectorBundleIngestCommandTests.java, ERROR_LOG.md if verification errors materially affect the work`
+- write_set: `STATE.md, docs/AI_CODEX_OAUTH_DEPLOYMENT_PLAN.md`
 - write_sets:
-  - `main`: `STATE.md, db/migrations/005_collection_contract_extensions.sql, db/SCHEMA_CONTRACT.md, docs/TEAM_DB_SETUP.md, scripts/verify/verify_tidb_ingest.py, collectors/common/normalize.py, backend/src/main/java/kr/daboyeo/backend/ingest/CollectorBundleIngestCommand.java, backend/src/test/java/kr/daboyeo/backend/ingest/CollectorBundleIngestCommandTests.java, ERROR_LOG.md if needed`
+  - `main`: `STATE.md, docs/AI_CODEX_OAUTH_DEPLOYMENT_PLAN.md`
 - shared_assets_owner: `main`
 - note: `One shared task board is active; no concurrent registry mode.`
-- concurrent_note: `No subagents are used; migration, docs, verifier, and ingest parser semantics must stay synchronized.`
+- concurrent_note: `No subagents are used; the output is one documentation artifact and does not require split ownership.`
 
 ## Contract Freeze
 
-- contract_freeze: `Finalize a team-shareable DB schema contract: migrations 001-005 define identical internal table names and columns for every teammate DB, migration 005 adds collection/canonical/layout/status/raw-payload support, Java ingest normalizes post-midnight provider times while preserving raw strings, and docs/verifier explain the common contract.`
-- note: `Do not write the fresh .local crawl bundle into TiDB and do not force-complete unfinished backend API work in this turn.`
+- contract_freeze: `Document the Codex OAuth deployment plan: Oracle Cloud hosts the Spring/static site, Spring/TiDB remains responsible for candidate selection, and presentation-time Codex OAuth is reached through a narrow AI gateway or local demo adapter without exposing raw /v1 publicly.`
+- note: `Do not implement Java/JS/gateway code in this turn; only save the agreed plan.`
 - contract_source: `user request`
-- contract_revision: `2026-04-28-team-db-contract`
-- verification_target: `migration dry-run, Python verifier syntax check, Java ingest test where Gradle is usable, static contract/security checks, and git diff --check`
+- contract_revision: `2026-04-29-codex-oauth-deploy-plan`
+- verification_target: `documentation file exists, no real secrets included, and git diff --check passes`
 
 ## Reviewer
 
 - reviewer: `main self-review`
-- reviewer_target: `migration idempotence, stable table names, post-midnight time normalization, no leaked credentials, and team docs clarity`
-- reviewer_focus: `make the DB contract shareable without inserting live crawl data or inventing unfinished backend API behavior`
+- reviewer_target: `OAuth boundary clarity, no secret leakage, no accidental public /v1 exposure, and implementation steps that fit the current Spring recommendation flow`
+- reviewer_focus: `make the presentation architecture understandable without pretending Codex directly queries the database`
 
 ## Last Update
+
+- timestamp: `2026-04-29 00:10:00 +09:00`
+- note: `Created docs/AI_CODEX_OAUTH_DEPLOYMENT_PLAN.md with the agreed Oracle Cloud + Codex OAuth gateway implementation plan; git diff --check passed with existing CRLF warnings only.`
+
+- timestamp: `2026-04-29 00:00:00 +09:00`
+- note: `Reclassified the active task to a documentation-only Codex OAuth deployment plan with write set limited to STATE.md and docs/AI_CODEX_OAUTH_DEPLOYMENT_PLAN.md.`
 
 - timestamp: `2026-04-28 00:20:00 +09:00`
 - note: `Completed the team-shareable DB contract package with migration 005, docs, verifier updates, observed provider status mappings, and midnight showtime normalization checks; Gradle remains blocked by local native-platform.dll loading.`

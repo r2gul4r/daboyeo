@@ -56,6 +56,10 @@ def today_yyyymmdd() -> str:
     return datetime.now().strftime("%Y%m%d")
 
 
+def today_date() -> datetime:
+    return datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+
 def blank_to_none(value: Any) -> Any:
     if value is None:
         return None
@@ -78,6 +82,24 @@ def db_date(value: Any) -> str | None:
     if len(text) >= 8 and text[:8].isdigit():
         return parse_yyyymmdd(text[:8])
     return None
+
+
+def future_or_today_date(value: Any) -> bool:
+    date_text = db_date(value)
+    if not date_text:
+        return False
+    return datetime.strptime(date_text, "%Y-%m-%d") >= today_date()
+
+
+def unique_values(values: Iterable[str]) -> list[str]:
+    seen: set[str] = set()
+    items: list[str] = []
+    for value in values:
+        text = safe_text(value)
+        if text and text not in seen:
+            seen.add(text)
+            items.append(text)
+    return items
 
 
 def db_datetime(date_value: Any, time_value: Any) -> str | None:
@@ -790,15 +812,33 @@ def choose_lotte_play_date(rows: list[dict[str, Any]], explicit: str | None) -> 
     return safe_text(rows[0].get("play_date")) if rows else datetime.now().strftime("%Y-%m-%d")
 
 
+def choose_lotte_play_dates(rows: list[dict[str, Any]], args: argparse.Namespace) -> list[str]:
+    if args.lotte_play_date:
+        return [args.lotte_play_date]
+    if not args.all_provider_dates:
+        return [choose_lotte_play_date(rows, None)]
+
+    dates = unique_values(
+        safe_text(row.get("play_date"))
+        for row in rows
+        if future_or_today_date(row.get("play_date")) and safe_text(row.get("is_play"), "Y") != "N"
+    )
+    if args.max_provider_dates and args.max_provider_dates > 0:
+        dates = dates[: args.max_provider_dates]
+    return dates or [choose_lotte_play_date(rows, None)]
+
+
 def ingest_lotte(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
     collector = LotteCinemaCollector()
     collected_at = now_db()
     movies = limited(collector.build_movie_records(), args.limit_movies)
     theaters = limited(collector.build_cinema_records(), args.limit_theaters)
-    play_date = choose_lotte_play_date(collector.build_play_date_records(), args.lotte_play_date)
+    play_date_rows = collector.build_play_date_records()
+    play_dates = choose_lotte_play_dates(play_date_rows, args)
     result: dict[str, Any] = {
         "provider": LOTTE,
-        "play_date": play_date,
+        "play_dates": play_dates,
+        "play_date_count": len(play_dates),
         "movies_upserted": 0,
         "theaters_upserted": 0,
         "screens_upserted": 0,
@@ -836,70 +876,71 @@ def ingest_lotte(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
         theater_by_id[theater_key] = theater
         result["theaters_upserted"] += 1
 
-    for movie in movies:
-        if args.limit_schedules and result["showtimes_upserted"] >= args.limit_schedules:
-            break
-        movie_no = safe_text(movie.get("movie_no"))
-        if not movie_no:
-            continue
-        for theater in theaters:
+    for play_date in play_dates:
+        for movie in movies:
             if args.limit_schedules and result["showtimes_upserted"] >= args.limit_schedules:
                 break
-            schedules = collector.build_schedule_records(
-                play_date,
-                collector.build_cinema_selector(theater.get("raw") or {}),
-                movie_no,
-            )
-            result["schedule_queries"] += 1
-            for schedule in schedules:
+            movie_no = safe_text(movie.get("movie_no"))
+            if not movie_no:
+                continue
+            for theater in theaters:
                 if args.limit_schedules and result["showtimes_upserted"] >= args.limit_schedules:
                     break
-                theater_key = safe_text(schedule.get("cinema_id"))
-                theater_id = theater_ids.get(theater_key) or theater_ids[safe_text(theater.get("cinema_id"))]
-                movie_id = movie_ids.get(safe_text(schedule.get("movie_no"))) or movie_ids[movie_no]
-                screen_id = upsert_screen(cursor, LOTTE, schedule, theater_id, collected_at)
-                showtime_id = upsert_showtime(
-                    cursor,
-                    LOTTE,
-                    schedule,
-                    movie_id,
-                    theater_id,
-                    screen_id,
-                    collected_at,
-                    theater_by_id.get(theater_key) or theater,
+                schedules = collector.build_schedule_records(
+                    play_date,
+                    collector.build_cinema_selector(theater.get("raw") or {}),
+                    movie_no,
                 )
-                result["screens_upserted"] += 1
-                result["showtimes_upserted"] += 1
-                schedule_movie_no = safe_text(schedule.get("movie_no")) or movie_no
-                if schedule_movie_no:
-                    result["movie_tags_upserted"] += upsert_movie_tags(
+                result["schedule_queries"] += 1
+                for schedule in schedules:
+                    if args.limit_schedules and result["showtimes_upserted"] >= args.limit_schedules:
+                        break
+                    theater_key = safe_text(schedule.get("cinema_id"))
+                    theater_id = theater_ids.get(theater_key) or theater_ids[safe_text(theater.get("cinema_id"))]
+                    movie_id = movie_ids.get(safe_text(schedule.get("movie_no"))) or movie_ids[movie_no]
+                    screen_id = upsert_screen(cursor, LOTTE, schedule, theater_id, collected_at)
+                    showtime_id = upsert_showtime(
                         cursor,
                         LOTTE,
+                        schedule,
                         movie_id,
-                        schedule_movie_no,
-                        schedule,
-                        movie_tag_keys,
+                        theater_id,
+                        screen_id,
+                        collected_at,
+                        theater_by_id.get(theater_key) or theater,
                     )
+                    result["screens_upserted"] += 1
+                    result["showtimes_upserted"] += 1
+                    schedule_movie_no = safe_text(schedule.get("movie_no")) or movie_no
+                    if schedule_movie_no:
+                        result["movie_tags_upserted"] += upsert_movie_tags(
+                            cursor,
+                            LOTTE,
+                            movie_id,
+                            schedule_movie_no,
+                            schedule,
+                            movie_tag_keys,
+                        )
 
-                if args.include_seats and result["seat_snapshots_inserted"] < args.max_seat_snapshots:
-                    booking_key = schedule.get("booking_key") or {}
-                    seats = collector.build_seat_records(
-                        cinema_id=to_int(booking_key.get("cinema_id")) or 0,
-                        screen_id=to_int(booking_key.get("screen_id")) or 0,
-                        play_date=safe_text(booking_key.get("play_date")),
-                        play_sequence=to_int(booking_key.get("play_sequence")) or 0,
-                        screen_division_code=to_int(booking_key.get("screen_division_code")) or 0,
-                    )
-                    _, item_count = insert_seat_snapshot(
-                        cursor,
-                        LOTTE,
-                        showtime_id,
-                        lotte_showtime_key(schedule),
-                        schedule,
-                        seats,
-                    )
-                    result["seat_snapshots_inserted"] += 1
-                    result["seat_items_inserted"] += item_count
+                    if args.include_seats and result["seat_snapshots_inserted"] < args.max_seat_snapshots:
+                        booking_key = schedule.get("booking_key") or {}
+                        seats = collector.build_seat_records(
+                            cinema_id=to_int(booking_key.get("cinema_id")) or 0,
+                            screen_id=to_int(booking_key.get("screen_id")) or 0,
+                            play_date=safe_text(booking_key.get("play_date")),
+                            play_sequence=to_int(booking_key.get("play_sequence")) or 0,
+                            screen_division_code=to_int(booking_key.get("screen_division_code")) or 0,
+                        )
+                        _, item_count = insert_seat_snapshot(
+                            cursor,
+                            LOTTE,
+                            showtime_id,
+                            lotte_showtime_key(schedule),
+                            schedule,
+                            seats,
+                        )
+                        result["seat_snapshots_inserted"] += 1
+                        result["seat_items_inserted"] += item_count
     backfilled, backfill_tags = backfill_missing_movies_from_showtimes(
         cursor,
         LOTTE,
@@ -921,6 +962,22 @@ def area_codes_from_branches(branches: list[dict[str, Any]]) -> list[str]:
     return codes
 
 
+def choose_megabox_play_dates(args: argparse.Namespace) -> list[str]:
+    if args.megabox_play_de:
+        return [args.megabox_play_de]
+    if not args.all_provider_dates:
+        return [today_yyyymmdd()]
+
+    days = max(1, args.megabox_date_days)
+    dates = [
+        (today_date() + timedelta(days=offset)).strftime("%Y%m%d")
+        for offset in range(days)
+    ]
+    if args.max_provider_dates and args.max_provider_dates > 0:
+        dates = dates[: args.max_provider_dates]
+    return dates
+
+
 def megabox_theater_from_schedule(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "provider": MEGABOX,
@@ -935,12 +992,11 @@ def megabox_theater_from_schedule(row: dict[str, Any]) -> dict[str, Any]:
 def ingest_megabox(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
     collector = MegaboxCollector()
     collected_at = now_db()
-    play_de = args.megabox_play_de or today_yyyymmdd()
-    movies = limited(collector.build_movie_records(play_de), args.limit_movies)
-    branches = limited(collector.build_area_records(play_de), args.limit_theaters)
+    play_dates = choose_megabox_play_dates(args)
     result: dict[str, Any] = {
         "provider": MEGABOX,
-        "play_de": play_de,
+        "play_dates": play_dates,
+        "play_date_count": len(play_dates),
         "movies_upserted": 0,
         "theaters_upserted": 0,
         "screens_upserted": 0,
@@ -956,82 +1012,88 @@ def ingest_megabox(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
     movie_ids: dict[str, int] = {}
     theater_ids: dict[str, int] = {}
     movie_tag_keys: set[tuple[str, str, str, str]] = set()
-    for movie in movies:
-        movie_id = upsert_movie(cursor, MEGABOX, movie, collected_at)
-        movie_no = safe_text(movie.get("movie_no"))
-        representative_movie_no = safe_text(movie.get("representative_movie_no"))
-        if movie_no:
-            movie_ids[movie_no] = movie_id
-        if representative_movie_no:
-            movie_ids[representative_movie_no] = movie_id
-        result["movie_tags_upserted"] += upsert_movie_tags(
-            cursor,
-            MEGABOX,
-            movie_id,
-            movie_no,
-            movie,
-            movie_tag_keys,
-        )
-        result["movies_upserted"] += 1
-    for branch in branches:
-        theater_id = upsert_theater(cursor, MEGABOX, branch, collected_at)
-        theater_ids[safe_text(branch.get("branch_no"))] = theater_id
-        result["theaters_upserted"] += 1
+    for play_de in play_dates:
+        movies = limited(collector.build_movie_records(play_de), args.limit_movies)
+        branches = limited(collector.build_area_records(play_de), args.limit_theaters)
+        for movie in movies:
+            movie_id = upsert_movie(cursor, MEGABOX, movie, collected_at)
+            movie_no = safe_text(movie.get("movie_no"))
+            representative_movie_no = safe_text(movie.get("representative_movie_no"))
+            if movie_no:
+                movie_ids[movie_no] = movie_id
+            if representative_movie_no:
+                movie_ids[representative_movie_no] = movie_id
+            result["movie_tags_upserted"] += upsert_movie_tags(
+                cursor,
+                MEGABOX,
+                movie_id,
+                movie_no,
+                movie,
+                movie_tag_keys,
+            )
+            result["movies_upserted"] += 1
+        for branch in branches:
+            theater_key = safe_text(branch.get("branch_no"))
+            if theater_key in theater_ids:
+                continue
+            theater_id = upsert_theater(cursor, MEGABOX, branch, collected_at)
+            theater_ids[theater_key] = theater_id
+            result["theaters_upserted"] += 1
 
-    for movie in movies:
-        if args.limit_schedules and result["showtimes_upserted"] >= args.limit_schedules:
-            break
-        movie_no = safe_text(movie.get("movie_no"))
-        if not movie_no:
-            continue
-        for area_code in area_codes_from_branches(branches):
+        for movie in movies:
             if args.limit_schedules and result["showtimes_upserted"] >= args.limit_schedules:
                 break
-            schedules = collector.build_schedule_records(movie_no=movie_no, play_de=play_de, area_cd=area_code)
-            result["schedule_queries"] += 1
-            for schedule in schedules:
+            movie_no = safe_text(movie.get("movie_no"))
+            if not movie_no:
+                continue
+            for area_code in area_codes_from_branches(branches):
                 if args.limit_schedules and result["showtimes_upserted"] >= args.limit_schedules:
                     break
-                theater_key = safe_text(schedule.get("branch_no"))
-                theater_id = theater_ids.get(theater_key)
-                if theater_id is None:
-                    theater_id = upsert_theater(cursor, MEGABOX, megabox_theater_from_schedule(schedule), collected_at)
-                    theater_ids[theater_key] = theater_id
-                    result["theaters_upserted"] += 1
-                movie_id, movie_key, movie_created = resolve_megabox_movie_id(cursor, schedule, movie_ids, collected_at)
-                if movie_id is None:
-                    continue
-                if movie_created:
-                    result["movies_upserted"] += 1
-                screen_id = upsert_screen(cursor, MEGABOX, schedule, theater_id, collected_at)
-                showtime_id = upsert_showtime(cursor, MEGABOX, schedule, movie_id, theater_id, screen_id, collected_at)
-                result["screens_upserted"] += 1
-                result["showtimes_upserted"] += 1
-                if movie_key:
-                    result["movie_tags_upserted"] += upsert_movie_tags(
-                        cursor,
-                        MEGABOX,
-                        movie_id,
-                        movie_key,
-                        schedule,
-                        movie_tag_keys,
-                    )
+                schedules = collector.build_schedule_records(movie_no=movie_no, play_de=play_de, area_cd=area_code)
+                result["schedule_queries"] += 1
+                for schedule in schedules:
+                    if args.limit_schedules and result["showtimes_upserted"] >= args.limit_schedules:
+                        break
+                    theater_key = safe_text(schedule.get("branch_no"))
+                    theater_id = theater_ids.get(theater_key)
+                    if theater_id is None:
+                        theater_id = upsert_theater(cursor, MEGABOX, megabox_theater_from_schedule(schedule), collected_at)
+                        theater_ids[theater_key] = theater_id
+                        result["theaters_upserted"] += 1
+                    movie_id, movie_key, movie_created = resolve_megabox_movie_id(cursor, schedule, movie_ids, collected_at)
+                    if movie_id is None:
+                        continue
+                    if movie_created:
+                        result["movies_upserted"] += 1
+                    screen_id = upsert_screen(cursor, MEGABOX, schedule, theater_id, collected_at)
+                    showtime_id = upsert_showtime(cursor, MEGABOX, schedule, movie_id, theater_id, screen_id, collected_at)
+                    result["screens_upserted"] += 1
+                    result["showtimes_upserted"] += 1
+                    if movie_key:
+                        result["movie_tags_upserted"] += upsert_movie_tags(
+                            cursor,
+                            MEGABOX,
+                            movie_id,
+                            movie_key,
+                            schedule,
+                            movie_tag_keys,
+                        )
 
-                if args.include_seats and result["seat_snapshots_inserted"] < args.max_seat_snapshots:
-                    seats = collector.build_seat_records(
-                        play_schdl_no=safe_text(schedule.get("play_schedule_no")),
-                        brch_no=safe_text(schedule.get("branch_no")),
-                    )
-                    _, item_count = insert_seat_snapshot(
-                        cursor,
-                        MEGABOX,
-                        showtime_id,
-                        megabox_showtime_key(schedule),
-                        schedule,
-                        seats,
-                    )
-                    result["seat_snapshots_inserted"] += 1
-                    result["seat_items_inserted"] += item_count
+                    if args.include_seats and result["seat_snapshots_inserted"] < args.max_seat_snapshots:
+                        seats = collector.build_seat_records(
+                            play_schdl_no=safe_text(schedule.get("play_schedule_no")),
+                            brch_no=safe_text(schedule.get("branch_no")),
+                        )
+                        _, item_count = insert_seat_snapshot(
+                            cursor,
+                            MEGABOX,
+                            showtime_id,
+                            megabox_showtime_key(schedule),
+                            schedule,
+                            seats,
+                        )
+                        result["seat_snapshots_inserted"] += 1
+                        result["seat_items_inserted"] += item_count
     backfilled, backfill_tags = backfill_missing_movies_from_showtimes(
         cursor,
         MEGABOX,
@@ -1048,16 +1110,22 @@ def collect_dry_run(args: argparse.Namespace) -> dict[str, Any]:
     result: dict[str, Any] = {"mode": "dry-run"}
     if args.provider in {"lotte", "all"}:
         lotte = LotteCinemaCollector()
+        play_date_rows = lotte.build_play_date_records()
+        play_dates = choose_lotte_play_dates(play_date_rows, args)
         result["lotte"] = {
             "movies": len(lotte.build_movie_records()),
             "theaters": len(lotte.build_cinema_records()),
-            "play_dates": len(lotte.build_play_date_records()),
+            "provider_play_dates": len(play_date_rows),
+            "selected_play_dates": play_dates,
+            "selected_play_date_count": len(play_dates),
         }
     if args.provider in {"megabox", "all"}:
-        play_de = args.megabox_play_de or today_yyyymmdd()
+        play_dates = choose_megabox_play_dates(args)
+        play_de = play_dates[0]
         megabox = MegaboxCollector()
         result["megabox"] = {
-            "play_de": play_de,
+            "selected_play_dates": play_dates,
+            "selected_play_date_count": len(play_dates),
             "movies": len(megabox.build_movie_records(play_de)),
             "area_branches": len(megabox.build_area_records(play_de)),
         }
@@ -1067,6 +1135,9 @@ def collect_dry_run(args: argparse.Namespace) -> dict[str, Any]:
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collect Lotte/Megabox data and ingest it into TiDB")
     parser.add_argument("--provider", choices=["lotte", "megabox", "all"], default="all")
+    parser.add_argument("--all-provider-dates", action="store_true", help="Ingest every future booking date exposed or supported by the provider API.")
+    parser.add_argument("--max-provider-dates", type=int, default=0, help="Optional cap for selected provider dates; 0 means no cap for provider-listed dates.")
+    parser.add_argument("--megabox-date-days", type=int, default=14, help="Future day range for Megabox when --all-provider-dates is used.")
     parser.add_argument("--lotte-play-date", help="Lotte play date, for example 2026-04-14")
     parser.add_argument("--megabox-play-de", help="Megabox playDe, for example 20260414")
     parser.add_argument("--limit-movies", type=int, default=10)
