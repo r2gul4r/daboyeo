@@ -1,66 +1,163 @@
-# daboyeo
+# daboyeo backend portfolio
 
-다보여?는 CGV, 롯데시네마, 메가박스의 상영 정보를 한곳에 모아 비교하는 영화 상영 데이터 도구다.
+Backend portfolio project for movie showtime ingest, live search APIs, seat snapshot persistence, and recommendation experiments.
 
-단순히 영화 정보를 보여주는 서비스가 아니라, 사용자가 영화, 지역, 시간, 상영관, 가격, 좌석 조건을 기준으로 가장 적절한 상영을 빠르게 찾고 예매까지 이어갈 수 있게 만드는 것이 목표다.
+## What this project shows
 
-## 목표
+- Spring Boot backend API design
+- Shared normalization pipeline for CGV, LOTTE CINEMA, and MEGABOX data
+- Location-based live movie search APIs
+- Seat snapshot collection and persistence structure
+- Local LLM recommendation integration experiments
 
-- CGV, 롯데시네마, 메가박스의 상영 데이터를 안정적으로 수집한다.
-- 수집한 데이터를 영화, 지역, 시간, 상영관, 가격, 좌석 기준으로 비교할 수 있게 정리한다.
-- 사용자가 원하는 조건에 맞는 상영을 빠르게 찾도록 검색, 필터, 비교 흐름을 만든다.
-- 가능한 경우 예매 링크로 바로 이동할 수 있게 연결한다.
-- 각 영화관의 특수관, 포맷, 정책, 좌석 특성은 무리하게 뭉개지 않고 원본 성격을 보존한다.
+## Repo layout
 
-## 방향성
+- `backend/`: Spring Boot backend
+- `collectors/`: Python collectors
+- `db/sql/`: schema and migration source SQL
+- `scripts/`: helper scripts for ingest and inspection
 
-이 프로젝트의 핵심 방향은 "완전 통합"보다 "비교 가능한 최소 공통 구조"다.
+## Current stage
 
-모든 극장 데이터를 하나의 거대한 스키마로 억지로 맞추지 않는다. 비교와 필터링에 필요한 공통 필드는 맞추되, 극장별로 다른 특수관, 상영 포맷, 예매 정책, 좌석 정보는 원본 특성을 유지한다.
+This repository is strong enough for portfolio review, but it is not positioned as a production-ready public service.
 
-수집 로직은 가능한 한 사이트별 API 직접 호출을 기준으로 한다. 브라우저 자동화는 구조 파악이나 검증 보조 수단으로 제한한다.
+- Build artifact exists: `backend/build/libs/daboyeo-backend-0.1.0-SNAPSHOT.jar`
+- Previous test results exist under `backend/build/test-results/test/`
+- Gradle wrapper is not committed yet
+- Local `gradle` was not available in the current environment during cleanup
 
-## 사이트 구성
+## Quick start
 
-프론트엔드는 바닐라 HTML, CSS, JavaScript를 기본으로 한다. 프레임워크나 큰 외부 라이브러리 도입은 기본 방향이 아니다.
+### 1. Minimal demo path
 
-서비스는 두 영역으로 나눈다.
+Goal: verify the backend without requiring external DB data, collectors, or LM Studio.
 
-- 사용자 서비스: 영화 검색, 자동완성, 지역/시간대/상영관 필터, 가격 비교, 좌석/혼잡도 확인, 예매 링크 연결, 추천 기능을 담당한다.
-- 관리자 사이트: 수집 스크립트 실행, 수집 상태 확인, 수집 결과 확인, 로그 확인 같은 운영 관리를 담당한다.
+```powershell
+cd backend
+java -jar build/libs/daboyeo-backend-0.1.0-SNAPSHOT.jar
+```
 
-## 주요 기능 후보
+Then try:
 
-- 영화 제목 검색과 자동완성
-- 지역, 시간대, 상영관 타입 필터
-- 가격 비교
-- 좌석 잔여 수와 혼잡도 확인
-- 좌석 배치도
-- 예매 링크 연결
-- 신규 영화와 예매 오픈 감지
-- 위치 기반 가까운 영화관 추천
-- 관람 이력 기반 개인화 추천
-- 영화 상세 정보
-- 리뷰와 평점 통합
-- 할인 정보
-- 후기
+- `GET http://localhost:8080/api/health`
+- `GET http://localhost:8080/api/live/nearby?lat=37.4979&lng=127.0276`
+- `GET http://localhost:8080/api/live/movies/CGV:demo_dune/schedules?lat=37.4979&lng=127.0276`
 
-## 현재 우선순위
+If database lookup fails, the live API can return deterministic sample data in demo fallback mode.
 
-지금은 전체 서비스를 한 번에 완성하는 것보다 3사 수집기 구축과 검증이 중심이다.
+## Portfolio demo sequence
 
-1. CGV, 롯데시네마, 메가박스 수집기 구축
-2. 상영 데이터를 비교할 수 있는 최소 공통 구조 정리
-3. 사용자 서비스 사이트 구현
-4. 크롤링 관리용 관리자 사이트 구현
-5. 검색과 필터링 기능
-6. 좌석과 혼잡도 기능
-7. 추천, 알림, 리뷰 등 확장 기능
+Use this exact order when showing the project:
 
-## 작업 원칙
+1. `GET /api/health`
+2. `GET /api/live/nearby?lat=37.4979&lng=127.0276`
+3. `GET /api/live/movies/CGV:demo_dune/schedules?lat=37.4979&lng=127.0276`
+4. Show `README.md`, `.env.example`, and the backend service classes together
 
-- 실제 사용자가 유지보수하기 쉬운 로컬 실행, 수집, 검증 흐름을 우선한다.
-- 비밀값, 토큰, 쿠키, API 키는 코드에 하드코딩하지 않는다.
-- 외부 입력과 HTML 렌더링은 경계에서 검증하고 이스케이프한다.
-- 검증은 로컬 명령과 코드 리뷰를 기본값으로 둔다.
-- 배포 URL, preview URL, 외부 도메인 smoke check는 명시적으로 필요할 때만 수행한다.
+This sequence works even when DB access is unavailable because the live endpoints can switch to sample data fallback.
+
+### Example health response
+
+```json
+{
+  "status": "ok",
+  "service": "daboyeo-backend",
+  "time": "2026-04-28T12:00:00+09:00"
+}
+```
+
+### Example live nearby response shape
+
+```json
+{
+  "search": {
+    "lat": 37.4979,
+    "lng": 127.0276,
+    "date": "2026-04-28",
+    "timeStart": "06:00",
+    "timeEnd": "23:59",
+    "radiusKm": 8,
+    "resultCount": 3,
+    "databaseAvailable": false,
+    "warning": "demo sample data returned because database lookup failed."
+  },
+  "results": [
+    {
+      "movie_key": "CGV:demo_dune",
+      "movie_name": "Dune Part Two",
+      "provider": "CGV",
+      "theater_name": "CGV Gangnam",
+      "seat_state": "comfortable"
+    }
+  ]
+}
+```
+
+### 2. Development path
+
+The repository currently does not include `gradlew` or `gradlew.bat`.
+
+- If Gradle is installed locally, use Gradle 8.9+ with Java 21
+- If Gradle is not installed, use the prebuilt jar path above for a limited demo
+
+Example:
+
+```powershell
+cd backend
+gradle test
+gradle bootRun
+```
+
+## Configuration
+
+Environment variables are documented in the root `.env.example`.
+
+### Minimal backend boot
+
+- No variables are required if you only want `/api/health`
+- `DABOYEO_DEMO_LIVE_FALLBACK_ENABLED=true` is recommended for demo-safe live API responses without DB data
+
+### Data-backed APIs
+
+- `DABOYEO_DB_URL`
+- `DABOYEO_DB_USERNAME`
+- `DABOYEO_DB_PASSWORD`
+
+### Optional features
+
+- Collector login and storage variables for Python collectors
+- `DABOYEO_FLYWAY_ENABLED=true` to apply backend migrations through Spring Boot
+- LM Studio variables for recommendation endpoints
+- Sync variables for scheduled collector jobs
+
+## Recommended portfolio demo scope
+
+### Stable to show
+
+- `/api/health`
+- live movie search API shape with demo fallback
+- grouped schedules API shape with demo fallback
+- schema and ingest pipeline design
+- request validation and API error shape
+
+### Good advanced talking points
+
+- scheduled sync jobs
+- seat snapshot persistence
+- local LLM reranking
+
+## Known gaps
+
+- Gradle wrapper is missing, so setup is less reproducible than it should be
+- Fresh test execution was blocked here because `gradle` was not installed in PATH
+- Some existing Korean strings in source and resources still need an encoding cleanup pass
+- Full demo quality still depends on DB contents, collector setup, and local model availability
+- Live API demo fallback returns sample data, not real-time theater data
+- The example responses in this README are shape-oriented and omit some fields for brevity
+
+## Next finish priorities
+
+1. Add a working Gradle wrapper
+2. Clean up encoding-sensitive user-facing strings
+3. Define a sample-data-backed demo path for live movie endpoints
+4. Rerun test and build verification in a reproducible environment

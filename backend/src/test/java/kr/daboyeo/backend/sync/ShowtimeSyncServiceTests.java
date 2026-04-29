@@ -26,6 +26,7 @@ class ShowtimeSyncServiceTests {
         properties.setEnabled(true);
         properties.setTimezone("Asia/Seoul");
         properties.getShowtimes().setEnabled(true);
+        properties.getShowtimes().setAutoDiscoveryEnabled(false);
         properties.getShowtimes().setDateOffsetDays(List.of(0, 1));
 
         CollectorSyncProperties.CgvTarget cgvTarget = new CollectorSyncProperties.CgvTarget();
@@ -67,5 +68,46 @@ class ShowtimeSyncServiceTests {
                 CollectorProvider.MEGABOX
             );
         assertThat(requests).extracting(ShowtimeCollectionRequest::playDate).hasSize(6).allSatisfy(date -> assertThat(date).isAfterOrEqualTo(LocalDate.now().minusDays(1)));
+    }
+
+    @Test
+    void autoDiscoverySyncsWorkingLotteAndMegaboxTargets() {
+        CollectorSyncProperties properties = new CollectorSyncProperties();
+        properties.setEnabled(true);
+        properties.setTimezone("Asia/Seoul");
+        properties.getShowtimes().setEnabled(true);
+        properties.getShowtimes().setAutoDiscoveryEnabled(true);
+        properties.getShowtimes().setDateOffsetDays(List.of(0));
+        properties.getShowtimes().setDiscoveryMovieLimit(2);
+        properties.getShowtimes().setDiscoveryLotteCinemaLimit(1);
+        properties.getShowtimes().setDiscoveryMegaboxBundleLimit(1);
+        properties.getShowtimes().setLottePreferredCinemaNames(List.of("위례"));
+        properties.getShowtimes().setMegaboxAreaCodes(List.of("30"));
+
+        PythonCollectorBridge bridge = mock(PythonCollectorBridge.class);
+        when(bridge.collectShowtimeDiscovery(eq(CollectorProvider.LOTTE_CINEMA), any()))
+            .thenReturn(new PythonCollectorBridge.ProviderDiscoveryPayload(
+                List.of(Map.of("cinema_selector", "1|0002|3037", "representation_movie_code", "24136"))
+            ));
+        when(bridge.collectShowtimeDiscovery(eq(CollectorProvider.MEGABOX), any()))
+            .thenReturn(new PythonCollectorBridge.ProviderDiscoveryPayload(
+                List.of(Map.of("movie_no", "26022300", "area_code", "30"))
+            ));
+        when(bridge.collectShowtimeBundle(any())).thenReturn(Map.of());
+
+        CollectorBundlePersistenceService persistenceService = mock(CollectorBundlePersistenceService.class);
+        when(persistenceService.persist(any(), any(), eq(false)))
+            .thenReturn(new CollectorBundleIngestCommand.IngestResult(1, 1, 1, 1));
+
+        ShowtimeSyncService service = new ShowtimeSyncService(properties, bridge, persistenceService);
+        service.syncDailyShowtimes();
+
+        ArgumentCaptor<ShowtimeCollectionRequest> requestCaptor = ArgumentCaptor.forClass(ShowtimeCollectionRequest.class);
+        verify(bridge, times(2)).collectShowtimeBundle(requestCaptor.capture());
+        List<ShowtimeCollectionRequest> requests = requestCaptor.getAllValues();
+        assertThat(requests).extracting(ShowtimeCollectionRequest::provider)
+            .containsExactlyInAnyOrder(CollectorProvider.LOTTE_CINEMA, CollectorProvider.MEGABOX);
+        assertThat(requests).extracting(ShowtimeCollectionRequest::representationMovieCode).contains("24136");
+        assertThat(requests).extracting(ShowtimeCollectionRequest::areaCode).contains("30");
     }
 }

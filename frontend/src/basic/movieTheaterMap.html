@@ -42,13 +42,13 @@
           <span class="dot"></span> 현재 주변 영화관 <span class="count-num">0</span>개
         </div>
         <div class="brand-filters">
-          <button class="filter-btn cgv">CGV</button>
-          <button class="filter-btn lotte">롯데시네마</button>
-          <button class="filter-btn mega">메가박스</button>
+          <button class="filter-btn brand-chip cgv active" data-brand="CGV">CGV</button>
+          <button class="filter-btn brand-chip lotte active" data-brand="롯데시네마">롯데시네마</button>
+          <button class="filter-btn brand-chip mega active" data-brand="메가박스">메가박스</button>
         </div>
       </div>
 
-      <div class="theater-list-empty">
+      <div id="placesList" class="theater-list-empty">
         위치를 허용하면 주변 영화관 목록이 여기에 표시됩니다.
       </div>
     </div>
@@ -65,6 +65,7 @@
       let currentMap = null;
       let markers = [];
       let infowindow = null;
+      let allPlaces = [];
 
       // 카카오맵 API 로드 확인 및 초기화
       if (typeof kakao !== 'undefined' && kakao.maps) {
@@ -127,7 +128,32 @@
       // 검색 결과 표시 함수
       function displayPlaces(places) {
         const listEl = document.getElementById('placesList');
+        const countEl = document.querySelector('.count-num');
+        if (!listEl) {
+          return;
+        }
+
+        allPlaces = places;
+        clearMarkers();
+        renderPlaces(places);
+
+        if (countEl) {
+          countEl.textContent = String(places.length);
+        }
+      }
+
+      function renderPlaces(places) {
+        const listEl = document.getElementById('placesList');
+        if (!listEl) {
+          return;
+        }
+
         listEl.innerHTML = '';
+
+        if (places.length === 0) {
+          listEl.textContent = '주변에서 조건에 맞는 영화관을 찾지 못했어.';
+          return;
+        }
 
         places.forEach((place, index) => {
           const brand = getBrand(place.place_name);
@@ -149,6 +175,11 @@
             addMarker(new kakao.maps.LatLng(place.y, place.x), place.place_name);
           }
         });
+      }
+
+      function clearMarkers() {
+        markers.forEach((marker) => marker.setMap(null));
+        markers = [];
       }
 
       // 브랜드 추출 함수
@@ -189,7 +220,20 @@
       filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
           btn.classList.toggle('active');
-          // active된 브랜드들만 필터 (추가 로직 필요, 여기서는 단순 토글만)
+          const activeBrands = Array.from(filterBtns)
+            .filter((item) => item.classList.contains('active'))
+            .map((item) => item.dataset.brand);
+
+          const filteredPlaces = activeBrands.length === 0
+            ? allPlaces
+            : allPlaces.filter((place) => activeBrands.includes(getBrand(place.place_name)));
+
+          renderPlaces(filteredPlaces);
+
+          const countEl = document.querySelector('.count-num');
+          if (countEl) {
+            countEl.textContent = String(filteredPlaces.length);
+          }
         });
       });
 
@@ -225,7 +269,7 @@
 
   <!-- Kakao SDK -->
   <script
-    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0520b1a822c33d45a0a7075152d340fa&libraries=services"></script>
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e07b7fda3e9cfefd771009dcc1fb97fa&libraries=services"></script>
     <script src="../js/include.js"></script>
   <script src="../js/pages/common.js"></script>
   <script src="../js/api/kakaoMap.js"></script>

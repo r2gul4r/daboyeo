@@ -2,6 +2,7 @@ package kr.daboyeo.backend.sync;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import kr.daboyeo.backend.config.CollectorSyncProperties;
@@ -32,7 +33,12 @@ public class ShowtimeSyncService {
     }
 
     public void syncDailyShowtimes() {
-        if (!properties.isEnabled() || !properties.getShowtimes().isEnabled()) {
+        if (!properties.isEnabled()) {
+            logger.info("Showtime sync skipped because daboyeo.sync.enabled=false.");
+            return;
+        }
+        if (!properties.getShowtimes().isEnabled()) {
+            logger.info("Showtime sync skipped because daboyeo.sync.showtimes.enabled=false.");
             return;
         }
         if (!running.compareAndSet(false, true)) {
@@ -42,12 +48,26 @@ public class ShowtimeSyncService {
 
         try {
             LocalDate baseDate = LocalDate.now(ZoneId.of(properties.getTimezone()));
+            logger.info(
+                "Showtime sync starting timezone={} baseDate={} offsets={} cgvTargets={} lotteTargets={} megaboxTargets={}",
+                properties.getTimezone(),
+                baseDate,
+                properties.getShowtimes().getDateOffsetDays(),
+                validCgvTargets(),
+                validLotteTargets(),
+                validMegaboxTargets()
+            );
             for (Integer offset : properties.getShowtimes().getDateOffsetDays()) {
                 LocalDate playDate = baseDate.plusDays(offset == null ? 0 : offset);
                 syncCgv(playDate);
                 syncLotte(playDate);
                 syncMegabox(playDate);
+                if (properties.getShowtimes().isAutoDiscoveryEnabled()) {
+                    syncLotteDiscovered(playDate);
+                    syncMegaboxDiscovered(playDate);
+                }
             }
+            logger.info("Showtime sync completed for baseDate={}.", baseDate);
         } finally {
             running.set(false);
         }
@@ -108,6 +128,10 @@ public class ShowtimeSyncService {
     }
 
     private void persistCollectedBundle(ShowtimeCollectionRequest request) {
+        persistCollectedBundleWithResult(request);
+    }
+
+    private CollectorBundleIngestCommand.IngestResult persistCollectedBundleWithResult(ShowtimeCollectionRequest request) {
         try {
             Map<String, Object> bundle = collectorBridge.collectShowtimeBundle(request);
             CollectorBundleIngestCommand.IngestResult result = persistenceService.persist(request.provider().name(), bundle, false);
@@ -120,12 +144,84 @@ public class ShowtimeSyncService {
                 result.screens(),
                 result.showtimes()
             );
+            return result;
         } catch (Exception exception) {
+            if (request.provider() == CollectorProvider.CGV && exception.getMessage() != null && exception.getMessage().contains("401")) {
+                logger.warn(
+                    "CGV collector is blocked by upstream 401 for siteNo={} movieNo={} date={}.",
+                    request.siteNo(),
+                    request.movieNo(),
+                    request.playDate()
+                );
+            }
             logger.error("Showtime sync failed for provider={} date={}", request.provider(), request.playDate(), exception);
+            return new CollectorBundleIngestCommand.IngestResult(0, 0, 0, 0);
         }
+    }
+
+    private void syncLotteDiscovered(LocalDate playDate) {
+        PythonCollectorBridge.ProviderDiscoveryPayload discovery = collectorBridge.collectShowtimeDiscovery(CollectorProvider.LOTTE_CINEMA, playDate);
+        if (discovery.targets().isEmpty()) {
+            logger.info("Showtime auto-discovery found no working LOTTE_CINEMA targets for date={}.", playDate);
+            return;
+        }
+        for (Map<String, Object> target : discovery.targets()) {
+            ShowtimeCollectionRequest request = new ShowtimeCollectionRequest(
+                CollectorProvider.LOTTE_CINEMA,
+                playDate,
+                null,
+                null,
+                text(target.get("cinema_selector")),
+                text(target.get("representation_movie_code")),
+                null
+            );
+            persistCollectedBundleWithResult(request);
+        }
+    }
+
+    private void syncMegaboxDiscovered(LocalDate playDate) {
+        PythonCollectorBridge.ProviderDiscoveryPayload discovery = collectorBridge.collectShowtimeDiscovery(CollectorProvider.MEGABOX, playDate);
+        if (discovery.targets().isEmpty()) {
+            logger.info("Showtime auto-discovery found no working MEGABOX targets for date={}.", playDate);
+            return;
+        }
+        for (Map<String, Object> target : discovery.targets()) {
+            ShowtimeCollectionRequest request = new ShowtimeCollectionRequest(
+                CollectorProvider.MEGABOX,
+                playDate,
+                null,
+                text(target.get("movie_no")),
+                null,
+                null,
+                text(target.get("area_code"))
+            );
+            persistCollectedBundleWithResult(request);
+        }
+    }
+
+    private static String text(Object value) {
+        return value == null ? "" : String.valueOf(value).trim();
     }
 
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private long validCgvTargets() {
+        return properties.getShowtimes().getCgvTargets().stream()
+            .filter(target -> !isBlank(target.getSiteNo()) && !isBlank(target.getMovieNo()))
+            .count();
+    }
+
+    private long validLotteTargets() {
+        return properties.getShowtimes().getLotteTargets().stream()
+            .filter(target -> !isBlank(target.getCinemaSelector()) && !isBlank(target.getRepresentationMovieCode()))
+            .count();
+    }
+
+    private long validMegaboxTargets() {
+        return properties.getShowtimes().getMegaboxTargets().stream()
+            .filter(target -> !isBlank(target.getMovieNo()) && !isBlank(target.getAreaCode()))
+            .count();
     }
 }

@@ -59,9 +59,16 @@ public class CollectorSyncProperties {
         private boolean enabled = false;
         private String cron = "0 0 3 * * *";
         private List<Integer> dateOffsetDays = new ArrayList<>(List.of(0, 1));
+        private boolean autoDiscoveryEnabled = false;
+        private int discoveryMovieLimit = 20;
+        private int discoveryLotteCinemaLimit = 2;
+        private int discoveryMegaboxBundleLimit = 2;
         private List<CgvTarget> cgvTargets = new ArrayList<>();
         private List<LotteTarget> lotteTargets = new ArrayList<>();
         private List<MegaboxTarget> megaboxTargets = new ArrayList<>();
+        private List<String> lottePreferredCinemaIds = new ArrayList<>(List.of("3037", "9111"));
+        private List<String> lottePreferredCinemaNames = new ArrayList<>();
+        private List<String> megaboxAreaCodes = new ArrayList<>(List.of("30"));
 
         public boolean isEnabled() {
             return enabled;
@@ -87,6 +94,38 @@ public class CollectorSyncProperties {
             this.dateOffsetDays = dateOffsetDays == null ? new ArrayList<>(List.of(0, 1)) : new ArrayList<>(dateOffsetDays);
         }
 
+        public boolean isAutoDiscoveryEnabled() {
+            return autoDiscoveryEnabled;
+        }
+
+        public void setAutoDiscoveryEnabled(boolean autoDiscoveryEnabled) {
+            this.autoDiscoveryEnabled = autoDiscoveryEnabled;
+        }
+
+        public int getDiscoveryMovieLimit() {
+            return discoveryMovieLimit;
+        }
+
+        public void setDiscoveryMovieLimit(int discoveryMovieLimit) {
+            this.discoveryMovieLimit = discoveryMovieLimit;
+        }
+
+        public int getDiscoveryLotteCinemaLimit() {
+            return discoveryLotteCinemaLimit;
+        }
+
+        public void setDiscoveryLotteCinemaLimit(int discoveryLotteCinemaLimit) {
+            this.discoveryLotteCinemaLimit = discoveryLotteCinemaLimit;
+        }
+
+        public int getDiscoveryMegaboxBundleLimit() {
+            return discoveryMegaboxBundleLimit;
+        }
+
+        public void setDiscoveryMegaboxBundleLimit(int discoveryMegaboxBundleLimit) {
+            this.discoveryMegaboxBundleLimit = discoveryMegaboxBundleLimit;
+        }
+
         public List<CgvTarget> getCgvTargets() {
             return cgvTargets;
         }
@@ -109,6 +148,30 @@ public class CollectorSyncProperties {
 
         public void setMegaboxTargets(List<MegaboxTarget> megaboxTargets) {
             this.megaboxTargets = megaboxTargets == null ? new ArrayList<>() : new ArrayList<>(megaboxTargets);
+        }
+
+        public List<String> getLottePreferredCinemaNames() {
+            return lottePreferredCinemaNames;
+        }
+
+        public void setLottePreferredCinemaNames(List<String> lottePreferredCinemaNames) {
+            this.lottePreferredCinemaNames = lottePreferredCinemaNames == null ? new ArrayList<>() : new ArrayList<>(lottePreferredCinemaNames);
+        }
+
+        public List<String> getLottePreferredCinemaIds() {
+            return lottePreferredCinemaIds;
+        }
+
+        public void setLottePreferredCinemaIds(List<String> lottePreferredCinemaIds) {
+            this.lottePreferredCinemaIds = lottePreferredCinemaIds == null ? new ArrayList<>() : new ArrayList<>(lottePreferredCinemaIds);
+        }
+
+        public List<String> getMegaboxAreaCodes() {
+            return megaboxAreaCodes;
+        }
+
+        public void setMegaboxAreaCodes(List<String> megaboxAreaCodes) {
+            this.megaboxAreaCodes = megaboxAreaCodes == null ? new ArrayList<>() : new ArrayList<>(megaboxAreaCodes);
         }
     }
 

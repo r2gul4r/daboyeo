@@ -18,14 +18,22 @@ public class CollectorBundlePersistenceService {
 
     private final DataSource dataSource;
     private final ObjectMapper objectMapper;
+    private final TheaterLocationEnricher theaterLocationEnricher;
 
-    public CollectorBundlePersistenceService(DataSource dataSource, ObjectMapper objectMapper) {
+    public CollectorBundlePersistenceService(
+        DataSource dataSource,
+        ObjectMapper objectMapper,
+        TheaterLocationEnricher theaterLocationEnricher
+    ) {
         this.dataSource = dataSource;
         this.objectMapper = objectMapper;
+        this.theaterLocationEnricher = theaterLocationEnricher;
     }
 
     public CollectorBundleIngestCommand.IngestResult persist(String providerCode, Map<String, Object> bundle, boolean dryRun) {
-        CollectorBundleIngestCommand.NormalizedBundle normalizedBundle = CollectorBundleIngestCommand.normalizeBundle(providerCode, bundle);
+        CollectorBundleIngestCommand.NormalizedBundle normalizedBundle = theaterLocationEnricher.enrich(
+            CollectorBundleIngestCommand.normalizeBundle(providerCode, bundle)
+        );
         CollectorBundleIngestCommand.IngestResult result = new CollectorBundleIngestCommand.IngestResult(
             normalizedBundle.movies().size(),
             normalizedBundle.theaters().size(),

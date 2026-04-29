@@ -41,13 +41,13 @@ public record LiveMovieSearchCriteria(
         Clock clock
     ) {
         if (lat == null || lng == null) {
-            throw new IllegalArgumentException("lat, lng는 필수야.");
+            throw new IllegalArgumentException("lat and lng are required.");
         }
         if (lat.doubleValue() < -90 || lat.doubleValue() > 90) {
-            throw new IllegalArgumentException("lat 범위를 확인해.");
+            throw new IllegalArgumentException("lat must be between -90 and 90.");
         }
         if (lng.doubleValue() < -180 || lng.doubleValue() > 180) {
-            throw new IllegalArgumentException("lng 범위를 확인해.");
+            throw new IllegalArgumentException("lng must be between -180 and 180.");
         }
 
         LocalDate resolvedDate = date == null ? LocalDate.now(clock) : date;
@@ -55,17 +55,17 @@ public record LiveMovieSearchCriteria(
         LocalTime resolvedTimeEnd = timeEnd == null ? LocalTime.of(23, 59) : timeEnd;
 
         if (resolvedTimeStart.isAfter(resolvedTimeEnd)) {
-            throw new IllegalArgumentException("timeStart는 timeEnd보다 늦을 수 없어.");
+            throw new IllegalArgumentException("timeStart must be earlier than or equal to timeEnd.");
         }
 
         BigDecimal resolvedRadiusKm = radiusKm == null ? DEFAULT_RADIUS_KM : radiusKm;
         if (resolvedRadiusKm.signum() <= 0 || resolvedRadiusKm.doubleValue() > 50) {
-            throw new IllegalArgumentException("radiusKm는 0보다 크고 50 이하여야 해.");
+            throw new IllegalArgumentException("radiusKm must be greater than 0 and at most 50.");
         }
 
         int resolvedLimit = limit == null ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
         if (resolvedLimit <= 0) {
-            throw new IllegalArgumentException("limit는 1 이상이어야 해.");
+            throw new IllegalArgumentException("limit must be at least 1.");
         }
 
         return new LiveMovieSearchCriteria(

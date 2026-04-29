@@ -368,7 +368,7 @@
 }
 
 .movies-main-container {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 40px;
 }
@@ -427,7 +427,7 @@
 /* 영화 카드 전용 스타일 (kakaoMap.css에서 이관됨) */
 .movie-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 명확하게 한 줄에 4개 배치 */
+  grid-template-columns: repeat(5, 1fr); /* 5개 배치로 넓이 최적화 */
   gap: 30px;
   padding: 10px 0;
 }
@@ -587,6 +587,13 @@
    Responsive Design (RWD)
    ============================================ */
 
+/* 대형 화면 (1500px 이하) */
+@media screen and (max-width: 1500px) {
+    .movie-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
 /* 타블렛 (1200px 이하) */
 @media screen and (max-width: 1200px) {
     .movie-grid {
@@ -636,4 +643,3 @@
         grid-template-columns: 1fr;
     }
 }
-

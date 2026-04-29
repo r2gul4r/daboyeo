@@ -3,6 +3,7 @@ package kr.daboyeo.backend.api;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.List;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -25,8 +26,32 @@ public class ApiExceptionHandler {
         return ResponseEntity.badRequest().body(
             ApiErrorResponse.of(
                 "BAD_REQUEST",
-                "요청 파라미터를 확인해.",
+                "Check the request parameters.",
                 List.of(exception.getMessage()),
+                request.getRequestURI()
+            )
+        );
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ApiErrorResponse> dataUnavailable(DataAccessException exception, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+            ApiErrorResponse.of(
+                "DATA_UNAVAILABLE",
+                "Could not load data. Check collector or database status.",
+                List.of(exception.getClass().getSimpleName()),
+                request.getRequestURI()
+            )
+        );
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiErrorResponse> serverState(IllegalStateException exception, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+            ApiErrorResponse.of(
+                "INTERNAL_ERROR",
+                "An internal server error occurred.",
+                List.of(exception.getClass().getSimpleName()),
                 request.getRequestURI()
             )
         );
@@ -37,7 +62,7 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
             ApiErrorResponse.of(
                 "INTERNAL_ERROR",
-                "서버 처리 중 오류가 발생했다.",
+                "An internal server error occurred.",
                 List.of(exception.getClass().getSimpleName()),
                 request.getRequestURI()
             )

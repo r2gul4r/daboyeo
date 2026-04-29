@@ -15,10 +15,6 @@
   color: var(--white0);
 }
 
-body.basic-page .nearby-theater-container {
-  margin-top: var(--basic-page-top-gap);
-}
-
 /* 헤더 영역 */
 .nearby-header {
   margin-bottom: 30px;

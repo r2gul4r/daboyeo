@@ -1,5 +1,5 @@
 -- daboyeo TiDB migration 002
--- 최신 롯데시네마/메가박스 샘플 기준으로 상영 검색과 혼잡도 정렬에 필요한 공통 필드를 보강한다.
+-- Fresh Lotte/Megabox samples showed region code and occupancy metrics are useful search fields.
 
 SET NAMES utf8mb4;
 

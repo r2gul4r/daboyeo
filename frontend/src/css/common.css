@@ -12,7 +12,8 @@
   --purple60: #BDB9E4;
   --pink50: #faa8c4;
   --red50: #FF4444;
-  --fixed-header-height: 88px;
+  /* --fixed-header-height: 88px; */
+  --fixed-header-height: 60px;
   --basic-page-top-gap: 32px;
   scroll-behavior: smooth;
   /* background: linear-gradient(135deg, #6c5ce7, #a29bfe, #fd79a8); */
@@ -22,7 +23,7 @@ body {
   font: 16px/1.7 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--gray100);
   background-color: #000;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('../assets/backgroundImg.avif'), url('../assets/backgroundImg.jpg');
+  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7)), url('../assets/backgroundImg.avif');
   background-size: cover;
   background-position: center top;
   background-attachment: fixed;
@@ -523,7 +524,7 @@ body.basic-page .main-content {
   }
 }
 
-/* http://meyerweb.com/eric/tools/css/reset/ 
+/* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
    License: none (public domain)
 */

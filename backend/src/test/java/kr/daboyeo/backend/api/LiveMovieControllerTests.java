@@ -125,6 +125,20 @@ class LiveMovieControllerTests {
     }
 
     @Test
+    void nearbyRejectsInvalidSeatStateWithCleanMessage() throws Exception {
+        mockMvc.perform(
+                get("/api/live/nearby")
+                    .queryParam("lat", "37.4979")
+                    .queryParam("lng", "127.0276")
+                    .queryParam("seatState", "weird")
+                    .accept(MediaType.APPLICATION_JSON)
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+            .andExpect(jsonPath("$.message").value("Check the request parameters."));
+    }
+
+    @Test
     void schedulesReturnsGroupedTheaters() throws Exception {
         LiveMovieSearchCriteria criteria = sampleCriteria();
         given(liveMovieService.buildCriteria(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))

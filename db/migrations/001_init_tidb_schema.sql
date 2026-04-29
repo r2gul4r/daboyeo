@@ -1,6 +1,6 @@
--- daboyeo TiDB full schema
--- 목적: TiDB 콘솔에 그대로 붙여넣어 초기 스키마와 검색 메트릭 보강까지 한 번에 생성한다.
--- 주의: 실행 전 대상 데이터베이스를 먼저 선택하거나 USE your_database; 를 추가해라.
+-- daboyeo TiDB v1 schema
+-- Search/compare fields stay normalized, provider-specific payloads stay in JSON.
+-- Never store TiDB credentials or connection strings in this file.
 
 SET NAMES utf8mb4;
 
@@ -99,7 +99,6 @@ CREATE TABLE IF NOT EXISTS showtimes (
   movie_title VARCHAR(255) NOT NULL,
   theater_name VARCHAR(255) NOT NULL,
   region_name VARCHAR(255) NULL,
-  region_code VARCHAR(128) NULL,
   screen_name VARCHAR(255) NULL,
   screen_type VARCHAR(255) NULL,
   format_name VARCHAR(255) NULL,
@@ -110,8 +109,6 @@ CREATE TABLE IF NOT EXISTS showtimes (
   end_time_raw VARCHAR(64) NULL,
   total_seat_count INT UNSIGNED NULL,
   remaining_seat_count INT UNSIGNED NULL,
-  sold_seat_count INT UNSIGNED NULL,
-  seat_occupancy_rate DECIMAL(6,3) NULL,
   remaining_seat_source VARCHAR(32) NOT NULL DEFAULT 'provider',
   booking_available VARCHAR(32) NULL,
   min_price_amount INT UNSIGNED NULL,
@@ -129,9 +126,7 @@ CREATE TABLE IF NOT EXISTS showtimes (
   KEY idx_showtimes_theater (provider_code, external_theater_id),
   KEY idx_showtimes_price (show_date, min_price_amount),
   KEY idx_showtimes_remaining (show_date, remaining_seat_count),
-  KEY idx_showtimes_last_collected (last_collected_at),
-  KEY idx_showtimes_region_date (region_code, show_date, starts_at),
-  KEY idx_showtimes_occupancy (show_date, seat_occupancy_rate)
+  KEY idx_showtimes_last_collected (last_collected_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS showtime_prices (
@@ -220,16 +215,14 @@ CREATE TABLE IF NOT EXISTS movie_tags (
 INSERT INTO providers (code, display_name, homepage_url)
 VALUES
   ('CGV', 'CGV', 'https://www.cgv.co.kr'),
-  ('LOTTE_CINEMA', '롯데시네마', 'https://www.lottecinema.co.kr'),
-  ('MEGABOX', '메가박스', 'https://www.megabox.co.kr')
+  ('LOTTE_CINEMA', 'Lotte Cinema', 'https://www.lottecinema.co.kr'),
+  ('MEGABOX', 'Megabox', 'https://www.megabox.co.kr')
 ON DUPLICATE KEY UPDATE
   display_name = VALUES(display_name),
   homepage_url = VALUES(homepage_url),
   updated_at = CURRENT_TIMESTAMP(3);
 
 INSERT INTO schema_migrations (version, description)
-VALUES
-  ('001', 'init TiDB v1 movie search and seat snapshot schema'),
-  ('002', 'add showtime region code and seat occupancy search metrics')
+VALUES ('001', 'init TiDB v1 movie search and seat snapshot schema')
 ON DUPLICATE KEY UPDATE
   description = VALUES(description);

@@ -24,6 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/live")
 public class LiveMovieController {
 
+    private static final String SEAT_STATE_MESSAGE =
+        "seatState must be one of all, spacious, comfortable, closing, group, or sold_out.";
+
     private final LiveMovieService liveMovieService;
 
     public LiveMovieController(LiveMovieService liveMovieService) {
@@ -55,7 +58,11 @@ public class LiveMovieController {
         @RequestParam(required = false) String formats,
         @RequestParam(required = false) String seatTypes,
         @RequestParam(required = false)
-        @Pattern(regexp = "all|spacious|comfortable|closing|group|sold_out", flags = Pattern.Flag.CASE_INSENSITIVE, message = "seatState 값이 잘못됐다.")
+        @Pattern(
+            regexp = "all|spacious|comfortable|closing|group|sold_out",
+            flags = Pattern.Flag.CASE_INSENSITIVE,
+            message = SEAT_STATE_MESSAGE
+        )
         String seatState,
         @RequestParam(required = false) String query,
         @RequestParam(required = false) Integer limit
@@ -104,7 +111,11 @@ public class LiveMovieController {
         @RequestParam(required = false) String formats,
         @RequestParam(required = false) String seatTypes,
         @RequestParam(required = false)
-        @Pattern(regexp = "all|spacious|comfortable|closing|group|sold_out", flags = Pattern.Flag.CASE_INSENSITIVE, message = "seatState 값이 잘못됐다.")
+        @Pattern(
+            regexp = "all|spacious|comfortable|closing|group|sold_out",
+            flags = Pattern.Flag.CASE_INSENSITIVE,
+            message = SEAT_STATE_MESSAGE
+        )
         String seatState,
         @RequestParam(required = false) String query,
         @RequestParam(required = false) Integer limit

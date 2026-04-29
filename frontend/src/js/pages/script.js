@@ -1,274 +1,293 @@
+import { REGIONS } from "../constants/regions.js";
 
-// ============================================
-// 유틸리티 함수
-// ============================================
+(() => {
+  const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
+  const AI_PAGE_URL = "./src/pages/ai.html";
+  const MOVIES_PAGE_URL = "./movies.html";
+  const SEAT_MBTI_PAGE_URL = "./src/basic/seatRecommendMbti.html";
 
-function indexToTime(index) {
-  if (index === 47) return "23:59";
-  const totalMinutes = index * 30;
-  const hour = Math.floor(totalMinutes / 60);
-  const minute = totalMinutes % 60;
-  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-}
+  let isInitialized = false;
+  let currentDate = new Date();
+  let currentPersonCount = 1;
 
-function logEvent(eventType, data) {
-  // const timestamp = new Date().toLocaleTimeString('ko-KR');
-  // console.log(`[${timestamp}] ${eventType}:`, data);
-}
+  let selectedSido = "";
+  let selectedGugun = "";
+  let selectedDong = "";
 
-
-// ============================================
-// 날짜 입력 + 커스텀 캘린더 (최종)
-// ============================================
-
-const input = document.getElementById("dateInput");
-const calendar = document.getElementById("calendar");
-const datesContainer = document.getElementById("calendarDates");
-const monthYear = document.getElementById("monthYear");
-
-let currentDate = new Date();
-
-function initializeDateInput() {
-  if (!input) return;
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  const todayString = `${year}-${month}-${day}`;
-  input.value = todayString;
-  input.min = todayString;
-}
-
-if (input && calendar) {
-  input.addEventListener("click", () => {
-    calendar.style.display = "block";
-    renderCalendar();
-  });
-}
-
-document.addEventListener("click", (e) => {
-  if (calendar && !e.target.closest(".form-group")) {
-    calendar.style.display = "none";
-  }
-});
-
-function renderCalendar() {
-  if (!datesContainer || !monthYear) return;
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  monthYear.textContent = `${year}년 ${month + 1}월`;
-  const firstDay = new Date(year, month, 1).getDay();
-  const lastDate = new Date(year, month + 1, 0).getDate();
-  datesContainer.innerHTML = "";
-
-  for (let i = 0; i < firstDay; i++) {
-    datesContainer.innerHTML += `<div></div>`;
+  function saveSearchContext(searchContext) {
+    sessionStorage.setItem(SEARCH_CONTEXT_KEY, JSON.stringify(searchContext));
   }
 
-  for (let d = 1; d <= lastDate; d++) {
-    const dateEl = document.createElement("div");
-    dateEl.textContent = d;
-    const thisDate = new Date(year, month, d);
+  function readSearchContext() {
+    try {
+      const raw = sessionStorage.getItem(SEARCH_CONTEXT_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
 
-    if (thisDate.getTime() === today.getTime()) {
-      dateEl.classList.add("today");
+  function initHomePage() {
+    if (isInitialized) return;
+
+    // Elements
+    const sidoContainer = document.getElementById("sidoContainer");
+    const gugunContainer = document.getElementById("gugunContainer");
+    const dongContainer = document.getElementById("dongContainer");
+    
+    const sidoDisplay = document.getElementById("sidoDisplay");
+    const gugunDisplay = document.getElementById("gugunDisplay");
+    const dongDisplay = document.getElementById("dongDisplay");
+    
+    const sidoOptions = document.getElementById("sidoOptions");
+    const gugunOptions = document.getElementById("gugunOptions");
+    const dongOptions = document.getElementById("dongOptions");
+
+    const dateInput = document.getElementById("dateInput");
+    const calendar = document.getElementById("calendar");
+    const datesContainer = document.getElementById("calendarDates");
+    const monthYear = document.getElementById("monthYear");
+    const prevMonthBtn = document.getElementById("prevMonth");
+    const nextMonthBtn = document.getElementById("nextMonth");
+    
+    const personCountDisplay = document.getElementById("personCount");
+    const increaseBtn = document.getElementById("increaseBtn");
+    const decreaseBtn = document.getElementById("decreaseBtn");
+    
+    const searchBtn = document.getElementById("searchBtn");
+    const nearbyBtn = document.getElementById("nearbyBtn");
+    const directCompareBtn = document.getElementById("directCompareBtn");
+    
+    const seatFlowTriggers = document.querySelectorAll("[data-seat-flow]");
+
+    if (!sidoContainer || !searchBtn) return;
+    isInitialized = true;
+
+    // --- Custom Select Logic ---
+    function closeAllSelects() {
+      document.querySelectorAll(".custom-select").forEach(el => el.classList.remove("active"));
     }
 
-    if (thisDate < today) {
-      dateEl.classList.add("disabled");
-    } else {
-      dateEl.addEventListener("click", () => {
-        const selectedDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-        if (input) input.value = selectedDate;
-        if (calendar) calendar.style.display = "none";
+    function setupCustomSelect(container, display, optionsList, onSelect) {
+      display.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (container.classList.contains("disabled")) return;
+        const isActive = container.classList.contains("active");
+        closeAllSelects();
+        if (!isActive) container.classList.add("active");
+      });
+
+      optionsList.addEventListener("click", (e) => {
+        const li = e.target.closest("li");
+        if (!li) return;
+        const value = li.dataset.value;
+        const text = li.textContent;
+        
+        display.querySelector("span").textContent = text;
+        optionsList.querySelectorAll("li").forEach(item => item.classList.remove("selected"));
+        li.classList.add("selected");
+        
+        container.classList.remove("active");
+        onSelect(value);
       });
     }
-    datesContainer.appendChild(dateEl);
-  }
-}
 
-const prevMonth = document.getElementById("prevMonth");
-if (prevMonth) {
-  prevMonth.onclick = () => {
-    const today = new Date();
-    if (currentDate.getFullYear() > today.getFullYear() || 
-        (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() > today.getMonth())) {
+    function populateOptions(listEl, options) {
+      listEl.innerHTML = "";
+      options.forEach(opt => {
+        const li = document.createElement("li");
+        li.dataset.value = opt;
+        li.textContent = opt;
+        listEl.appendChild(li);
+      });
+    }
+
+    setupCustomSelect(sidoContainer, sidoDisplay, sidoOptions, (val) => {
+      selectedSido = val;
+      selectedGugun = "";
+      selectedDong = "";
+      
+      gugunDisplay.querySelector("span").textContent = "시/군/구 선택";
+      dongDisplay.querySelector("span").textContent = "읍/면/동 선택";
+      
+      const guguns = Object.keys(REGIONS[val] || {});
+      populateOptions(gugunOptions, guguns);
+      gugunContainer.classList.remove("disabled");
+      dongContainer.classList.add("disabled");
+    });
+
+    setupCustomSelect(gugunContainer, gugunDisplay, gugunOptions, (val) => {
+      selectedGugun = val;
+      selectedDong = "";
+      dongDisplay.querySelector("span").textContent = "읍/면/동 선택";
+      
+      const dongs = REGIONS[selectedSido][val] || [];
+      populateOptions(dongOptions, ["전체", ...dongs]);
+      dongContainer.classList.remove("disabled");
+    });
+
+    setupCustomSelect(dongContainer, dongDisplay, dongOptions, (val) => {
+      selectedDong = val;
+    });
+
+    // --- Calendar Logic ---
+    function initializeDateInput() {
+      if (dateInput.value) return;
+      const today = new Date();
+      dateInput.value = today.toISOString().split('T')[0];
+    }
+
+    function renderCalendar() {
+      if (!datesContainer || !monthYear) return;
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      monthYear.textContent = `${year}.${String(month + 1).padStart(2, "0")}`;
+      datesContainer.innerHTML = "";
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) datesContainer.appendChild(document.createElement("div"));
+
+      for (let day = 1; day <= lastDate; day++) {
+        const dateCell = document.createElement("div");
+        const thisDate = new Date(year, month, day);
+        dateCell.textContent = String(day);
+
+        if (thisDate.getTime() === today.getTime()) dateCell.classList.add("today");
+        if (thisDate < today) {
+          dateCell.classList.add("disabled");
+        } else {
+          dateCell.addEventListener("click", () => {
+            dateInput.value = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            calendar.style.display = "none";
+          });
+        }
+        datesContainer.appendChild(dateCell);
+      }
+    }
+
+    // --- Context & Search Logic ---
+    function buildSearchContext() {
+      const region = `${selectedSido} ${selectedGugun} ${selectedDong === "전체" ? "" : selectedDong}`.trim();
+      return {
+        region: region || "전체",
+        date: dateInput.value || "",
+        timeRange: document.querySelector('input[name="timeRange"]:checked')?.value || "morning",
+        personCount: currentPersonCount
+      };
+    }
+
+    function restoreSearchContext() {
+      const context = readSearchContext();
+      if (!context) return;
+
+      if (context.date) {
+        dateInput.value = context.date;
+        const restoredDate = new Date(context.date);
+        if (!isNaN(restoredDate)) currentDate = restoredDate;
+      }
+      currentPersonCount = context.personCount || 1;
+      if (personCountDisplay) personCountDisplay.textContent = currentPersonCount;
+      
+      const timeRadio = document.querySelector(`input[name="timeRange"][value="${context.timeRange}"]`);
+      if (timeRadio) timeRadio.checked = true;
+    }
+
+    // Event Listeners
+    populateOptions(sidoOptions, Object.keys(REGIONS));
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".custom-select")) closeAllSelects();
+      if (calendar && !e.target.closest(".form-group")) calendar.style.display = "none";
+    });
+
+    dateInput?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      calendar.style.display = "block";
+      renderCalendar();
+    });
+
+    prevMonthBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
       currentDate.setMonth(currentDate.getMonth() - 1);
       renderCalendar();
+    });
+
+    nextMonthBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    });
+
+    increaseBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      currentPersonCount++;
+      if (personCountDisplay) personCountDisplay.textContent = currentPersonCount;
+    });
+
+    decreaseBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      currentPersonCount = Math.max(1, currentPersonCount - 1);
+      if (personCountDisplay) personCountDisplay.textContent = currentPersonCount;
+    });
+
+    searchBtn.addEventListener("click", () => {
+      saveSearchContext(buildSearchContext());
+      window.location.href = AI_PAGE_URL;
+    });
+
+    nearbyBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      
+      if (!selectedSido || !selectedGugun) {
+        alert("지역(시/도, 시/군/구)을 선택해주세요.");
+        return;
+      }
+
+      const context = buildSearchContext();
+      saveSearchContext(context);
+
+      // --- Geocoding selected region ---
+      const geocoder = new kakao.maps.services.Geocoder();
+      const address = `${selectedSido} ${selectedGugun} ${selectedDong === "전체" ? "" : selectedDong}`.trim();
+      
+      geocoder.addressSearch(address, (result, status) => {
+        if (status === kakao.maps.services.Status.OK) {
+          const lat = result[0].y;
+          const lng = result[0].x;
+          window.location.href = `${MOVIES_PAGE_URL}?region=${encodeURIComponent(context.region)}&lat=${lat}&lng=${lng}`;
+        } else {
+          // Fallback if geocoding fails (e.g. very new address)
+          window.location.href = `${MOVIES_PAGE_URL}?region=${encodeURIComponent(context.region)}`;
+        }
+      });
+    });
+
+    if (directCompareBtn) {
+      directCompareBtn.addEventListener("click", () => {
+        nearbyBtn.click();
+      });
     }
-  };
-}
 
-const nextMonth = document.getElementById("nextMonth");
-if (nextMonth) {
-  nextMonth.onclick = () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar();
-  };
-}
+    seatFlowTriggers.forEach(trigger => {
+      trigger.addEventListener("click", () => {
+        saveSearchContext(buildSearchContext());
+        window.location.href = `${SEAT_MBTI_PAGE_URL}?flow=${encodeURIComponent(trigger.dataset.seatFlow || "mbti")}`;
+      });
+    });
 
-if (input) {
-  input.addEventListener("change", function () {
-    logEvent("날짜 입력", { action: "변경", date: this.value });
-  });
-}
-
-// ============================================
-// 시간 선택 슬라이더 (핵심)
-// ============================================
-
-const sliderStart = document.getElementById('sliderStart');
-const sliderEnd = document.getElementById('sliderEnd');
-const sliderProgress = document.getElementById('sliderProgress');
-const timeValue = document.getElementById('timeValue');
-const sliderTrack = document.querySelector('.slider-track');
-
-const timeSliderState = {
-  startIndex: 24,
-  endIndex: 47,
-  isDragging: false,
-  activeHandle: null
-};
-
-function updateSliderProgress() {
-  if (!sliderTrack || !sliderProgress || !timeValue) return;
-  const startPercent = (timeSliderState.startIndex / 47) * 100;
-  const endPercent = (timeSliderState.endIndex / 47) * 100;
-
-  sliderProgress.style.left = startPercent + '%';
-  sliderProgress.style.width = (endPercent - startPercent) + '%';
-
-  const startTime = indexToTime(timeSliderState.startIndex);
-  const endTime = indexToTime(timeSliderState.endIndex);
-  timeValue.textContent = `${startTime} - ${endTime}`;
-}
-
-function updateHandlePosition() {
-  if (!sliderStart || !sliderEnd) return;
-  const startPercent = (timeSliderState.startIndex / 47) * 100;
-  const endPercent = (timeSliderState.endIndex / 47) * 100;
-  sliderStart.style.left = startPercent + '%';
-  sliderEnd.style.left = endPercent + '%';
-}
-
-function getIndexFromMousePosition(event) {
-  if (!sliderTrack) return 0;
-  const rect = sliderTrack.getBoundingClientRect();
-  const percent = (event.clientX - rect.left) / rect.width;
-  let index = Math.round(percent * 47);
-  return Math.max(0, Math.min(47, index));
-}
-
-if (sliderStart) {
-  sliderStart.addEventListener('mousedown', function () {
-    timeSliderState.isDragging = true;
-    timeSliderState.activeHandle = 'start';
-    sliderStart.style.cursor = 'grabbing';
-  });
-}
-
-if (sliderEnd) {
-  sliderEnd.addEventListener('mousedown', function () {
-    timeSliderState.isDragging = true;
-    timeSliderState.activeHandle = 'end';
-    sliderEnd.style.cursor = 'grabbing';
-  });
-}
-
-document.addEventListener('mousemove', function (event) {
-  if (!timeSliderState.isDragging) return;
-  const newIndex = getIndexFromMousePosition(event);
-  if (timeSliderState.activeHandle === 'start') {
-    if (newIndex <= timeSliderState.endIndex) timeSliderState.startIndex = newIndex;
-  } else if (timeSliderState.activeHandle === 'end') {
-    if (newIndex >= timeSliderState.startIndex) timeSliderState.endIndex = newIndex;
+    initializeDateInput();
+    restoreSearchContext();
   }
-  updateHandlePosition();
-  updateSliderProgress();
-});
 
-document.addEventListener('mouseup', function () {
-  if (timeSliderState.isDragging) {
-    timeSliderState.isDragging = false;
-    if (sliderStart) sliderStart.style.cursor = 'grab';
-    if (sliderEnd) sliderEnd.style.cursor = 'grab';
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initHomePage, { once: true });
+  } else {
+    initHomePage();
   }
-});
-
-if (sliderTrack) {
-  sliderTrack.addEventListener('mousedown', function (e) {
-    const index = getIndexFromMousePosition(e);
-    const distToStart = Math.abs(index - timeSliderState.startIndex);
-    const distToEnd = Math.abs(index - timeSliderState.endIndex);
-    if (distToStart < distToEnd) {
-      timeSliderState.startIndex = Math.min(index, timeSliderState.endIndex);
-    } else {
-      timeSliderState.endIndex = Math.max(index, timeSliderState.startIndex);
-    }
-    updateHandlePosition();
-    updateSliderProgress();
-  });
-}
-
-// ============================================
-// 인원 선택 및 가격 강조 등 (누락 방지)
-// ============================================
-const personCount = document.getElementById('personCount');
-const increaseBtn = document.getElementById('increaseBtn');
-const decreaseBtn = document.getElementById('decreaseBtn');
-let currentPersonCount = 1;
-
-if (increaseBtn) {
-  increaseBtn.addEventListener('click', () => { currentPersonCount++; if (personCount) personCount.textContent = currentPersonCount; });
-}
-if (decreaseBtn) {
-  decreaseBtn.addEventListener('click', () => { if (currentPersonCount > 1) { currentPersonCount--; if (personCount) personCount.textContent = currentPersonCount; } });
-}
-
-function highlightLowestPrices() {
-  const movieCards = document.querySelectorAll('.movie-card');
-  if (movieCards.length === 0) return;
-  // ... (기본 로직 유지)
-}
-
-const aiCards = document.querySelectorAll('.ai-card');
-if (aiCards.length > 0) {
-  let currentFeaturedIndex = 0;
-  setInterval(() => {
-    aiCards.forEach(c => c.classList.remove('featured'));
-    aiCards[currentFeaturedIndex].classList.add('featured');
-    currentFeaturedIndex = (currentFeaturedIndex + 1) % aiCards.length;
-  }, 3000);
-}
-
-const searchBtn = document.getElementById('searchBtn');
-if (searchBtn) {
-  searchBtn.addEventListener('click', () => {
-    const searchData = {
-      movie: document.getElementById('movieInput')?.value || '전체',
-      region: document.getElementById('regionInput')?.value || '전체',
-      date: document.getElementById('dateInput')?.value || '',
-      timeStart: indexToTime(timeSliderState.startIndex),
-      timeEnd: indexToTime(timeSliderState.endIndex),
-      personCount: currentPersonCount
-    };
-    const params = new URLSearchParams(searchData);
-    window.location.href = `/basic/priceComparison.html?${params.toString()}`;
-  });
-}
-
-function initialize() {
-  initializeDateInput();
-  updateSliderProgress();
-  updateHandlePosition();
-  highlightLowestPrices();
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initialize);
-} else {
-  initialize();
-}
+})();

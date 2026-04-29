@@ -117,18 +117,32 @@ public class CollectorBundleIngestCommand {
         if (value == null || value.isBlank()) {
             return null;
         }
-        return value.contains("-") ? LocalDate.parse(value) : LocalDate.parse(value, COMPACT_DATE);
+        String normalized = value.trim();
+        if (normalized.length() >= 10 && normalized.charAt(4) == '-' && normalized.charAt(7) == '-') {
+            return LocalDate.parse(normalized.substring(0, 10));
+        }
+        String digits = normalized.replaceAll("[^0-9]", "");
+        if (digits.length() >= 8) {
+            return LocalDate.parse(digits.substring(0, 8), COMPACT_DATE);
+        }
+        return null;
     }
 
     static LocalTime parseTime(String value) {
         if (value == null || value.isBlank()) {
             return null;
         }
-        String normalized = value.replace(":", "").trim();
-        if (normalized.length() < 4) {
+        String digits = value.replaceAll("[^0-9]", "");
+        if (digits.length() < 4) {
             return null;
         }
-        return LocalTime.parse(normalized.substring(0, 4), COMPACT_TIME);
+        String normalized = digits.substring(0, 4);
+        int hour = Integer.parseInt(normalized.substring(0, 2));
+        int minute = Integer.parseInt(normalized.substring(2, 4));
+        if (minute > 59) {
+            return null;
+        }
+        return LocalTime.of(hour % 24, minute);
     }
 
     private void upsertMovies(List<MovieRow> movies) throws Exception {
