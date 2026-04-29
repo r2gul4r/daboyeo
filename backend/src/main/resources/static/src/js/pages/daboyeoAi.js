@@ -1,12 +1,14 @@
 import {
   createRecommendationSession,
   deleteRecommendationSession,
+  getRecommendationProviderHealth,
   getPosterSeed,
   requestRecommendations,
   sendRecommendationFeedback,
 } from "../api/client.js";
 
 const STORAGE_KEY = "daboyeoAnonymousId";
+const AI_PROVIDER_STORAGE_KEY = "daboyeoAiProvider";
 const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
 const MAIN_PAGE_URL = "../../index.html";
 const SEAT_RECOMMEND_URL = "./seatRecommendMbti.html?flow=ai-result";
@@ -14,6 +16,7 @@ const POSTER_LIMIT = 12;
 const POSTER_BATCH_SIZE = 6;
 const LIKE_LIMIT = 5;
 const AUTO_ADVANCE_MS = 320;
+const DEFAULT_AI_PROVIDER = "local";
 
 const audienceOptions = [
   { value: "alone", label: "혼자", hint: "혼자서도 몰입할 수 있는 영화로 볼래." },
@@ -60,6 +63,48 @@ const modeOptions = [
   },
 ];
 
+const providerOptions = [
+  {
+    value: "local",
+    label: "로컬",
+    title: "로컬 Gemma",
+    description: "학원/작업 컴퓨터의 로컬 OpenAI 호환 서버로 추천을 돌립니다.",
+  },
+  {
+    value: "gpt",
+    label: "GPT",
+    title: "GPT-5.5",
+    description: "GPT-5.5 모델은 고정하고 빠른/정밀 카드별 추론 레벨만 다르게 보냅니다.",
+  },
+];
+
+const providerModeProfiles = {
+  local: {
+    fast: {
+      model: "Gemma 4 E2B Q4",
+      description: "로컬 Gemma E2B로 짧은 이유와 함께\n바로 볼 수 있는 영화를 빠르게 추천해 드립니다.",
+      tags: ["Gemma E2B Q4", "로컬", "빠름", "상위 후보"],
+    },
+    precise: {
+      model: "Gemma 4 E4B Q4",
+      description: "로컬 Gemma E4B로 후보를 꼼꼼히 비교하고,\n포스터 취향까지 반영해 추천해 드립니다.",
+      tags: ["Gemma E4B Q4", "로컬", "정밀 분석", "후보 비교"],
+    },
+  },
+  gpt: {
+    fast: {
+      model: "GPT-5.5 · reasoning low",
+      description: "GPT-5.5는 고정하고 낮은 추론 레벨로\n상영 후보를 빠르게 추려 추천해 드립니다.",
+      tags: ["GPT-5.5", "reasoning low", "빠른 판단", "상위 후보"],
+    },
+    precise: {
+      model: "GPT-5.5 · reasoning high",
+      description: "GPT-5.5는 고정하고 높은 추론 레벨로\n후보와 취향 근거를 더 꼼꼼하게 비교합니다.",
+      tags: ["GPT-5.5", "reasoning high", "정밀 분석", "후보 비교"],
+    },
+  },
+};
+
 const progressText = {
   audience: "1 / 5 상황",
   mood: "2 / 5 컨디션",
@@ -90,11 +135,13 @@ const screen = document.getElementById("aiScreen");
 const backButton = document.getElementById("aiBackButton");
 const progress = document.getElementById("aiProgress");
 const toast = document.getElementById("aiToast");
+const topbarLeft = document.querySelector(".ai-topbar-left");
 
 const state = {
   step: "audience",
   sessionStatus: "pending",
   anonymousId: localStorage.getItem(STORAGE_KEY),
+  aiProvider: readStoredAiProvider(),
   survey: {
     audience: null,
     mood: null,
@@ -114,7 +161,13 @@ const state = {
   run: {
     status: "idle",
     mode: null,
+    aiProvider: null,
     response: null,
+    error: null,
+  },
+  providerHealth: {
+    status: "idle",
+    items: {},
     error: null,
   },
   feedback: new Map(),
@@ -124,8 +177,132 @@ const state = {
 
 state.searchContext = readSearchContext();
 
+function readStoredAiProvider() {
+  const stored = localStorage.getItem(AI_PROVIDER_STORAGE_KEY);
+  return providerOptions.some((option) => option.value === stored) ? stored : DEFAULT_AI_PROVIDER;
+}
+
+function activeProvider(value = state.aiProvider) {
+  return providerOptions.find((option) => option.value === value) || providerOptions[0];
+}
+
+function modeOption(value) {
+  return modeOptions.find((option) => option.value === value) || modeOptions[0];
+}
+
+function modeProfile(modeValue, providerValue = state.aiProvider) {
+  const option = modeOption(modeValue);
+  const providerProfiles = providerModeProfiles[providerValue] || providerModeProfiles[DEFAULT_AI_PROVIDER];
+  return {
+    ...option,
+    ...(providerProfiles?.[option.value] || {}),
+  };
+}
+
+function setAiProvider(value) {
+  if (!providerOptions.some((option) => option.value === value)) {
+    return;
+  }
+
+  state.aiProvider = value;
+  localStorage.setItem(AI_PROVIDER_STORAGE_KEY, value);
+  render();
+}
+
+function normalizeProviderHealth(items) {
+  if (!Array.isArray(items)) {
+    return {};
+  }
+
+  return items.reduce((acc, item) => {
+    const provider = typeof item?.provider === "string" ? item.provider.trim().toLowerCase() : "";
+    if (provider) {
+      acc[provider] = item;
+    }
+    return acc;
+  }, {});
+}
+
+function providerHealthFor(providerValue) {
+  return state.providerHealth.items[providerValue] || null;
+}
+
+function providerHealthMeta(providerValue) {
+  const health = providerHealthFor(providerValue);
+  if (state.providerHealth.status === "loading" || state.providerHealth.status === "idle") {
+    return { key: "checking", label: "확인 중", note: "모델 서버 연결 상태를 확인하고 있어." };
+  }
+  if (state.providerHealth.status === "error") {
+    return { key: "unknown", label: "확인 실패", note: "상태 확인은 실패했지만 추천 요청은 계속 보낼 수 있어." };
+  }
+  if (health?.available) {
+    return { key: "ready", label: "연결됨", note: health.message || "모델 서버가 응답 중이야." };
+  }
+  return { key: "offline", label: "오프라인", note: health?.message || "모델 서버 연결이 없어 fallback 추천으로 이어질 수 있어." };
+}
+
+async function ensureProviderHealthLoaded(force = false) {
+  if (!force && ["loading", "ready"].includes(state.providerHealth.status)) {
+    return;
+  }
+
+  state.providerHealth = { ...state.providerHealth, status: "loading", error: null };
+  if (state.step === "mode") {
+    render();
+  }
+
+  try {
+    const items = await getRecommendationProviderHealth();
+    state.providerHealth = {
+      status: "ready",
+      items: normalizeProviderHealth(items),
+      error: null,
+    };
+  } catch (error) {
+    state.providerHealth = {
+      status: "error",
+      items: {},
+      error,
+    };
+  }
+
+  if (state.step === "mode") {
+    render();
+  }
+}
+
 function goToMainPage() {
   window.location.href = MAIN_PAGE_URL;
+}
+
+function goToPreviousPage() {
+  if (window.history.length > 1) {
+    window.history.back();
+    return;
+  }
+
+  goToMainPage();
+}
+
+function resetBackButtonToTopbar() {
+  backButton.hidden = false;
+  backButton.style.position = "";
+  backButton.style.top = "";
+  backButton.style.left = "";
+  backButton.style.marginBottom = "";
+
+  if (topbarLeft && backButton.parentElement !== topbarLeft) {
+    topbarLeft.insertBefore(backButton, topbarLeft.firstChild);
+  }
+}
+
+function moveBackButtonToStepPane(leftPane) {
+  backButton.hidden = false;
+  backButton.style.position = "absolute";
+  backButton.style.top = "-90px";
+  backButton.style.left = "0";
+  backButton.style.marginBottom = "0";
+  leftPane.appendChild(backButton);
 }
 
 function shuffleItems(items) {
@@ -304,6 +481,9 @@ function setStep(nextStep) {
     if (nextStep === "posters") {
       ensurePostersLoaded();
     }
+    if (nextStep === "mode") {
+      ensureProviderHealthLoaded();
+    }
     render();
     screen.classList.add("is-entering");
     setTimeout(() => screen.classList.remove("is-entering"), 400);
@@ -326,7 +506,7 @@ function resetInputs(keepSession = true) {
   state.survey = { audience: null, mood: null, avoid: [] };
   state.posterChoices = { likedSeedMovieIds: [], dislikedSeedMovieIds: [] };
   state.posters.activeBatchIndex = 0;
-  state.run = { status: "idle", mode: null, response: null, error: null };
+  state.run = { status: "idle", mode: null, aiProvider: null, response: null, error: null };
   state.feedback = new Map();
 
   if (!keepSession) {
@@ -423,11 +603,9 @@ function renderSplitLayout({ kicker, titleParts, description, extraLeft, content
   const leftPane = createElement("div", "ai-split-left");
 
   if (stepBackMap[state.step]) {
-    backButton.style.position = "absolute";
-    backButton.style.top = "-90px";
-    backButton.style.left = "0";
-    backButton.style.marginBottom = "0";
-    leftPane.appendChild(backButton);
+    moveBackButtonToStepPane(leftPane);
+  } else {
+    resetBackButtonToTopbar();
   }
 
   leftPane.appendChild(renderTitle(titleParts));
@@ -703,17 +881,29 @@ function renderPosterCard(movie) {
   card.type = "button";
   card.addEventListener("click", () => selectPoster(id));
 
+  const title = movie.title || "이름 없는 포스터";
+  const fallback = createElement("div", "ai-poster-image-fallback");
+  fallback.appendChild(createElement("span", null, title));
+  fallback.appendChild(createElement("small", null, "포스터 준비 중"));
+  card.appendChild(fallback);
+
   if (movie.posterUrl) {
     const image = createElement("img");
-    image.alt = `${movie.title || "영화"} 포스터`;
+    image.alt = `${title} 포스터`;
     image.loading = "lazy";
     image.src = movie.posterUrl;
-    image.addEventListener("error", () => image.removeAttribute("src"));
+    image.addEventListener("load", () => card.classList.add("has-image"));
+    image.addEventListener("error", () => {
+      image.remove();
+      card.classList.add("is-image-missing");
+    });
     card.appendChild(image);
+  } else {
+    card.classList.add("is-image-missing");
   }
 
   const overlay = createElement("div", "ai-poster-overlay");
-  overlay.appendChild(createElement("span", null, movie.title || "이름 없는 포스터"));
+  overlay.appendChild(createElement("span", null, title));
   card.appendChild(overlay);
 
   return card;
@@ -802,6 +992,7 @@ function renderPosterStep() {
 }
 
 function renderModeCard(option) {
+  const profile = modeProfile(option.value);
   const card = createElement("div", "ai-mode-card");
 
   if (option.recommended) {
@@ -811,15 +1002,16 @@ function renderModeCard(option) {
 
   const top = createElement("div");
   top.appendChild(createElement("h3", null, option.label));
+  top.appendChild(createElement("div", "ai-mode-model", profile.model));
 
   top.appendChild(createElement("div", "ai-mode-divider"));
 
-  const desc = createElement("p", null, option.description);
-  desc.innerHTML = option.description.replace(/\n/g, '<br/>');
+  const desc = createElement("p", null, profile.description);
+  desc.innerHTML = profile.description.replace(/\n/g, '<br/>');
   top.appendChild(desc);
 
   const badges = createElement("div", "ai-mode-badges");
-  option.tags.forEach(t => {
+  profile.tags.forEach(t => {
     badges.appendChild(createElement("span", "ai-mode-badge", t));
   });
   top.appendChild(badges);
@@ -834,17 +1026,58 @@ function renderModeCard(option) {
   return card;
 }
 
+function renderProviderSwitch() {
+  const panel = createElement("section", "ai-provider-panel");
+  panel.setAttribute("aria-label", "AI 추천 엔진 선택");
+
+  const header = createElement("div", "ai-provider-header");
+  header.appendChild(createElement("span", "ai-provider-kicker", "AI ROUTE"));
+  header.appendChild(createElement("strong", null, "추천 엔진 선택"));
+  panel.appendChild(header);
+
+  const switcher = createElement("div", "ai-provider-switch");
+  providerOptions.forEach((option) => {
+    const button = createElement("button", "ai-provider-option");
+    button.type = "button";
+    button.classList.toggle("is-selected", state.aiProvider === option.value);
+    const healthMeta = providerHealthMeta(option.value);
+    button.classList.add(`is-${healthMeta.key}`);
+    button.setAttribute("aria-pressed", String(state.aiProvider === option.value));
+
+    const label = createElement("span", null, option.label);
+    const title = createElement("strong", null, option.title);
+    const copy = createElement("small", null, option.description);
+    const status = createElement("em", "ai-provider-status", healthMeta.label);
+    button.appendChild(label);
+    button.appendChild(title);
+    button.appendChild(status);
+    button.appendChild(copy);
+    button.addEventListener("click", () => setAiProvider(option.value));
+    switcher.appendChild(button);
+  });
+  panel.appendChild(switcher);
+
+  const active = activeProvider();
+  const activeHealth = providerHealthMeta(active.value);
+  panel.appendChild(createElement("p", "ai-provider-note", `${active.title} 라우팅 · ${activeHealth.note}`));
+
+  return panel;
+}
+
 function renderModeStep() {
+  const content = createElement("div", "ai-mode-panel");
   const grid = createElement("div", "ai-mode-grid");
   modeOptions.forEach(opt => {
     grid.appendChild(renderModeCard(opt));
   });
+  content.appendChild(renderProviderSwitch());
+  content.appendChild(grid);
 
   return renderSplitLayout({
     kicker: "AI GUIDE 05",
     titleParts: [{ text: "어떤 방식으로\n추천해 드릴까요?" }],
-    description: " 빠른 추천은 간단하게, 정밀 추천은 더 꼼꼼하게 분석해 드립니다.",
-    content: grid,
+    description: "로컬과 GPT 중 하나를 고르면, 빠른/정밀 추천 카드의 모델 라우팅도 함께 바뀝니다.",
+    content,
   });
 }
 
@@ -858,12 +1091,14 @@ async function runRecommendation(mode) {
     return;
   }
 
-  state.run = { status: "loading", mode, response: null, error: null };
+  const aiProvider = state.aiProvider || DEFAULT_AI_PROVIDER;
+  state.run = { status: "loading", mode, aiProvider, response: null, error: null };
   setStep("loading");
 
   const payload = {
     anonymousId: state.anonymousId,
     mode,
+    aiProvider,
     survey: {
       audience: state.survey.audience,
       mood: state.survey.mood,
@@ -881,12 +1116,12 @@ async function runRecommendation(mode) {
 
   try {
     const response = await requestRecommendations(payload);
-    state.run = { status: "success", mode, response, error: null };
+    state.run = { status: "success", mode, aiProvider, response, error: null };
 
     const recommendations = Array.isArray(response?.recommendations) ? response.recommendations : [];
     setStep(response?.status === "no_candidates" || recommendations.length === 0 ? "empty" : "results");
   } catch (error) {
-    state.run = { status: "error", mode, response: null, error };
+    state.run = { status: "error", mode, aiProvider, response: null, error };
     setStep("error");
   }
 }
@@ -900,7 +1135,7 @@ function renderLoadingMessage(title, description) {
 }
 
 function renderLoadingStep() {
-  const mode = modeOptions.find((option) => option.value === state.run.mode);
+  const mode = modeProfile(state.run.mode, state.run.aiProvider || state.aiProvider);
   const title = mode ? `${mode.label} 분석 중` : "분석 중";
   const description = mode
     ? `${mode.model} 모델에 상위 후보만 보내고 있어. 결과가 없으면 가짜 추천 없이 알려줄게.`
@@ -945,7 +1180,7 @@ function renderEmptyStep() {
 function renderRecommendationErrorStep() {
   return renderErrorPanel(
     "추천 요청이 실패했어",
-    state.run.error?.message || "백엔드 API 또는 로컬 Ollama 연결을 확인해줘.",
+    state.run.error?.message || "백엔드 API 또는 선택한 AI 라우팅 연결을 확인해줘.",
     [
       { label: "다시 시도", onClick: () => runRecommendation(state.run.mode || "fast") },
       { label: "방식 다시 고르기", onClick: () => setStep("mode"), secondary: true },
@@ -1058,8 +1293,15 @@ function renderShowtimeItem(label, value) {
   return item;
 }
 
-function renderResultCard(item, index) {
+function renderResultCard(item, index, context = {}) {
   const card = createElement("article", "ai-result-card");
+  const isAiBacked = context.isAiBacked !== false;
+  const isGptResult = isAiBacked && context.providerValue === "gpt";
+  const isFallbackResult = !isAiBacked;
+  const isPreciseResult = context.mode === "precise";
+  card.classList.toggle("is-gpt-result", isGptResult);
+  card.classList.toggle("is-fallback-result", isFallbackResult);
+  card.classList.toggle("is-precise-result", isPreciseResult);
   const inner = createElement("div", "ai-result-card-inner");
   const poster = createElement("div", "ai-result-poster");
   const imageUrl = safeUrl(item.posterUrl);
@@ -1083,15 +1325,23 @@ function renderResultCard(item, index) {
   body.appendChild(heading);
 
   if (item.reason) {
-    body.appendChild(createElement("p", "ai-result-tags", item.reason));
+    body.appendChild(createElement("p", isGptResult ? "ai-result-reason" : "ai-result-tags", item.reason));
   }
 
   if (item.analysisPoint) {
-    const analysisPoint = createElement("p", "ai-result-tags");
-    const label = createElement("strong", "ai-analysis-label", "분석 포인트");
+    const analysisPoint = createElement("p", isGptResult ? "ai-result-analysis" : "ai-result-tags");
+    const labelText = isGptResult ? "GPT 분석" : isFallbackResult ? "Fallback 근거" : "분석 포인트";
+    const label = createElement("strong", "ai-analysis-label", labelText);
     analysisPoint.appendChild(label);
     analysisPoint.appendChild(document.createTextNode(` ${item.analysisPoint}`));
     body.appendChild(analysisPoint);
+  }
+
+  if (item.caution) {
+    const caution = createElement("p", "ai-result-caution");
+    caution.appendChild(createElement("strong", null, "주의 포인트"));
+    caution.appendChild(document.createTextNode(` ${item.caution}`));
+    body.appendChild(caution);
   }
 
   if (item.valuePoint) {
@@ -1128,6 +1378,13 @@ function renderResultsStep() {
   const response = state.run.response || {};
   const recommendations = Array.isArray(response.recommendations) ? response.recommendations : [];
   const modeLabel = optionLabel(modeOptions, response.mode || state.run.mode);
+  const providerValue = state.run.aiProvider || state.aiProvider;
+  const provider = activeProvider(providerValue);
+  const model = response.model || modeProfile(response.mode || state.run.mode, providerValue).model;
+  const isAiBacked = response.status === "ok";
+  const resultSource = isAiBacked
+    ? `${provider.title} · ${modeLabel}`
+    : "코드 점수 기반 fallback";
   const layout = createElement("section", "ai-result-layout");
   const side = createElement("aside", "ai-result-side");
 
@@ -1135,7 +1392,8 @@ function renderResultsStep() {
   side.appendChild(renderTitle([
     { text: "다보의\n영화 추천은!" },
   ]));
-  side.appendChild(createElement("p", "ai-result-note", "지금 상황과 취향을 반영해, 바로 볼 수 있는 최적의 영화를 골랐어요."));
+  const resultNote = response.message || "지금 상황과 취향을 반영해, 바로 볼 수 있는 최적의 영화를 골랐어요.";
+  side.appendChild(createElement("p", "ai-result-note", resultNote));
 
   const summary = createElement("div", "ai-result-summary");
 
@@ -1164,6 +1422,13 @@ function renderResultsStep() {
     addSummaryRow("포스터 취향", `${state.posterChoices.likedSeedMovieIds.length} / ${LIKE_LIMIT}`);
   }
   addSummaryRow("추천 방식", modeLabel);
+  addSummaryRow("요청 엔진", `${provider.title} · ${model}`);
+  addSummaryRow("실제 처리", resultSource);
+  addSummaryRow("분석 깊이", isAiBacked
+    ? providerValue === "gpt"
+      ? (response.mode || state.run.mode) === "precise" ? "GPT 정밀 분석" : "GPT 빠른 분석"
+      : (response.mode || state.run.mode) === "precise" ? "로컬 정밀 추천" : "로컬 빠른 추천"
+    : "fallback 추천");
 
   side.appendChild(summary);
 
@@ -1192,7 +1457,11 @@ function renderResultsStep() {
 
   const list = createElement("div", "ai-result-list");
   recommendations.forEach((item, index) => {
-    list.appendChild(renderResultCard(item, index));
+    list.appendChild(renderResultCard(item, index, {
+      providerValue,
+      mode: response.mode || state.run.mode,
+      isAiBacked,
+    }));
   });
 
   layout.appendChild(side);
@@ -1297,7 +1566,10 @@ backButton.addEventListener("click", () => {
   if (previousStep) {
     clearStateFromStep(previousStep);
     setStep(previousStep);
+    return;
   }
+
+  goToPreviousPage();
 });
 
 render();

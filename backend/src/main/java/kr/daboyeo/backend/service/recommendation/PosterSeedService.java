@@ -1,6 +1,6 @@
 package kr.daboyeo.backend.service.recommendation;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.PosterSeedMovie;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,10 @@ import org.springframework.stereotype.Service;
 public class PosterSeedService {
 
     private static final int MAX_LIMIT = 40;
+    private static final String LOCAL_POSTER_MANIFEST = "recommendation/korea-boxoffice-top50-posters.json";
+    private static final List<String> DEFAULT_GENRES = List.of("popular");
+    private static final List<String> DEFAULT_MOODS = List.of("visual", "immersive");
+    private static final List<String> DEFAULT_AUDIENCES = List.of("alone", "friends", "family");
 
     private final List<PosterSeedMovie> seedMovies;
     private final Map<String, PosterSeedMovie> seedById;
@@ -47,16 +52,51 @@ public class PosterSeedService {
     }
 
     private List<PosterSeedMovie> loadSeed(ObjectMapper objectMapper) {
-        ClassPathResource resource = new ClassPathResource("recommendation/poster-seed.json");
+        ClassPathResource resource = new ClassPathResource(LOCAL_POSTER_MANIFEST);
         try (InputStream inputStream = resource.getInputStream()) {
-            List<PosterSeedMovie> movies = objectMapper.readValue(
-                inputStream,
-                new TypeReference<List<PosterSeedMovie>>() {
-                }
-            );
+            JsonNode moviesNode = objectMapper.readTree(inputStream).path("movies");
+            if (!moviesNode.isArray()) {
+                throw new IllegalStateException("R2 poster manifest has no movies array.");
+            }
+            List<PosterSeedMovie> movies = StreamSupport.stream(moviesNode.spliterator(), false)
+                .map(this::toPosterSeedMovie)
+                .filter(movie -> !movie.id().isBlank() && !movie.posterUrl().isBlank())
+                .toList();
             return List.copyOf(movies);
         } catch (IOException e) {
-            throw new IllegalStateException("포스터 seed 데이터를 읽지 못했어.", e);
+            throw new IllegalStateException("R2 poster seed data could not be loaded.", e);
         }
+    }
+
+    private PosterSeedMovie toPosterSeedMovie(JsonNode node) {
+        String movieCode = text(node, "movieCd");
+        String rank = text(node, "rank");
+        String id = movieCode.isBlank() ? "kobis-rank-" + rank : movieCode;
+        return new PosterSeedMovie(
+            id,
+            text(node, "titleKo"),
+            text(node, "posterPath"),
+            DEFAULT_GENRES,
+            DEFAULT_MOODS,
+            paceForRank(node.path("rank").asInt(0)),
+            DEFAULT_AUDIENCES,
+            List.of(),
+            ""
+        );
+    }
+
+    private String paceForRank(int rank) {
+        if (rank > 0 && rank % 3 == 0) {
+            return "fast";
+        }
+        if (rank > 0 && rank % 5 == 0) {
+            return "slow";
+        }
+        return "medium";
+    }
+
+    private String text(JsonNode node, String fieldName) {
+        JsonNode value = node.path(fieldName);
+        return value.isMissingNode() || value.isNull() ? "" : value.asText("");
     }
 }

@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import kr.daboyeo.backend.config.RecommendationProperties;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiPick;
+import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiProvider;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiResult;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.PosterChoices;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.RecommendationMode;
@@ -275,6 +276,37 @@ class RecommendationServiceQualityTests {
         assertThat(response.recommendations().get(0).analysisPoint()).isEqualTo("#몰입취향");
     }
 
+    @Test
+    void gptFastKeepsNarrativeReasonAnalysisValueAndCaution() {
+        RecommendationService service = service();
+        ShowtimeCandidate first = candidate(1L, 10L, "First A");
+        List<ShowtimeCandidate> candidates = List.of(first);
+        List<ScoredCandidate> scored = List.of(scored(first, 94));
+        when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class))).thenReturn(candidates);
+        when(showtimeRepository.countStoredShowtimes()).thenReturn(1);
+        when(scorer.score(any(TagProfile.class), anyList(), any())).thenReturn(scored);
+        when(localModelClient.rankAndExplain(eq(AiProvider.GPT), eq(RecommendationMode.FAST), any(TagProfile.class), anyList()))
+            .thenReturn(Optional.of(new AiResult(
+                "{\"r\":[]}",
+                "gpt-test",
+                List.of(new AiPick(
+                    1L,
+                    "친구와 가볍게 보기 좋은 리듬이라 지금 조건에 잘 맞아.",
+                    "복잡한 이야기를 피하고 싶다면 중반 정보량만 살짝 보면 돼.",
+                    "17:00 상영이고 좌석 여유가 있어 바로 예매 판단이 쉬워.",
+                    "선택한 포스터 취향과 오늘 컨디션이 둘 다 밝은 톤으로 이어져."
+                ))
+            )));
+
+        RecommendationResponse response = service.recommend(request("fast", "gpt"));
+
+        assertThat(response.recommendations()).hasSize(1);
+        assertThat(response.recommendations().get(0).reason()).contains("친구", "조건");
+        assertThat(response.recommendations().get(0).analysisPoint()).contains("포스터", "컨디션");
+        assertThat(response.recommendations().get(0).valuePoint()).contains("17:00", "좌석");
+        assertThat(response.recommendations().get(0).caution()).contains("복잡한");
+    }
+
     private RecommendationService service() {
         when(profileRepository.findProfile("anon_test"))
             .thenReturn(Optional.of(new RecommendationProfile("anon_test", Map.of())));
@@ -340,11 +372,17 @@ class RecommendationServiceQualityTests {
     }
 
     private RecommendationRequest request(String mode) {
+        return request(mode, null);
+    }
+
+    private RecommendationRequest request(String mode, String aiProvider) {
         return new RecommendationRequest(
             "anon_test",
             mode,
             new RecommendationSurvey("friends", "light", List.of("too_long")),
-            new PosterChoices(List.of("barbie", "aladdin_2019", "inside_out_2"), List.of())
+            new PosterChoices(List.of("barbie", "aladdin_2019", "inside_out_2"), List.of()),
+            null,
+            aiProvider
         );
     }
 }

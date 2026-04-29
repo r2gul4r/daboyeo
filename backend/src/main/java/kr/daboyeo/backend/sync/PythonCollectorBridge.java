@@ -69,6 +69,24 @@ public class PythonCollectorBridge {
         );
     }
 
+    public Map<String, Object> collectCgvSeatLayout(
+        String siteNo,
+        String screeningDate,
+        String screenNo,
+        String screenSequence,
+        String seatAreaNo
+    ) {
+        Map<String, String> env = new LinkedHashMap<>();
+        env.put("SITE_NO", siteNo);
+        env.put("SCN_YMD", screeningDate);
+        env.put("SCNS_NO", screenNo);
+        env.put("SCN_SSEQ", screenSequence);
+        if (seatAreaNo != null && !seatAreaNo.isBlank()) {
+            env.put("SEAT_AREA_NO", seatAreaNo);
+        }
+        return executeJsonScript(buildCgvSeatLayoutScript(), env);
+    }
+
     private Map<String, Object> executeJsonScript(String script, Map<String, String> env) {
         ProcessBuilder processBuilder = new ProcessBuilder(properties.getPythonExecutable(), "-c", script);
         processBuilder.directory(workspaceRoot.toFile());
@@ -212,6 +230,21 @@ public class PythonCollectorBridge {
                 print(json.dumps({"summary": summary, "seats": seats}, ensure_ascii=False))
                 """;
         };
+    }
+
+    private static String buildCgvSeatLayoutScript() {
+        return """
+            import json, os
+            from collectors.cgv.collector import CgvCollector
+            layout = CgvCollector().build_seat_layout(
+                site_no=os.environ["SITE_NO"],
+                scn_ymd=os.environ["SCN_YMD"],
+                scns_no=os.environ["SCNS_NO"],
+                scn_sseq=os.environ["SCN_SSEQ"],
+                seat_area_no=os.environ.get("SEAT_AREA_NO", ""),
+            )
+            print(json.dumps(layout, ensure_ascii=False))
+            """;
     }
 
     @SuppressWarnings("unchecked")

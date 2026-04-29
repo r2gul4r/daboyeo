@@ -67,6 +67,21 @@ export async function getPosterSeed(limit = 16) {
   return requestJson(`/api/recommendation/poster-seed?limit=${encodeURIComponent(limit)}`);
 }
 
+export async function getRecommendationProviderHealth() {
+  return requestJson("/api/recommendation/providers/health");
+}
+
+export async function fetchCgvSeatLayout(params) {
+  const query = new URLSearchParams();
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim()) {
+      query.set(key, String(value).trim());
+    }
+  });
+
+  return requestJson(`/api/cgv/seat-layout?${query.toString()}`);
+}
+
 export async function requestRecommendations(payload) {
   return requestJson("/api/recommendations", {
     method: "POST",

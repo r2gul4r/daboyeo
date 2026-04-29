@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import kr.daboyeo.backend.config.RecommendationProperties;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiPick;
+import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiProvider;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiResult;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.RecommendationMode;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ScoredCandidate;
@@ -60,6 +61,31 @@ class LocalModelRecommendationClientTests {
     }
 
     @Test
+    void gptFastPromptRequestsRicherAnalysisFields() {
+        TagProfile profile = new TagProfile();
+        profile.setAudience("friends");
+        profile.setMood("light");
+        profile.addAvoid(List.of("too_long"));
+        profile.addLikedGenre("sf");
+
+        String prompt = client.buildPrompt(AiProvider.GPT, RecommendationMode.FAST, profile, List.of(scoredCandidate()));
+
+        assertThat(prompt).contains(
+            "User profile:",
+            "Candidates:",
+            "fast: make a quick but grounded comparison",
+            "\"why\"",
+            "\"a\"",
+            "\"v\"",
+            "\"c\"",
+            "fitHints",
+            "valueHints",
+            "cautionHints"
+        );
+        assertThat(prompt).doesNotContain("\"score\"", "\"matchedTags\"", "\"penalties\"");
+    }
+
+    @Test
     void compactAiResponseIsMappedToExistingAiPickShape() throws Exception {
         String json = "{\"r\":[{\"id\":1,\"why\":\"#가볍게 #친구랑\",\"v\":\"#17:00상영 #좌석여유\"}]}";
 
@@ -88,6 +114,20 @@ class LocalModelRecommendationClientTests {
             assertThat(pick.caution()).isBlank();
         });
         assertThat(result.rawJson()).isEqualTo(json);
+    }
+
+    @Test
+    void gptRichResponseIsMappedToAiPickFields() throws Exception {
+        String json = "{\"r\":[{\"id\":1,\"why\":\"조건과 취향이 같이 맞아.\",\"a\":\"포스터 취향과 가벼운 컨디션이 이어져.\",\"v\":\"17:00 상영에 좌석 여유가 있어.\",\"c\":\"긴 러닝타임은 아니야.\"}]}";
+
+        AiResult result = client.parseResult(json, "gpt-test").orElseThrow();
+
+        AiPick pick = result.picks().get(0);
+        assertThat(pick.showtimeId()).isEqualTo(1L);
+        assertThat(pick.reason()).contains("조건");
+        assertThat(pick.analysisPoint()).contains("포스터");
+        assertThat(pick.valuePoint()).contains("17:00");
+        assertThat(pick.caution()).contains("러닝타임");
     }
 
     private RecommendationProperties properties() {

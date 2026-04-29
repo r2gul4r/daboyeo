@@ -41,6 +41,29 @@ public final class RecommendationModels {
         }
     }
 
+    public enum AiProvider {
+        LOCAL,
+        GPT;
+
+        public static AiProvider from(String value) {
+            if (value == null || value.isBlank()) {
+                return LOCAL;
+            }
+            String normalized = value.trim().toUpperCase(Locale.ROOT).replace('-', '_');
+            if ("LOCAL".equals(normalized) || "LOCAL_OPENAI_COMPATIBLE".equals(normalized)) {
+                return LOCAL;
+            }
+            if ("GPT".equals(normalized) || "REMOTE_GATEWAY".equals(normalized) || "CODEX_OAUTH_GATEWAY".equals(normalized)) {
+                return GPT;
+            }
+            throw new IllegalArgumentException("지원하지 않는 AI provider야.");
+        }
+
+        public String wireValue() {
+            return name().toLowerCase(Locale.ROOT);
+        }
+    }
+
     public enum FeedbackAction {
         LIKE("like"),
         DISLIKE("dislike"),
@@ -129,10 +152,21 @@ public final class RecommendationModels {
         String mode,
         RecommendationSurvey survey,
         PosterChoices posterChoices,
-        SearchFilters searchFilters
+        SearchFilters searchFilters,
+        String aiProvider
     ) {
         public RecommendationRequest(String anonymousId, String mode, RecommendationSurvey survey, PosterChoices posterChoices) {
-            this(anonymousId, mode, survey, posterChoices, null);
+            this(anonymousId, mode, survey, posterChoices, null, null);
+        }
+
+        public RecommendationRequest(
+            String anonymousId,
+            String mode,
+            RecommendationSurvey survey,
+            PosterChoices posterChoices,
+            SearchFilters searchFilters
+        ) {
+            this(anonymousId, mode, survey, posterChoices, searchFilters, null);
         }
     }
 
@@ -147,6 +181,23 @@ public final class RecommendationModels {
     public record FeedbackResponse(boolean accepted, Map<String, Integer> appliedWeights) {
         public FeedbackResponse {
             appliedWeights = appliedWeights == null ? Map.of() : Map.copyOf(appliedWeights);
+        }
+    }
+
+    public record AiProviderStatus(
+        String provider,
+        String label,
+        List<String> expectedModels,
+        boolean available,
+        String status,
+        String message
+    ) {
+        public AiProviderStatus {
+            provider = normalize(provider);
+            label = text(label);
+            expectedModels = expectedModels == null ? List.of() : List.copyOf(expectedModels);
+            status = normalize(status);
+            message = text(message);
         }
     }
 

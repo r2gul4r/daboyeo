@@ -120,7 +120,7 @@ public class SeatSnapshotPersistenceService {
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             for (Map<String, Object> seat : seats) {
-                String seatKey = firstText(seat, "seat_loc_no", "seat_id", "seat_no", "seat_label");
+                String seatKey = firstText(seat, "seat_key", "seat_loc_no", "seat_id", "seat_no", "seat_label");
                 if (seatKey.isBlank()) {
                     continue;
                 }
@@ -133,10 +133,10 @@ public class SeatSnapshotPersistenceService {
                 statement.setString(7, blankToNull(firstText(seat, "seat_status_code", "row_status_code")));
                 statement.setString(8, blankToNull(firstText(seat, "seat_kind_name", "seat_class_code", "seat_type_code")));
                 statement.setString(9, blankToNull(firstText(seat, "seat_zone_name", "seat_zone_code")));
-                setDecimal(statement, 10, decimalOrNull(firstNonNull(seat, "x")));
-                setDecimal(statement, 11, decimalOrNull(firstNonNull(seat, "y")));
-                setDecimal(statement, 12, decimalOrNull(firstNonNull(seat, "width", "width_rate")));
-                setDecimal(statement, 13, decimalOrNull(firstNonNull(seat, "height")));
+                setDecimal(statement, 10, decimalOrNull(firstNonNull(seat, "x", "x1")));
+                setDecimal(statement, 11, decimalOrNull(firstNonNull(seat, "y", "y1")));
+                setDecimal(statement, 12, decimalOrNull(firstNonNull(seat, "width", "w", "width_rate")));
+                setDecimal(statement, 13, decimalOrNull(firstNonNull(seat, "height", "h")));
                 statement.setString(14, objectMapper.writeValueAsString(providerMeta(seat)));
                 statement.setString(15, objectMapper.writeValueAsString(seat));
                 statement.addBatch();
@@ -161,7 +161,10 @@ public class SeatSnapshotPersistenceService {
             "seat_status_name", firstText(seat, "seat_status_name"),
             "seat_sale_yn", firstText(seat, "seat_sale_yn"),
             "customer_division_code", firstText(seat, "customer_division_code"),
-            "seat_group_name", firstText(seat, "seat_group_name")
+            "seat_group_name", firstText(seat, "seat_group_name"),
+            "seat_zone_kind_code", firstText(seat, "seat_zone_kind_code"),
+            "left_passage_yn", firstText(seat, "left_passage_yn"),
+            "right_passage_yn", firstText(seat, "right_passage_yn")
         );
     }
 

@@ -29,6 +29,14 @@ daboyeo:
     lm-studio-base-url: ${DABOYEO_LM_STUDIO_BASE_URL:http://127.0.0.1:1234/v1}
     fast-model: ${DABOYEO_RECOMMEND_FAST_MODEL:gemma-4-e2b-it}
     precise-model: ${DABOYEO_RECOMMEND_PRECISE_MODEL:gemma-4-e4b-it}
+    gpt-base-url: ${DABOYEO_RECOMMEND_GPT_BASE_URL:http://127.0.0.1:10531/v1}
+    gpt-model: ${DABOYEO_RECOMMEND_GPT_MODEL:gpt-5.5}
+    gpt-fast-reasoning-effort: ${DABOYEO_RECOMMEND_GPT_FAST_REASONING_EFFORT:low}
+    gpt-precise-reasoning-effort: ${DABOYEO_RECOMMEND_GPT_PRECISE_REASONING_EFFORT:high}
+    gpt-fast-ai-candidate-limit: ${DABOYEO_RECOMMEND_GPT_FAST_AI_CANDIDATE_LIMIT:6}
+    gpt-precise-ai-candidate-limit: ${DABOYEO_RECOMMEND_GPT_PRECISE_AI_CANDIDATE_LIMIT:8}
+    gpt-fast-max-tokens: ${DABOYEO_RECOMMEND_GPT_FAST_MAX_TOKENS:520}
+    gpt-precise-max-tokens: ${DABOYEO_RECOMMEND_GPT_PRECISE_MAX_TOKENS:900}
     min-start-buffer-minutes: ${DABOYEO_RECOMMEND_MIN_START_BUFFER_MINUTES:20}
     fast-ai-candidate-limit: ${DABOYEO_RECOMMEND_FAST_AI_CANDIDATE_LIMIT:5}
     precise-ai-candidate-limit: ${DABOYEO_RECOMMEND_PRECISE_AI_CANDIDATE_LIMIT:5}

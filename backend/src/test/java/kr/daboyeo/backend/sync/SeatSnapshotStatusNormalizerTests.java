@@ -11,9 +11,13 @@ class SeatSnapshotStatusNormalizerTests {
 
     @Test
     void normalizesCgvStatuses() {
+        assertThat(normalizer.normalize(CollectorProvider.CGV, Map.of("seat_status_code", "00"))).isEqualTo("available");
+        assertThat(normalizer.normalize(CollectorProvider.CGV, Map.of("seat_status_code", "01"))).isEqualTo("sold");
         assertThat(normalizer.normalize(CollectorProvider.CGV, Map.of("seat_sale_yn", "Y"))).isEqualTo("available");
+        assertThat(normalizer.normalize(CollectorProvider.CGV, Map.of("seat_sale_yn", "N"))).isEqualTo("sold");
         assertThat(normalizer.normalize(CollectorProvider.CGV, Map.of("seat_status_name", "예매완료"))).isEqualTo("sold");
         assertThat(normalizer.normalize(CollectorProvider.CGV, Map.of("seat_status_name", "판매불가"))).isEqualTo("unavailable");
+        assertThat(normalizer.normalize(CollectorProvider.CGV, Map.of("seat_status_code", "00", "seat_status_name", "BLOCK"))).isEqualTo("unavailable");
     }
 
     @Test

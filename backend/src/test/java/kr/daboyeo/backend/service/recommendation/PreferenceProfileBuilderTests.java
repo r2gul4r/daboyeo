@@ -20,7 +20,7 @@ class PreferenceProfileBuilderTests {
         var profile = builder.build(
             new RecommendationSurvey("friends", "exciting", List.of("too_long")),
             new PosterChoices(
-                List.of("avatar", "avengers_endgame", "spiderman_no_way_home"),
+                List.of("20129370", "20182530", "20150976"),
                 List.of()
             ),
             Map.of("genre:action", 2)
@@ -29,15 +29,16 @@ class PreferenceProfileBuilderTests {
         assertThat(profile.audience()).isEqualTo("friends");
         assertThat(profile.mood()).isEqualTo("exciting");
         assertThat(profile.avoids("too_long")).isTrue();
-        assertThat(profile.weight("genre:action")).isEqualTo(14);
-        assertThat(profile.weight("mood:visual")).isEqualTo(5);
+        assertThat(profile.weight("genre:action")).isEqualTo(4);
+        assertThat(profile.weight("genre:popular")).isEqualTo(15);
+        assertThat(profile.weight("mood:visual")).isEqualTo(15);
     }
 
     @Test
     void requiresAtLeastThreeLikedPosters() {
         assertThatThrownBy(() -> builder.build(
             new RecommendationSurvey("friends", "exciting", List.of()),
-            new PosterChoices(List.of("avatar", "joker"), List.of()),
+            new PosterChoices(List.of("20129370", "20182530"), List.of()),
             Map.of()
         )).isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("끌리는 포스터를 3개 이상");
@@ -48,7 +49,7 @@ class PreferenceProfileBuilderTests {
         assertThatThrownBy(() -> builder.build(
             new RecommendationSurvey("friends", "exciting", List.of()),
             new PosterChoices(
-                List.of("avatar", "avengers_endgame", "spiderman_no_way_home", "top_gun_maverick", "super_mario_bros", "barbie"),
+                List.of("20129370", "20182530", "20150976", "20137048", "20184889", "20197803"),
                 List.of()
             ),
             Map.of()
@@ -61,8 +62,8 @@ class PreferenceProfileBuilderTests {
         var profile = builder.build(
             new RecommendationSurvey("friends", "exciting", List.of()),
             new PosterChoices(
-                List.of("avatar", "avengers_endgame", "spiderman_no_way_home"),
-                List.of("joker", "parasite", "titanic")
+                List.of("20129370", "20182530", "20150976"),
+                List.of("20137048", "20184889", "20197803")
             ),
             Map.of()
         );

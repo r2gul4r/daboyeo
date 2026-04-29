@@ -331,3 +331,69 @@ Do not rewrite existing entries; append only.
   summary: `샌드박스 내부 Start-Process 로 띄운 Spring 서버가 명령 종료 후 유지되지 않음`
   details: `Spring boot jar 자체는 약 13초 후 정상 시작하고 static/index.html 도 잡히지만, 기본 샌드박스 내부에서 분리 실행한 Java 프로세스는 앱 브라우저 확인 전에 정리되어 ERR_CONNECTION_REFUSED 로 보였다. 샌드박스 밖에서 같은 jar를 실행하자 /api/health, /, /src/pages/daboyeoAi.html 모두 200으로 확인됐다.`
   status: `resolved`
+
+- time: `2026-04-29 10:42:00 +09:00`
+  location: `backend recommendation session runtime`
+  summary: `익명 세션 생성 API가 DB 설정 문제로 타임아웃`
+  details: `/api/health 는 정상 응답했지만 /api/recommendation/sessions POST 가 타임아웃됐다. 원인은 Spring 서버가 처음에는 기본 localhost DB URL로 실행됐고, 이후 TiDB URL 조립 중 PowerShell 변수 보간 오류로 DB명이 깨졌으며, 다음 실행에서는 useSSL=false 로 TiDB Cloud가 연결을 거부한 것이다. .env의 TiDB 값을 DABOYEO_DB_* 로 매핑하고 URL 보간을 ${db} 형태로 고친 뒤 useSSL=true 로 재시작해 세션 API 200을 확인했다.`
+  status: `resolved`
+
+- time: `2026-04-29 10:58:00 +09:00`
+  location: `manual Java config verification`
+  summary: `JShell 검증이 Windows prefs 권한 문제로 실패`
+  details: `변경된 dotenv 설정 로직을 jshell 로 검증하려 했지만 Java Preferences 레지스트리 접근 권한 문제로 jshell 이 히스토리 저장 중 종료됐다. 같은 검증은 build/tmp 아래 임시 Java 클래스 컴파일/실행으로 우회했다.`
+  status: `resolved`
+
+- time: `2026-04-29 11:01:00 +09:00`
+  location: `RootDotenvLoader`
+  summary: `.env UTF-8 BOM 때문에 첫 TIDB_HOST 키를 읽지 못함`
+  details: `루트 .env 첫 키가 Java 로더에서 TIDB_HOST가 아니라 BOM이 붙은 키로 읽혀 Spring datasource 파생값이 생성되지 않았다. RootDotenvLoader가 BOM을 제거하도록 수정하고 BOM 회귀 테스트를 추가했다.`
+  status: `resolved`
+
+- time: `2026-04-29 11:07:00 +09:00`
+  location: `backend boot jar runtime`
+  summary: `기존 boot jar에 EnvironmentPostProcessor 등록 리소스가 없어 dotenv 로직이 실행되지 않음`
+  details: `소스와 build resources에는 META-INF/spring.factories가 있었지만 현재 실행 중인 build/libs jar에는 BOOT-INF/classes/META-INF/spring.factories가 없어 RootDotenvEnvironmentPostProcessor가 등록되지 않았다. 현재 jar에 등록 리소스를 반영한 뒤 정상 jar 실행에서 /api/recommendation/sessions 200을 확인했다.`
+  status: `resolved`
+
+- time: `2026-04-29 11:32:48 +09:00`
+  location: `backend boot jar runtime`
+  summary: `RecommendationProperties 보조 생성자 추가 후 Spring 설정 바인딩 실패`
+  details: `GPT provider 설정 필드를 추가하면서 테스트 호환용 보조 생성자를 함께 둔 결과, Spring Boot가 @ConfigurationProperties record의 바인딩 생성자를 고르지 못하고 기본 생성자를 찾다가 boot jar가 종료됐다. canonical record 생성자에 @ConstructorBinding을 명시하고 jar를 다시 패치한 뒤 /api/health 200을 확인했다.`
+  status: `resolved`
+
+- time: `2026-04-29 13:36:00 +09:00`
+  location: `GPT recommendation prompt depth verification`
+  summary: `Gradle 테스트 시작 실패와 Start-Process Path/PATH 중복 오류`
+  details: `추천 프롬프트 차별화 검증 중 backend 디렉터리에서 gradle test --tests kr.daboyeo.backend.service.recommendation.* 를 실행했지만 native-platform.dll 로딩 실패로 Gradle이 시작되지 않았다. 변경 Java 클래스는 Gradle 캐시 jar를 classpath로 둔 javac 직접 컴파일로 검증했다. 이후 jar 재시작 때 Start-Process가 Windows 환경 변수 Path/PATH 중복으로 실패해 cmd start /b 경로로 우회했고 /api/health 200을 확인했다.`
+  status: `resolved`
+
+- time: `2026-04-29 14:08:00 +09:00`
+  location: `recommendation future showtime recovery`
+  summary: `Lotte 적재와 jar 패치 중 로컬 환경 문제가 발생`
+  details: `TiDB 쓰기용 Python 경로는 Anaconda였지만 PyMySQL은 다른 Python user-site에만 잡혀 있어 repo 내부 backend/build/tmp/pymysql_vendor에 PyMySQL을 설치해 PYTHONPATH로 우회했다. Lotte 실제 적재는 영화 목록 API가 JSON이 아닌 응답을 반환해 중단됐고, Megabox 오늘 데이터 160건만 bounded upsert했다. 실행 중인 Spring jar가 파일 잠금을 잡아 첫 jar update가 실패했으며, 서버를 내린 뒤 jar를 패치하고 PID 6192로 재시작해 /api/health 200을 확인했다.`
+  status: `resolved`
+
+- time: `2026-04-29 14:15:00 +09:00`
+  location: `provider health jar patch`
+  summary: `새 nested class 누락으로 Spring 첫 재시작 실패`
+  details: `provider health 응답 record를 추가한 뒤 jar 패치 스테이징에서 RecommendationModels*.class 복사가 누락되어 BOOT-INF/classes 안에 RecommendationModels$AiProviderStatus.class가 없었다. Spring이 LocalModelRecommendationClient를 introspect하다 NoClassDefFoundError로 종료됐다. class 복사를 wildcard Path 방식으로 다시 수행하고 jar에 domain/recommendation class들을 재반영한 뒤 PID 5500으로 /api/health 200을 확인했다.`
+  status: `resolved`
+
+- time: `2026-04-29 14:27:00 +09:00`
+  location: `fallback result verification`
+  summary: `poster-seed limit 파라미터 바인딩이 수동 jar 패치 환경에서 400 반환`
+  details: `/api/recommendation/poster-seed?limit=12 검증 중 @RequestParam 이 limit 이름을 명시하지 않아, 현재 수동 컴파일/패치된 jar에서 Java parameter-name metadata 를 찾지 못하고 400 bad_request 를 반환했다. RecommendationController 의 @RequestParam 에 name = "limit" 를 명시해 런타임 바인딩이 컴파일 플래그에 의존하지 않도록 고쳤다.`
+  status: `resolved`
+
+- time: `2026-04-29 15:44:35 +09:00`
+  location: `CGV seat-layout live API fetch`
+  summary: `CGV_API_SECRET 값이 비어 있어 실제 CGV API 호출이 중단됨`
+  details: `python scripts\cgv_collector_demo.py --mode movies 로 CGV signed API 호출을 시작했지만 CgvApiClient 가 CGV_API_SECRET 환경변수 또는 루트 .env 값이 필요하다고 중단했다. .env에는 CGV_API_SECRET 키는 있으나 값이 비어 있는 것으로 확인했다. API 기반 구현은 유지되며, 실제 좌석배치도 수신은 유효한 CGV_API_SECRET 설정 후 재시도해야 한다.`
+  status: `open`
+
+- time: `2026-04-29 16:38:26 +09:00`
+  location: `browser-use CGV homepage access-scope check`
+  summary: `browser-use URL 네비게이션이 Codex app-server 경로 오류로 실패`
+  details: `CGV 홈페이지를 browser-use로 열어 .env CGV_API_SECRET 접근 가능 범위를 확인하려 했지만, 탭 생성과 about:blank 스크린샷은 성공한 반면 tab.goto("https://cgv.co.kr/")와 tab.goto("https://www.cgv.co.kr/")가 모두 "failed to start codex app-server: 지정된 경로를 찾을 수 없습니다. (os error 3)"로 실패했다. 이후 http://127.0.0.1:5500/ 이동은 정상 동작해 browser-use 전체 고장이 아니라 외부 도메인 네비게이션 경로 문제로 좁혀졌다. 사용자가 직접 https://cgv.co.kr/ 를 연 뒤 browser-use tabs.list 로 URL과 제목 "깊이 빠져 보다, CGV"는 확인했지만, DOM snapshot, screenshot, dev logs는 같은 app-server 오류로 실패했다. 직접 CGV API 호출은 사용자 요청에 따라 실행하지 않았다.`
+  status: `open`

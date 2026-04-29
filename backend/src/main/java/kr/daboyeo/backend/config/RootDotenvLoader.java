@@ -8,6 +8,8 @@ import java.util.Map;
 
 public final class RootDotenvLoader {
 
+    private static final char UTF8_BOM = '\ufeff';
+
     private RootDotenvLoader() {
     }
 
@@ -20,13 +22,13 @@ public final class RootDotenvLoader {
         Map<String, Object> values = new LinkedHashMap<>();
         try {
             for (String rawLine : Files.readAllLines(dotenvPath)) {
-                String line = rawLine.trim();
+                String line = stripUtf8Bom(rawLine.trim());
                 if (line.isEmpty() || line.startsWith("#") || !line.contains("=")) {
                     continue;
                 }
 
                 int separatorIndex = line.indexOf('=');
-                String key = line.substring(0, separatorIndex).trim();
+                String key = stripUtf8Bom(line.substring(0, separatorIndex).trim());
                 String value = line.substring(separatorIndex + 1).trim();
                 if (key.isEmpty()) {
                     continue;
@@ -50,6 +52,13 @@ public final class RootDotenvLoader {
             current = current.getParent();
         }
         return null;
+    }
+
+    private static String stripUtf8Bom(String value) {
+        if (!value.isEmpty() && value.charAt(0) == UTF8_BOM) {
+            return value.substring(1);
+        }
+        return value;
     }
 
     private static String stripQuotes(String value) {

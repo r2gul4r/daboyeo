@@ -19,14 +19,17 @@ public class SeatSnapshotStatusNormalizer {
         String statusCode = text(seat.get("seat_status_code"));
         String statusName = text(seat.get("seat_status_name"));
         String sale = text(seat.get("seat_sale_yn"));
-        if ("Y".equalsIgnoreCase(sale)) {
-            return "available";
-        }
-        if (containsAny(statusCode, statusName, "SOLD", "BOOK", "예매", "판매완료")) {
-            return "sold";
-        }
         if (containsAny(statusCode, statusName, "LOCK", "BLOCK", "장애", "불가")) {
             return "unavailable";
+        }
+        if ("01".equals(statusCode) || containsAny(statusCode, statusName, "SOLD", "BOOK", "예매", "판매완료")) {
+            return "sold";
+        }
+        if ("00".equals(statusCode) || "Y".equalsIgnoreCase(sale)) {
+            return "available";
+        }
+        if ("N".equalsIgnoreCase(sale)) {
+            return "sold";
         }
         return null;
     }

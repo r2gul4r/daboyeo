@@ -2,64 +2,203 @@
 
 ## Current Task
 
-- task: `Codex OAuth deployment architecture plan`
-- phase: `documentation`
-- scope: `Record the agreed portfolio-demo architecture where the site is deployed on Oracle Cloud, recommendation data stays in the Spring/TiDB backend, and Codex OAuth is used through a temporary AI gateway during presentation.`
-- verification_target: `A detailed Markdown plan exists under docs/ with the target architecture, API flow, security guardrails, implementation phases, deployment checklist, and verification plan.`
-- previous_task_note: `The provider future-date ingest work is complete enough for this turn; this request changes scope to deployment/AI architecture documentation.`
+- task: `CGV .env key access-scope check without direct API call`
+- phase: `playwright_devtools_file_inspection`
+- scope: `Inspect redacted .env key presence, repo CGV signing paths, and CGV page-loaded frontend files/resources through Playwright/DevTools-style observation without making direct API calls.`
+- verification_target: `Report what the current .env keys can potentially access, clearly separate code-inferred signed API scope from browser-confirmed CGV homepage scope, and do not reveal secret values.`
+- previous_task_note: `The prior CGV realtime seat-map implementation is verified locally; this is a new read-only access-scope investigation.`
+- runtime_dependency_note: `Direct CGV API calls, admin-like paths, status-code probes, login-token use, and endpoint guessing/scanning are explicitly prohibited. The current pass uses Playwright to inspect only public CGV page UI plus already-loaded frontend resources/request traces.`
 
 ## Orchestration Profile
 
 - score_total: `5`
-- score_breakdown: `2 auth/OAuth and account-token handling, 1 cloud deployment architecture, 1 external AI gateway dependency, 1 repository documentation write`
-- hard_triggers: `auth_token_boundary, external_runtime_connection, deployment_configuration`
-- selected_rules: `single-session; documentation-only; do not write secrets; do not expose openai-oauth /v1 directly; preserve existing dirty worktree changes`
-- selected_skills: `none`
+- score_breakdown: `2 external CGV homepage/browser dependency, 2 secret/access-scope boundary, 1 explicit direct API prohibition`
+- hard_triggers: `external_source_dependency; secret handling boundary; browser verification requested`
+- selected_rules: `single-session; read-only investigation except STATE/ERROR_LOG; do not print .env values; do not call CGV API directly; use Playwright browser UI and DevTools-style loaded-resource inspection; do not access admin-like paths, use login tokens, probe status codes, or scan/guess endpoints`
+- selected_skills: `playwright`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
-- spawn_decision: `no spawn; the deliverable is one architecture plan and does not have separable implementation write sets`
-- efficiency_basis: `current Spring recommendation flow, frontend API path, and deployment assumptions can be documented from the already inspected code without parallel work`
-- selection_reason: `user asked to save the conversation as a detailed implementation plan; the decisive trigger is auth/OAuth deployment documentation, not runtime implementation`
+- spawn_decision: `no spawn; user did not request delegation and the work is a narrow read-only inspection with one browser-use blocker`
+- efficiency_basis: `Handoff cost is higher than benefit because the result depends on one local .env inspection, one repo code path check, and one browser-use runtime surface`
+- selection_reason: `the user explicitly forbade direct API calls and asked for Playwright/DevTools-style inspection of CGV loaded files, so observed page resources and code-inferred key scope must remain separate`
 
 ## Evaluation Plan
 
 - evaluation_need: `light`
 - project_invariants:
-  - `Do not document real secrets, passwords, OAuth tokens, cookies, API keys, or tunnel tokens.`
-  - `Keep the deployed-site recommendation pipeline grounded in DB candidates; AI must not invent showtimes outside backend-provided candidates.`
+  - `Do not print, commit, or document real DB passwords, OAuth tokens, cookies, API keys, tunnel tokens, or OAuth auth paths.`
   - `Do not overwrite unrelated frontend/backend user edits.`
-  - `Do not require exposing openai-oauth /v1 directly to the public internet.`
 - task_acceptance:
-  - `Create a detailed Markdown implementation plan under docs/.`
-  - `Explain the agreed Oracle Cloud deployed-site flow and the Codex OAuth gateway alternatives.`
-  - `Record the API boundary, required environment variables, fallback strategy, security guardrails, and verification checklist.`
-  - `Make clear that AI reranks/explains backend DB candidates rather than directly querying the database.`
+  - `Spring exposes GET /api/cgv/seat-layout for siteNo, screeningDate, screenNo, screenSequence, and optional seatAreaNo.`
+  - `The endpoint calls the Python CGV collector's build_seat_layout and returns live CGV layout JSON with fetchedAt/source metadata.`
+  - `The frontend page loads live layout data from the endpoint and can auto-refresh it while preserving x/y/w/h coordinate positions.`
+  - `Seats, row labels, zone boxes, and entrances are positioned from x/y/w/h values without converting to a fake uniform grid.`
+  - `The UI distinguishes available, sold, unavailable, special, and unknown status while preserving provider metadata access for debugging.`
+  - `No CGV secret, cookies, or signing implementation is moved into frontend code.`
 - non_goals:
-  - `No Java, JavaScript, gateway, or deployment code changes in this turn.`
-  - `No real tunnel URL, account token, or private key in documentation.`
-  - `No public-runtime smoke checks unless explicitly requested.`
+  - `No secret extraction from browser bundles.`
+  - `No hardcoded CGV_API_SECRET, cookies, IDs, passwords, or account setup.`
+  - `No direct browser-to-CGV signed API call from frontend.`
+  - `No DB schema migration unless the existing seat snapshot/layout contract is insufficient.`
+  - `No persistence of live seat layout responses unless explicitly requested.`
+  - `No deployed-domain or browser automation check.`
 - hard_checks:
-  - `Update STATE before writing docs.`
-  - `Markdown plan is present and readable.`
-  - `git diff --check passes or remaining warnings are explained.`
+  - `Update STATE before code edits.`
+  - `python -m py_compile collectors/cgv/collector.py scripts/cgv_collector_demo.py`
+  - `node --check frontend/src/js/pages/cgvSeatMap.js`
+  - `Focused Spring test or Java compile for CgvSeatMapController/PythonCollectorBridge.`
+  - `JSON parse check for the CGV sample fixture.`
+  - `Static search confirms no real CGV secret was introduced into frontend/static files.`
 - llm_review_rubric:
-  - `The plan should be understandable to a teammate preparing the portfolio presentation.`
-  - `Security tradeoffs should be concrete enough to prevent accidentally exposing OAuth-backed /v1 endpoints.`
+  - `Coordinate geometry should stay faithful to CGV x/y/w/h instead of becoming a synthetic row/column map.`
+  - `Signed API failures should surface as backend API failures without leaking stderr, secret, or stack trace to the browser.`
 - evidence_required:
-  - `Plan path`
-  - `Architecture summary`
-  - `Verification command result`
+  - `Python compile result`
+  - `JS syntax check result`
+  - `Focused backend test/compile result`
+  - `Sample JSON parse/layout summary`
+  - `Secret placeholder/static scan result`
+
+## Writer Slot
+
+- writer_slot: `main`
+- write_sets: `STATE.md, ERROR_LOG.md only for required task/error logging`
 
 ## Contract Freeze
 
 - status: `frozen`
-- source_basis: `Conversation agreement: deploy the portfolio site/backend on Oracle Cloud or similar cloud, keep recommendation candidate selection in Spring/TiDB, and use Codex OAuth only through a presentation-time AI gateway or local demo adapter.`
-- output_document: `docs/AI_CODEX_OAUTH_DEPLOYMENT_PLAN.md`
-- write_sets: `STATE.md, docs/AI_CODEX_OAUTH_DEPLOYMENT_PLAN.md`
-- writer_slot: `main`
+- source_basis: `Root .env redacted key-state scan plus collectors/cgv/api.py, collectors/cgv/collector.py, PythonCollectorBridge, CgvSeatMapController source inspection, Playwright browser UI observation, and CGV page-loaded frontend resource/request traces.`
+- output_code: `none`
+- output_tests: `source inspection, redacted env inspection, Playwright browser UI snapshot, loaded resource/request trace inspection, and workspace verification commands`
+- output_docs: `none`
+- write_sets: `STATE.md, ERROR_LOG.md`
+
+## Reviewer
+
+- review_required: `self-review only; no subagent because user did not request delegation`
+- reviewer_focus: `secret redaction, no direct CGV API calls, no admin-like endpoint access, no endpoint scanning, Playwright browser evidence stated without overstating access`
+
+## Last Update
+
+- timestamp: `2026-04-29 16:38:26 +09:00`
+- note: `Current .env has CGV_API_SECRET set and no CGV_ID/CGV_PASSWORD values; direct API validation was not run by request. User approved Playwright browser UI fallback after browser-use confirmed only selected tab metadata.`
 
 ## Verification Results
+
+- cgv_api_fetch_attempt_20260429:
+  - `timestamp`: `2026-04-29 15:45:53 +09:00`
+  - `request_update`: `User explicitly asked to use the API instead of page scraping.`
+  - `live_attempt`: `python scripts\cgv_collector_demo.py --mode movies stopped before network I/O because CgvApiClient found no usable CGV_API_SECRET value.`
+  - `implementation_status`: `The collector uses CGV signed API endpoints including /cnm/atkt/searchSchByMov and /cnm/atkt/searchIfSeatData; Spring exposes GET /api/cgv/seat-layout and keeps signing server-side.`
+  - `verification`: `python py_compile passed for collectors/cgv/api.py, collectors/cgv/collector.py, and scripts/cgv_collector_demo.py; node --check passed for frontend/static cgvSeatMap.js and client.js; sample JSON parsed with 123 seats and 2 zone boxes; frontend/static secret scan found no matches; focused CgvSeatMapControllerTests passed outside sandbox after Gradle native-platform.dll failed inside sandbox; git diff --check passed with CRLF warnings only.`
+  - `blocker`: `Set a real CGV_API_SECRET in the root .env or process environment, then rerun scripts\cgv_collector_demo.py --mode seat-layout with current CGV booking keys or call /api/cgv/seat-layout from the Spring backend.`
+
+- cgv_realtime_coordinate_seat_map:
+  - `timestamp`: `2026-04-29 17:37:00 +09:00`
+  - `classification`: `score_total 9; full evaluation; single-session; no spawn because the Spring endpoint, Python bridge, collector layout output, API client, and coordinate renderer share one tight live-data contract.`
+  - `implementation`: `Added GET /api/cgv/seat-layout with validated CGV booking-key params; PythonCollectorBridge now calls CgvCollector.build_seat_layout server-side; cgvSeatMap.html/css/js renders live or uploaded/sample CGV x/y/w/h coordinates with status filters, zoom, selected-seat detail, JSON upload, sample fallback, and 15-second auto-refresh.`
+  - `collector`: `CgvCollector build_seat_records, summarize_seat_map, and build_seat_layout now accept optional seat_area_no; scripts/cgv_collector_demo.py exposes --mode seat-layout and --seat-area-no.`
+  - `static_runtime`: `The new cgvSeatMap page, CSS, JS, API client, and cgv-seat-layout.sample.json were mirrored from frontend/src into backend/src/main/resources/static/src.`
+  - `security`: `CGV signing and CGV_API_SECRET remain server/Python collector concerns; frontend/static scan found no CGV_API_SECRET, X-TIMESTAMP, X-SIGNATURE, api_secret, or secret strings.`
+  - `verification`: `python -m py_compile passed for collectors/cgv/collector.py and scripts/cgv_collector_demo.py; node --check passed for frontend and backend-static cgvSeatMap.js and client.js; sample JSON parsed with 123 seats, 2 zone boxes, and status counts special=26 available=65 sold=32; focused Gradle test CgvSeatMapControllerTests passed after elevated Gradle native-platform.dll access; git diff --check passed with CRLF warnings only; frontend/backend static mirrors matched for JS/CSS/client.`
+  - `live_limit`: `No live CGV upstream smoke was run because the current env has no usable CGV_API_SECRET and network approval/live keys were not provided.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification static renderer expanded to realtime endpoint after the user clarified the requirement; reviewer_findings explicit RequestParam names avoid compile-flag fragility and browser code never receives signing material; verification_outcome local contract is verified, while true realtime freshness needs a valid current CGV booking key plus CGV_API_SECRET; next_gate_adjustment if this becomes production-facing, add request throttling/caching around the live CGV endpoint.`
+
+- cgv_signed_seat_map_collection:
+  - `timestamp`: `2026-04-29 16:38:00 +09:00`
+  - `classification`: `score_total 8; full evaluation; single-session; no spawn because user did not request delegation and CGV collector output plus backend snapshot normalization had one tight contract.`
+  - `implementation`: `CgvCollector now converts CGV searchIfSeatData seats into stable seat_key, x/y/width/height, normalized_status, and a UI-ready build_seat_layout payload; scripts/cgv_collector_demo.py adds --mode seat-layout.`
+  - `backend`: `SeatSnapshotStatusNormalizer now maps CGV code 00 to available, code 01 or sale N to sold, sale Y to available, and blocked names before sale availability; SeatSnapshotPersistenceService accepts seat_key and CGV coordinate aliases.`
+  - `security`: `CGV_API_SECRET remains loaded only from process env or repo-root .env; static scan found only the .env.example placeholder plus existing signing header usage.`
+  - `verification`: `python -m py_compile passed for collectors/cgv/api.py, collectors/cgv/collector.py, scripts/cgv_collector_demo.py, and scripts/cgv_api_probe.py; synthetic CGV seat payload check returned records=2, remaining=1, zoneBoxes=1; sandbox Gradle failed on native-platform.dll, then elevated focused tests passed for SeatSnapshotStatusNormalizerTests and SeatSnapshotSyncServiceTests; git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification no schema change was needed because existing snapshot tables can store CGV coordinates; reviewer_findings signed API boundary is intact and CGV status mapping no longer drops 00/01-only rows; verification_outcome collector and backend contract are locally verified, while live CGV API smoke remains intentionally skipped unless explicitly requested; next_gate_adjustment if layout persistence becomes required, add a focused seat_layouts upsert path instead of overloading seat_snapshots.`
+
+- r2_local_poster_seed_routing:
+  - `timestamp`: `2026-04-29 14:59:00 +09:00`
+  - `classification`: `score_total 4; light evaluation; single-session; no spawn because PosterSeedService, test expectations, build resources, and boot-jar patch formed one narrow seed-source switch.`
+  - `implementation`: `PosterSeedService now reads recommendation/korea-boxoffice-top50-posters.json and maps each movie to the existing PosterSeedMovie response shape with id=movieCd and posterUrl=/src/assets/R2/posters/*.webp; DB image storage was not added.`
+  - `metadata_note`: `The R2/KOBIS manifest currently has poster path and ranking fields, not rich genre/mood metadata, so the service attaches minimal generic poster preference tags popular, visual, immersive, and audience defaults until a richer local metadata file exists.`
+  - `test_update`: `PreferenceProfileBuilderTests now use KOBIS movieCd seed ids and assert the generic local seed preference weights.`
+  - `static_runtime`: `korea-boxoffice-top50-posters.json was copied into backend/build/resources/main/recommendation and patched into the boot jar with PosterSeedService.class; Spring was restarted from the patched jar as PID 18200 on 127.0.0.1:8080.`
+  - `verification`: `javac compiled PosterSeedService and PreferenceProfileBuilderTests with a minimal classpath; /api/health returned ok; /api/recommendation/poster-seed?limit=12 returned 12 items and all posterUrl values matched /src/assets/R2/posters/*.webp; a representative R2 poster URL returned HTTP 200; POST /api/recommendations accepted three returned KOBIS ids and returned fallback with 3 recommendations; boot jar contains PosterSeedService.class and korea-boxoffice-top50-posters.json; git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit light fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification no DB path was needed; reviewer_findings poster selection is now local-static and presentation-safe, but richer seed metadata should be added later if poster choices need stronger taste differentiation; verification_outcome current 8080 server serves R2 poster seed successfully; next_gate_adjustment keep image binaries in static/R2 and recommendation metadata in classpath JSON rather than movie DB columns.`
+
+- fallback_result_presentation_clarity:
+  - `timestamp`: `2026-04-29 14:32:00 +09:00`
+  - `classification`: `score_total 5; full evaluation; single-session; no spawn because fallback result rendering, static mirroring, one controller binding fix, and jar patch were tightly coupled to the same demo flow.`
+  - `implementation`: `Fallback responses now render neutral fallback result cards, use Fallback 근거 instead of GPT 분석, and the summary separates 요청 엔진 from 실제 처리 so GPT/local offline fallback no longer looks like live model analysis.`
+  - `controller_fix`: `RecommendationController now declares @RequestParam(name = "limit", defaultValue = "10") for poster-seed so the endpoint does not depend on Java parameter-name metadata in manually patched jars.`
+  - `static_runtime`: `frontend AI JS/CSS/HTML were mirrored into backend static resources, backend build resources, and the current boot jar; RecommendationController.class was recompiled and patched into the boot jar; Spring was restarted from the patched jar as PID 13168 on 127.0.0.1:8080.`
+  - `verification`: `node --check passed for frontend/src/js/pages/daboyeoAi.js; javac cleanly recompiled RecommendationController.class with a minimal Spring classpath outside the sandbox after sandbox Gradle-cache access noise; /api/health returned ok; /api/recommendation/poster-seed?limit=12 returned 12 items; 8080 static HTML/JS/CSS contain 20260429-fallback-result, is-fallback-result, Fallback 근거, 요청 엔진, 실제 처리, and fallback CSS markers; POST /api/recommendations with aiProvider=gpt returned status fallback, model gpt-5.5, and 3 recommendations; git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification verification exposed one backend binding durability bug inside the same AI flow; reviewer_findings fallback UI is now honest about actual processing and poster-seed is no longer compile-flag fragile; verification_outcome demo server is running and the GPT-offline path is presentable; next_gate_adjustment explicitly name RequestParam values on controller methods whenever manual javac/jar patching is part of the workflow.`
+
+- ai_provider_health_visibility_for_demo:
+  - `timestamp`: `2026-04-29 14:18:00 +09:00`
+  - `classification`: `score_total 5; full evaluation; single-session; no spawn because backend health response, frontend badge UI, and jar mirror were one small coupled contract.`
+  - `implementation`: `Added GET /api/recommendation/providers/health returning local/GPT provider, label, expected models, availability, status, and safe message; frontend mode step now fetches it and shows checking/connected/offline badges on provider route buttons.`
+  - `runtime`: `Spring was restarted from the patched jar as PID 5500 on 127.0.0.1:8080.`
+  - `verification`: `node --check passed for frontend/src/js/api/client.js and frontend/src/js/pages/daboyeoAi.js; javac compiled RecommendationModels, LocalModelRecommendationClient, RecommendationService, and RecommendationController; /api/health returned ok; /api/recommendation/providers/health returned local and GPT as offline because 1234/10531 are not running; 8080 static HTML/JS/CSS contain provider-health markers; POST /api/recommendations still returns fallback with 3 recommendations; git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification no major reclassification, but jar patch had to be corrected for the new nested record class; reviewer_findings offline model routes are now visible instead of silently becoming fallback; verification_outcome demo can show why GPT/local live analysis is not connected; next_gate_adjustment wildcard nested Java classes must be explicitly included in manual jar patches.`
+
+- recommendation_future_showtime_coverage_recovery:
+  - `timestamp`: `2026-04-29 14:08:00 +09:00`
+  - `classification`: `score_total 7; full evaluation; single-session; no spawn because DB coverage, collector dry-run, bounded ingest, and API verification were sequentially dependent.`
+  - `db_before`: `Read-only JDBC coverage found 474 showtimes, max starts_at 2026-04-28 23:10:00, and 0 usable future candidates for the 2026-04-29 afternoon cutoff.`
+  - `collector_dry_run`: `collect_all_to_tidb.py --provider all --all-provider-dates --max-provider-dates 1 confirmed provider date 2026-04-29 was available from Lotte and Megabox.`
+  - `ingest`: `Lotte write was blocked by a JSONDecodeError from the provider response before useful upsert; Megabox bounded write inserted/upserted 160 today showtimes, 31 movies, 16 theaters, 160 screens, and 75 movie tags.`
+  - `db_after`: `Coverage rose to 634 total showtimes, max starts_at 2026-04-29 22:25:00, and 155 usable future showtimes, all currently from MEGABOX.`
+  - `implementation`: `RecommendationService now retries an expired date+timeRange filter without the expired timeRange, preserving date/region/person filters, and the result page displays response.message so the user sees the fallback reason.`
+  - `static_runtime`: `frontend AI JS/HTML were mirrored into backend static resources, backend build resources, and the current boot jar; Spring was restarted from the patched jar as PID 6192 on 127.0.0.1:8080.`
+  - `verification`: `node --check passed for daboyeoAi.js; javac compiled RecommendationService and RecommendationServiceCandidateFilterTests after elevated Gradle-cache access; 8080 health returned ok; 8080 HTML contains 20260429-filter-relax and JS contains resultNote; POST /api/recommendations with gpt fast and today morning now returns status fallback with 3 recommendations and the expired-timeRange message; git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification discovery became a bounded data refresh plus backend guard; reviewer_findings data freshness was the real blocker and today morning needed a durability guard; verification_outcome API moved from no_usable_showtimes/no_filtered_candidates to candidate-backed fallback; next_gate_adjustment check same-day expired filters whenever recommendations depend on current time.`
+
+- gpt_recommendation_prompt_depth_differentiation:
+  - `timestamp`: `2026-04-29 13:40:00 +09:00`
+  - `classification`: `score_total 6; full evaluation; single-session; no spawn because provider-mode prompt contract, response shaping, result UI, and jar mirror are tightly coupled.`
+  - `implementation`: `GPT fast/precise now use provider-specific prompts, wider GPT JSON fields (why/a/v/c), GPT candidate/token budgets, caution parsing, narrative preservation, and GPT analysis/caution result-card styling while local Gemma keeps compact tag-oriented behavior.`
+  - `config`: `Added GPT-specific candidate and max-token environment knobs: GPT fast 6 candidates/520 tokens, GPT precise 8 candidates/900 tokens by default.`
+  - `static_runtime`: `frontend AI JS/CSS/HTML and application.yml/classes were mirrored into backend static resources, backend build resources/classes, and the current boot jar; Spring is running as PID 12836 on 127.0.0.1:8080.`
+  - `verification`: `node --check passed for daboyeoAi.js; Gradle test could not start because native-platform.dll failed; javac compiled RecommendationModels, RecommendationProperties, LocalModelRecommendationClient, and RecommendationService; 8080 health returned ok; 8080 static JS/CSS/HTML contain gpt-depth result UI markers; GPT recommendation POST accepted aiProvider=gpt and model=gpt-5.5 but returned no_usable_showtimes because the current DB has no usable future showtime candidates; git diff --check passed with CRLF warnings only.`
+
+- ai_poster_image_failure_fallback:
+  - `timestamp`: `2026-04-29 12:39:00 +09:00`
+  - `classification`: `score_total 2; light evaluation; single-session; no spawn because this was a narrow frontend image-error fallback plus Spring static mirror.`
+  - `root_cause`: `poster seed currently returns external posterUrl values and posterPath null, and the old img error handler only removed src, leaving a blank framed card.`
+  - `implementation`: `renderPosterCard now always renders a styled ai-poster-image-fallback title panel and switches to it when posterUrl is absent or the img error event fires.`
+  - `static_runtime`: `frontend AI JS/CSS/HTML were mirrored into backend static resources, backend build resources, and the current boot jar; Spring was restarted as PID 9768 on 127.0.0.1:8080.`
+  - `verification`: `node --check passed for daboyeoAi.js; 8080 health returned ok; 8080 HTML/JS/CSS contain 20260429-poster-fallback, ai-poster-image-fallback, and is-image-missing rules; git diff --check passed with CRLF warnings only.`
+
+- ai_poster_card_frame_polish:
+  - `timestamp`: `2026-04-29 12:31:00 +09:00`
+  - `classification`: `score_total 2; light evaluation; single-session; no spawn because this was a narrow CSS poster-frame polish plus Spring static mirror.`
+  - `implementation`: `Poster cards now use a dark padded cinematic frame, inner inset highlight, subtler hover lift, and cyan selected state instead of the flat pale border/background.`
+  - `static_runtime`: `frontend AI CSS/HTML were mirrored into backend static resources, backend build resources, and the current boot jar; Spring was restarted as PID 20664 on 127.0.0.1:8080.`
+  - `verification`: `8080 health returned ok; 8080 HTML/CSS contains 20260429-poster-frame and the poster-card frame rules; app browser reached the poster step and showed the updated framed poster cards; git diff --check passed with CRLF warnings only.`
+
+- ai_first_step_back_button:
+  - `timestamp`: `2026-04-29 12:22:00 +09:00`
+  - `classification`: `score_total 2; light evaluation; single-session; no spawn because this was a narrow JS navigation hotfix plus Spring static mirror.`
+  - `implementation`: `First-step 이전 now calls browser history back with a main-page fallback, while later AI guide steps keep the existing internal previous-step behavior.`
+  - `static_runtime`: `frontend AI JS/HTML were mirrored into backend static resources, backend build resources, and the current boot jar; Spring was restarted as PID 13016 on 127.0.0.1:8080.`
+  - `verification`: `node --check passed for daboyeoAi.js; /api/health returned ok; 8080 HTML/JS contains 20260429-first-back and goToPreviousPage; app browser confirmed first-step 이전 returns to index history and second-step 이전 returns to the audience step; git diff --check passed with CRLF warnings only.`
+
+- ai_provider_route_selector:
+  - `timestamp`: `2026-04-29 11:40:00 +09:00`
+  - `classification`: `score_total 5; full evaluation; single-session; no spawn because the provider selector UI, aiProvider request contract, backend routing, and Spring static mirror form one tight slice.`
+  - `implementation`: `The mode step now renders a local/GPT route selector, stores the selected provider as daboyeoAiProvider, updates fast/precise card model labels between Gemma local and GPT-5.5 reasoning labels, and sends aiProvider with recommendation requests.`
+  - `backend`: `RecommendationRequest accepts aiProvider, AiProvider defaults to local, RecommendationProperties exposes local/GPT base URL, model, and reasoning settings, and LocalModelRecommendationClient routes OpenAI-compatible calls by provider without exposing OAuth tokens to the browser.`
+  - `startup_fix`: `The added RecommendationProperties compatibility constructor required @ConstructorBinding on the canonical record constructor; without it, the patched jar exited because Spring looked for a default constructor.`
+  - `static_runtime`: `frontend AI files were mirrored into backend/src/main/resources/static, backend/build/resources/main/static, and the current boot jar; Spring is running from the patched jar as PID 13160 on 127.0.0.1:8080.`
+  - `verification`: `node --check passed for frontend/src/js/pages/daboyeoAi.js; javac 21 compiled the changed recommendation classes; Gradle test remains blocked by native-platform.dll; /api/health returned status ok; POST /api/recommendations accepted aiProvider=local and aiProvider=gpt with models gemma-4-e2b-it and gpt-5.5; app browser confirmed GPT switch changes the card labels to GPT-5.5 reasoning low/high; git diff --check passed with CRLF warnings only.`
+
+- durable_spring_tidb_dotenv_mapping:
+  - `timestamp`: `2026-04-29 11:10:00 +09:00`
+  - `classification`: `score_total 6; full evaluation; single-session; no spawn because dotenv parsing, Spring property-source precedence, jar startup, and API recovery were one tight config slice.`
+  - `root_cause`: `The root .env first key was read as a BOM-prefixed key instead of TIDB_HOST, and the current boot jar also lacked BOOT-INF/classes/META-INF/spring.factories, so the EnvironmentPostProcessor was not registered in that jar.`
+  - `implementation`: `RootDotenvLoader now strips a UTF-8 BOM, RootDotenvEnvironmentPostProcessor derives DABOYEO_DB_* plus spring.datasource.* from TIDB_* with TiDB Cloud TLS and timeout defaults, and docs/env example explain the durable mapping.`
+  - `verification`: `Gradle test could not start because native-platform.dll failed to load; javac 21 compiled the changed config classes; manual Java config harness returned MANUAL_CONFIG_CHECK_OK; the patched boot jar includes RootDotenv classes and BOOT-INF/classes/META-INF/spring.factories; /api/health returned 200; POST /api/recommendation/sessions returned 200 in 2142 ms.`
+  - `runtime`: `Spring backend is running from the normal jar as PID 2112 on 127.0.0.1:8080.`
 
 - korea_boxoffice_top50_poster_webp_seed:
   - `timestamp`: `2026-04-28 16:23:00 +09:00`
@@ -339,28 +478,55 @@
 ## Writer Slot
 
 - writer_slot: `main`
-- write_set: `STATE.md, docs/AI_CODEX_OAUTH_DEPLOYMENT_PLAN.md`
+- write_set: `STATE.md, ERROR_LOG.md if needed, frontend/src/pages/daboyeoAi.html, frontend/src/js/pages/daboyeoAi.js, frontend/src/css/daboyeoAi.css, backend static mirror files, backend recommendation provider routing files, backend/src/main/resources/application.yml, .env.example, backend/README.md`
 - write_sets:
-  - `main`: `STATE.md, docs/AI_CODEX_OAUTH_DEPLOYMENT_PLAN.md`
+  - `main`: `STATE.md, ERROR_LOG.md if needed, frontend/src/pages/daboyeoAi.html, frontend/src/js/pages/daboyeoAi.js, frontend/src/css/daboyeoAi.css, backend static mirror files, backend recommendation provider routing files, backend/src/main/resources/application.yml, .env.example, backend/README.md`
 - shared_assets_owner: `main`
 - note: `One shared task board is active; no concurrent registry mode.`
-- concurrent_note: `No subagents are used; the output is one documentation artifact and does not require split ownership.`
+- concurrent_note: `No subagents are used; provider selector UI and backend request routing are one integrated contract.`
 
 ## Contract Freeze
 
-- contract_freeze: `Document the Codex OAuth deployment plan: Oracle Cloud hosts the Spring/static site, Spring/TiDB remains responsible for candidate selection, and presentation-time Codex OAuth is reached through a narrow AI gateway or local demo adapter without exposing raw /v1 publicly.`
-- note: `Do not implement Java/JS/gateway code in this turn; only save the agreed plan.`
+- contract_freeze: `Add GPT/local provider selection to the 5/5 AI recommendation mode screen, make fast/precise card model labels follow the selected provider, send aiProvider to the backend, and route local vs GPT-compatible AI calls by configurable backend settings.`
+- note: `Keep local provider as the default demo path; do not implement OAuth login or expose tokens in frontend code.`
 - contract_source: `user request`
-- contract_revision: `2026-04-29-codex-oauth-deploy-plan`
-- verification_target: `documentation file exists, no real secrets included, and git diff --check passes`
+- contract_revision: `2026-04-29-ai-provider-route-selector`
+- verification_target: `frontend syntax check, backend compile or Gradle result, local/GPT aiProvider API smoke, 8080 static/browser visibility, git diff --check`
 
 ## Reviewer
 
 - reviewer: `main self-review`
-- reviewer_target: `OAuth boundary clarity, no secret leakage, no accidental public /v1 exposure, and implementation steps that fit the current Spring recommendation flow`
-- reviewer_focus: `make the presentation architecture understandable without pretending Codex directly queries the database`
+- reviewer_target: `provider selector visibility, request payload contract, configurable GPT/local backend routing, no secret leakage, and 8080 static mirror freshness`
+- reviewer_focus: `make GPT/local selection real without exposing OAuth internals or breaking the local default demo path`
 
 ## Last Update
+
+- timestamp: `2026-04-29 13:40:00 +09:00`
+- note: `GPT recommendation prompt depth differentiation verified: GPT fast/precise now use richer prompt/schema/result UI, jar is refreshed, and Spring is running as PID 12836; live recommendation currently stops at no_usable_showtimes due DB showtime freshness.`
+
+- timestamp: `2026-04-29 12:39:00 +09:00`
+- note: `Poster image fallback verified: external image failure now shows a title fallback instead of a blank card, Spring static jar was refreshed, and server is running as PID 9768.`
+
+- timestamp: `2026-04-29 12:31:00 +09:00`
+- note: `Poster card frame polish verified: dark padded poster frame, inset highlight, hover/selected states, Spring static jar refreshed, and server is running as PID 20664.`
+
+- timestamp: `2026-04-29 12:22:00 +09:00`
+- note: `First-step AI guide 이전 button hotfix verified: browser history back works from the audience step, internal step-back still works from mood, Spring static jar was refreshed, and server is running as PID 13016.`
+
+- timestamp: `2026-04-29 11:40:00 +09:00`
+- note: `AI provider route selector verified: browser shows local/GPT selector and GPT-5.5 reasoning labels, frontend sends aiProvider, backend accepts local/gpt routing, patched jar is running on PID 13160, and local/gpt recommendation payloads both avoid 4xx contract failures.`
+
+- timestamp: `2026-04-29 11:10:00 +09:00`
+- note: `Durable dotenv fix verified: BOM-safe .env loading, DABOYEO_DB_* and spring.datasource.* derivation, current jar spring.factories registration, health 200, and recommendation session 200 from normal jar runtime.`
+
+- timestamp: `2026-04-29 11:20:00 +09:00`
+- note: `Reclassified browser comment into AI provider route selector implementation: add GPT/local UI on the mode screen, update card model labels, send aiProvider, and route backend AI settings by provider.`
+
+- timestamp: `2026-04-29 10:47:00 +09:00`
+- note: `Reclassified the session failure follow-up into a durable Spring TiDB dotenv mapping implementation with config/test/doc write set.`
+
+- timestamp: `2026-04-29 10:42:00 +09:00`
+- note: `Runtime session failure triage: /api/health was ok but /api/recommendation/sessions timed out because Spring was first started with the default localhost DB URL, then with a malformed TiDB URL, then with useSSL=false; restarted the sandbox-external Spring process with .env TiDB values, corrected URL interpolation, and useSSL=true.`
 
 - timestamp: `2026-04-29 00:10:00 +09:00`
 - note: `Created docs/AI_CODEX_OAUTH_DEPLOYMENT_PLAN.md with the agreed Oracle Cloud + Codex OAuth gateway implementation plan; git diff --check passed with existing CRLF warnings only.`
@@ -515,6 +681,78 @@
 - note: `Refined Stitch outputs were generated for sections 2-10, but the tool created new screen IDs rather than replacing the original final-row canvas instances in place.`
 
 ## Retrospective
+
+- task: `GPT recommendation prompt depth differentiation`
+- score_total: `6`
+- evaluation_fit: `full fit; the change affected prompt contract, provider config, service sanitization, result-card rendering, and running jar state`
+- orchestration_fit: `single-session fit; one request/response contract controlled all edits and delegation would raise mismatch risk`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the prior poster fallback task was complete, then the user clarified that Gemma/GPT are engine choices and each keeps fast/precise modes with GPT always more analytical`
+- reviewer_findings: `local Gemma still uses compact tag output, while GPT can now return narrative reason, analysis, practical value, and caution fields; the frontend visibly marks GPT analysis/caution cards`
+- verification_outcome: `node --check passed; Gradle remained blocked by native-platform.dll, so javac compiled the changed backend classes; 8080 health/static checks passed; GPT POST accepted the route but returned no_usable_showtimes because data freshness is currently the blocking runtime condition`
+- next_gate_adjustment: `before judging GPT result quality in-browser, refresh future showtime coverage so recommendation requests reach the model path instead of stopping at candidate availability`
+
+- task: `AI poster image failure fallback`
+- score_total: `2`
+- evaluation_fit: `light fit; acceptance was a focused resilience fix for missing external poster images`
+- orchestration_fit: `single-session fit; one JS/CSS surface plus Spring static mirror needed no delegation`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the poster frame polish revealed a separate runtime image-loading failure path, so a fallback panel was added without changing backend API behavior`
+- reviewer_findings: `poster cards now avoid the blank-frame failure mode by showing a title fallback and 준비 중 copy when posterUrl is missing or the img error event fires`
+- verification_outcome: `node --check passed for daboyeoAi.js; 8080 health and static JS/CSS/HTML checks passed; git diff --check passed with CRLF warnings only`
+- next_gate_adjustment: `when external media URLs are used in demo UI, add visible broken-media fallbacks at the component boundary instead of only relying on source data completeness`
+
+- task: `AI poster card frame visual polish`
+- score_total: `2`
+- evaluation_fit: `light fit; acceptance was a focused visual correction on one card family`
+- orchestration_fit: `single-session fit; one CSS surface and static mirror needed no delegation`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the old pale border and flat gray backing made poster images feel detached from the card`
+- reviewer_findings: `the new darker frame, inset highlight, and more integrated selected state make posters feel contained without changing the poster data or layout`
+- verification_outcome: `8080 static CSS checks, app-browser poster-step visual check, Spring health, and git diff --check passed`
+- next_gate_adjustment: `for poster-heavy UI, prefer a matte/inset frame over bright outline borders when the background is already dark and atmospheric`
+
+- task: `AI guide first-step back button browser navigation`
+- score_total: `2`
+- evaluation_fit: `light fit; acceptance was one visible button behavior plus static freshness`
+- orchestration_fit: `single-session fit; one JS handler and cache-busted static mirror were cheaper than delegation`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the existing button was visible on the first step but only handled internal stepBackMap entries, so it became a no-op there`
+- reviewer_findings: `first-step 이전 now has a real browser-back meaning, and later steps keep the current survey-step back behavior`
+- verification_outcome: `node --check, 8080 health/static checks, app-browser first-step and second-step back checks, and git diff --check passed`
+- next_gate_adjustment: `when a shared navigation button is visible on a step without internal history, give it a page-level fallback instead of leaving an empty branch`
+
+- task: `AI provider route selector on recommendation mode step`
+- score_total: `5`
+- evaluation_fit: `full fit; the task combined a user-visible route selector, request-contract change, provider-specific backend routing, and running 8080 jar/static verification`
+- orchestration_fit: `single-session fit; the UI state, payload shape, Spring properties, and jar patching were tightly coupled around the same aiProvider contract`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the first patched jar failed because adding a secondary constructor to a configuration-properties record made Spring require an explicit @ConstructorBinding on the canonical constructor`
+- reviewer_findings: `the final route keeps local as default, uses GPT-5.5 with low/high reasoning labels, keeps GPT gateway configuration on the backend, and avoids exposing OAuth or API secrets to the browser`
+- verification_outcome: `node --check, javac, 8080 health, local/gpt recommendation API smoke, app-browser GPT label switch, and git diff --check passed; Gradle remains blocked by native-platform.dll`
+- next_gate_adjustment: `when adding overloads to Spring @ConfigurationProperties records, bind the canonical constructor explicitly before runtime jar verification`
+
+- task: `Durable Spring TiDB dotenv mapping`
+- score_total: `6`
+- evaluation_fit: `full fit; the user explicitly rejected a temporary workaround and the failure crossed dotenv parsing, Spring datasource binding, jar packaging, and runtime API recovery`
+- orchestration_fit: `single-session fit; one config/runtime lane was cheaper and safer than delegation because each discovery result directly changed the same fix surface`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the initial env mapping fix was not enough because the root .env had a UTF-8 BOM on TIDB_HOST and the stale boot jar was missing spring.factories registration`
+- reviewer_findings: `the durable contract now handles BOM-safe .env parsing, derives both DABOYEO_DB_* and spring.datasource.* keys, preserves explicit env overrides, defaults TiDB Cloud to TLS, and avoids logging secrets`
+- verification_outcome: `Gradle remained blocked by native-platform.dll; javac/manual harness passed; the patched normal jar returned health 200 and recommendation session 200`
+- next_gate_adjustment: `when a Spring environment postprocessor fix seems ignored, check both property source contents and packaged registration resources before blaming DB connectivity`
 
 - task: `Repo-direction verification from WORKSPACE_CONTEXT and README set`
 - score_total: `4`

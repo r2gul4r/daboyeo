@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import kr.daboyeo.backend.config.RecommendationProperties;
+import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiProvider;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.PosterChoices;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.RecommendationMode;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.RecommendationProfile;
@@ -145,6 +146,32 @@ class RecommendationServiceCandidateFilterTests {
     }
 
     @Test
+    void routesGptProviderToProviderSpecificModelClient() {
+        RecommendationService service = service(20, 3, 5);
+        ShowtimeCandidate first = candidate(1, "First");
+        ShowtimeCandidate second = candidate(2, "Second");
+        ShowtimeCandidate third = candidate(3, "Third");
+        ShowtimeCandidate fourth = candidate(4, "Fourth");
+        List<ScoredCandidate> scored = List.of(
+            scored(first, 90),
+            scored(second, 80),
+            scored(third, 70),
+            scored(fourth, 60)
+        );
+        when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class)))
+            .thenReturn(List.of(first, second, third, fourth));
+        when(scorer.score(any(TagProfile.class), any(), any())).thenReturn(scored);
+        when(localModelClient.rankAndExplain(any(AiProvider.class), any(), any(), any())).thenReturn(Optional.empty());
+
+        service.recommend(request("fast", null, "gpt"));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<ScoredCandidate>> aiCandidates = ArgumentCaptor.forClass(List.class);
+        verify(localModelClient).rankAndExplain(eq(AiProvider.GPT), eq(RecommendationMode.FAST), any(TagProfile.class), aiCandidates.capture());
+        assertThat(aiCandidates.getValue()).hasSize(4);
+    }
+
+    @Test
     void passesSearchFiltersToCandidateQueryWhenPresent() {
         RecommendationService service = service(20);
         SearchFilters filters = new SearchFilters("Gangnam", LocalDate.of(2026, 4, 17), "night", 2);
@@ -165,6 +192,28 @@ class RecommendationServiceCandidateFilterTests {
 
         assertThat(response.status()).isEqualTo("no_filtered_candidates");
         assertThat(response.message()).contains("지역", "날짜", "시간대", "인원수");
+    }
+
+    @Test
+    void retriesWithoutExpiredTimeRangeBeforeReturningNoFilteredCandidates() {
+        RecommendationService service = service(20);
+        SearchFilters expiredFilters = new SearchFilters("", LocalDate.now().minusDays(1), "morning", 1);
+        SearchFilters relaxedFilters = new SearchFilters("", LocalDate.now().minusDays(1), "", 1);
+        ShowtimeCandidate candidate = candidate(1, "Recovered");
+        when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class), eq(expiredFilters))).thenReturn(List.of());
+        when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class), eq(relaxedFilters))).thenReturn(List.of(candidate));
+        when(scorer.score(any(TagProfile.class), eq(List.of(candidate)), eq(relaxedFilters)))
+            .thenReturn(List.of(scored(candidate, 90)));
+        when(localModelClient.rankAndExplain(any(), any(), any())).thenReturn(Optional.empty());
+
+        RecommendationResponse response = service.recommend(request("fast", expiredFilters));
+
+        assertThat(response.status()).isEqualTo("fallback");
+        assertThat(response.message()).contains("남은 상영");
+        assertThat(response.recommendations()).hasSize(1);
+        verify(showtimeRepository).findUpcomingCandidates(anyInt(), any(LocalDateTime.class), eq(expiredFilters));
+        verify(showtimeRepository).findUpcomingCandidates(anyInt(), any(LocalDateTime.class), eq(relaxedFilters));
+        verify(scorer).score(any(TagProfile.class), eq(List.of(candidate)), eq(relaxedFilters));
     }
 
     private RecommendationService service(int minStartBufferMinutes) {
@@ -238,12 +287,17 @@ class RecommendationServiceCandidateFilterTests {
     }
 
     private RecommendationRequest request(String mode, SearchFilters filters) {
+        return request(mode, filters, null);
+    }
+
+    private RecommendationRequest request(String mode, SearchFilters filters, String aiProvider) {
         return new RecommendationRequest(
             "anon_test",
             mode,
             new RecommendationSurvey("friends", "light", List.of("too_long")),
             new PosterChoices(List.of("barbie", "aladdin_2019", "inside_out_2"), List.of()),
-            filters
+            filters,
+            aiProvider
         );
     }
 }

@@ -1,6 +1,7 @@
 package kr.daboyeo.backend.api.recommendation;
 
 import java.util.List;
+import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiProviderStatus;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.FeedbackRequest;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.FeedbackResponse;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.PosterSeedMovie;
@@ -42,8 +43,13 @@ public class RecommendationController {
     }
 
     @GetMapping("/recommendation/poster-seed")
-    public List<PosterSeedMovie> posterSeed(@RequestParam(defaultValue = "10") int limit) {
+    public List<PosterSeedMovie> posterSeed(@RequestParam(name = "limit", defaultValue = "10") int limit) {
         return recommendationService.posterSeed(limit);
+    }
+
+    @GetMapping("/recommendation/providers/health")
+    public List<AiProviderStatus> providerHealth() {
+        return recommendationService.providerHealth();
     }
 
     @PostMapping("/recommendations")

@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Optional;
 import kr.daboyeo.backend.config.RecommendationProperties;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiPick;
+import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiProvider;
+import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiProviderStatus;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiResult;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.RecommendationMode;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ScoredCandidate;
@@ -31,6 +33,7 @@ public class LocalModelRecommendationClient {
     private static final int CONNECT_TIMEOUT_MS = 5_000;
     private static final int FAST_READ_TIMEOUT_MS = 45_000;
     private static final int PRECISE_READ_TIMEOUT_MS = 90_000;
+    private static final int STATUS_TIMEOUT_MS = 1_500;
     private final RecommendationProperties properties;
     private final ObjectMapper objectMapper;
 
@@ -44,23 +47,94 @@ public class LocalModelRecommendationClient {
         TagProfile profile,
         List<ScoredCandidate> candidates
     ) {
+        return rankAndExplain(AiProvider.LOCAL, mode, profile, candidates);
+    }
+
+    public Optional<AiResult> rankAndExplain(
+        AiProvider provider,
+        RecommendationMode mode,
+        TagProfile profile,
+        List<ScoredCandidate> candidates
+    ) {
         if (candidates.isEmpty()) {
             return Optional.empty();
         }
         RestClient restClient = RestClient.builder()
-            .baseUrl(properties.lmStudioBaseUrl())
+            .baseUrl(properties.baseUrlFor(provider))
             .requestFactory(requestFactory(mode))
             .build();
-        String model = properties.modelFor(mode);
+        String model = properties.modelFor(provider, mode);
         if (model.isBlank()) {
             return Optional.empty();
         }
 
         try {
-            return callLmStudio(restClient, mode, profile, candidates, model);
+            return callOpenAiCompatible(restClient, provider, mode, profile, candidates, model);
         } catch (RestClientException | JsonProcessingException e) {
-            log.warn("Local recommendation model call failed. mode={}, model={}, cause={}", mode.wireValue(), model, e.toString());
+            log.warn(
+                "Recommendation model call failed. provider={}, mode={}, model={}, cause={}",
+                provider.wireValue(),
+                mode.wireValue(),
+                model,
+                e.toString()
+            );
             return Optional.empty();
+        }
+    }
+
+    public AiProviderStatus providerStatus(AiProvider provider) {
+        List<String> expectedModels = expectedModels(provider);
+        if (properties.baseUrlFor(provider).isBlank() || expectedModels.isEmpty()) {
+            return new AiProviderStatus(
+                provider.wireValue(),
+                properties.providerLabel(provider),
+                expectedModels,
+                false,
+                "not_configured",
+                "모델 라우팅 설정이 비어 있어."
+            );
+        }
+
+        try {
+            JsonNode response = RestClient.builder()
+                .baseUrl(properties.baseUrlFor(provider))
+                .requestFactory(statusRequestFactory())
+                .build()
+                .get()
+                .uri("/models")
+                .retrieve()
+                .body(JsonNode.class);
+            List<String> actualModels = modelIds(response);
+            List<String> missingModels = expectedModels.stream()
+                .filter(model -> !actualModels.contains(model))
+                .toList();
+            if (!missingModels.isEmpty()) {
+                return new AiProviderStatus(
+                    provider.wireValue(),
+                    properties.providerLabel(provider),
+                    expectedModels,
+                    false,
+                    "model_missing",
+                    "서버는 켜져 있지만 필요한 모델이 로드되지 않았어."
+                );
+            }
+            return new AiProviderStatus(
+                provider.wireValue(),
+                properties.providerLabel(provider),
+                expectedModels,
+                true,
+                "ready",
+                "모델 서버가 응답 중이야."
+            );
+        } catch (RestClientException exception) {
+            return new AiProviderStatus(
+                provider.wireValue(),
+                properties.providerLabel(provider),
+                expectedModels,
+                false,
+                "offline",
+                "모델 서버에 연결할 수 없어. 결과는 코드 점수 기반 fallback으로 나올 수 있어."
+            );
         }
     }
 
@@ -71,22 +145,73 @@ public class LocalModelRecommendationClient {
         return factory;
     }
 
-    private Optional<AiResult> callLmStudio(
+    private SimpleClientHttpRequestFactory statusRequestFactory() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(STATUS_TIMEOUT_MS);
+        factory.setReadTimeout(STATUS_TIMEOUT_MS);
+        return factory;
+    }
+
+    private List<String> expectedModels(AiProvider provider) {
+        if (provider == AiProvider.GPT) {
+            return List.of(properties.modelFor(provider, RecommendationMode.FAST)).stream()
+                .filter(model -> model != null && !model.isBlank())
+                .distinct()
+                .toList();
+        }
+        return List.of(
+                properties.modelFor(AiProvider.LOCAL, RecommendationMode.FAST),
+                properties.modelFor(AiProvider.LOCAL, RecommendationMode.PRECISE)
+            ).stream()
+            .filter(model -> model != null && !model.isBlank())
+            .distinct()
+            .toList();
+    }
+
+    private List<String> modelIds(JsonNode response) {
+        List<String> ids = new ArrayList<>();
+        JsonNode data = response == null ? null : response.path("data");
+        if (data != null && data.isArray()) {
+            for (JsonNode item : data) {
+                String id = item.path("id").asText("");
+                if (!id.isBlank()) {
+                    ids.add(id);
+                }
+            }
+        }
+        return ids;
+    }
+
+    private Optional<AiResult> callOpenAiCompatible(
         RestClient restClient,
+        AiProvider provider,
         RecommendationMode mode,
         TagProfile profile,
         List<ScoredCandidate> candidates,
         String model
     ) throws JsonProcessingException {
-        Map<String, Object> request = Map.of(
-            "model", model,
-            "stream", false,
-            "temperature", mode == RecommendationMode.FAST ? 0.0 : 0.05,
-            "top_p", 0.85,
-            "max_tokens", properties.maxTokensFor(mode),
-            "messages", messages(mode, profile, candidates),
-            "response_format", recommendationResponseFormat(mode, properties.responseTextMaxLength(), candidates.size())
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("model", model);
+        request.put("stream", false);
+        request.put("temperature", mode == RecommendationMode.FAST ? 0.0 : 0.05);
+        request.put("top_p", 0.85);
+        request.put("max_tokens", properties.maxTokensFor(provider, mode));
+        request.put("messages", messages(provider, mode, profile, candidates));
+        request.put(
+            "response_format",
+            recommendationResponseFormat(
+                provider,
+                mode,
+                properties.responseTextMaxLengthFor(provider, mode),
+                candidates.size()
+            )
         );
+
+        String reasoningEffort = properties.reasoningEffortFor(provider, mode);
+        if (!reasoningEffort.isBlank()) {
+            request.put("reasoning_effort", reasoningEffort);
+        }
+
         JsonNode response = restClient.post()
             .uri("/chat/completions")
             .contentType(MediaType.APPLICATION_JSON)
@@ -100,6 +225,7 @@ public class LocalModelRecommendationClient {
     }
 
     private List<Map<String, String>> messages(
+        AiProvider provider,
         RecommendationMode mode,
         TagProfile profile,
         List<ScoredCandidate> candidates
@@ -107,12 +233,21 @@ public class LocalModelRecommendationClient {
         return List.of(
             Map.of(
                 "role", "system",
-                "content", mode == RecommendationMode.PRECISE
-                    ? "Rerank only given showtimes and write one Korean hashtag analysis. Return JSON only. No prose, invention, scores, or raw tokens."
-                    : "Rank only given showtimes. Return JSON only. why/v are Korean hashtags from b/vp. No prose, invention, scores, or raw tokens."
+                "content", systemPrompt(provider, mode)
             ),
-            Map.of("role", "user", "content", buildPrompt(mode, profile, candidates))
+            Map.of("role", "user", "content", buildPrompt(provider, mode, profile, candidates))
         );
+    }
+
+    private String systemPrompt(AiProvider provider, RecommendationMode mode) {
+        if (provider == AiProvider.GPT) {
+            return mode == RecommendationMode.PRECISE
+                ? "You are a careful Korean movie recommendation analyst. Use only the supplied candidates. Compare user context, avoided elements, poster taste, and showtime practicality. Return JSON only. Do not invent movies, theaters, prices, scores, ids, or hidden fields."
+                : "You are a concise Korean movie recommendation analyst. Use only the supplied candidates. Be faster than deep analysis but more grounded than a local tag ranker. Return JSON only. Do not invent movies, theaters, prices, scores, ids, or hidden fields.";
+        }
+        return mode == RecommendationMode.PRECISE
+            ? "Rerank only given showtimes and write one Korean hashtag analysis. Return JSON only. No prose, invention, scores, or raw tokens."
+            : "Rank only given showtimes. Return JSON only. why/v are Korean hashtags from b/vp. No prose, invention, scores, or raw tokens.";
     }
 
     Optional<AiResult> parseResult(String content, String model) throws JsonProcessingException {
@@ -131,7 +266,7 @@ public class LocalModelRecommendationClient {
                     picks.add(new AiPick(
                         row.path("id").asLong(),
                         row.path("why").asText(""),
-                        "",
+                        row.path("c").asText(""),
                         row.path("v").asText(""),
                         row.path("a").asText("")
                     ));
@@ -142,8 +277,55 @@ public class LocalModelRecommendationClient {
     }
 
     String buildPrompt(RecommendationMode mode, TagProfile profile, List<ScoredCandidate> candidates) {
+        return buildPrompt(AiProvider.LOCAL, mode, profile, candidates);
+    }
+
+    String buildPrompt(
+        AiProvider provider,
+        RecommendationMode mode,
+        TagProfile profile,
+        List<ScoredCandidate> candidates
+    ) {
         try {
-            String candidateJson = objectMapper.writeValueAsString(candidates.stream().map(this::candidateForPrompt).toList());
+            String candidateJson = objectMapper.writeValueAsString(candidates.stream()
+                .map(scored -> provider == AiProvider.GPT ? candidateForGptPrompt(scored) : candidateForPrompt(scored))
+                .toList());
+            if (provider == AiProvider.GPT) {
+                String pickInstruction = mode == RecommendationMode.PRECISE && candidates.size() >= 3
+                    ? "Pick exactly 3 objects from candidates."
+                    : "Pick 1 to " + Math.min(3, candidates.size()) + " objects from candidates.";
+                String depth = mode == RecommendationMode.PRECISE
+                    ? "deep: compare tradeoffs, avoid risks, poster taste, and showtime practicality before choosing."
+                    : "fast: make a quick but grounded comparison, then explain the strongest practical fit.";
+                String itemContract = mode == RecommendationMode.PRECISE
+                    ? "why=2 short Korean sentences; a=deeper Korean analysis about context/poster taste/avoidance; v=practical showtime value; c=short caution or empty string."
+                    : "why=1 Korean sentence; a=one Korean analysis point; v=one practical showtime value; c=short caution or empty string.";
+                return """
+                    User profile:
+                    - audience=%s
+                    - mood=%s
+                    - avoid=%s
+                    - liked_poster_hints=%s
+
+                    Candidates:
+                    %s
+
+                    Method: %s
+                    %s
+                    Return only {"r":[{"id":1,"why":"...","a":"...","v":"...","c":"..."}]}.
+                    %s
+                    Do not mention scores, raw tags, field names, or unavailable facts.
+                    """.formatted(
+                    profile.audience(),
+                    profile.mood(),
+                    profile.avoid(),
+                    analysisHints(profile),
+                    candidateJson,
+                    depth,
+                    pickInstruction,
+                    itemContract
+                );
+            }
             if (mode == RecommendationMode.PRECISE) {
                 String pickInstruction = candidates.size() >= 3
                     ? "Pick exactly 3 objects from JSON."
@@ -186,19 +368,31 @@ public class LocalModelRecommendationClient {
         }
     }
 
-    private Map<String, Object> recommendationResponseFormat(RecommendationMode mode, int maxTextLength, int candidateCount) {
+    private Map<String, Object> recommendationResponseFormat(
+        AiProvider provider,
+        RecommendationMode mode,
+        int maxTextLength,
+        int candidateCount
+    ) {
         return Map.of(
             "type", "json_schema",
             "json_schema", Map.of(
                 "name", "daboyeo_recommendation_response",
                 "strict", true,
-                "schema", recommendationResponseSchema(mode, maxTextLength, candidateCount)
+                "schema", recommendationResponseSchema(provider, mode, maxTextLength, candidateCount)
             )
         );
     }
 
-    private Map<String, Object> recommendationResponseSchema(RecommendationMode mode, int maxTextLength, int candidateCount) {
-        int minItems = mode == RecommendationMode.PRECISE ? Math.min(3, Math.max(1, candidateCount)) : 0;
+    private Map<String, Object> recommendationResponseSchema(
+        AiProvider provider,
+        RecommendationMode mode,
+        int maxTextLength,
+        int candidateCount
+    ) {
+        int minItems = provider == AiProvider.GPT
+            ? mode == RecommendationMode.PRECISE ? Math.min(3, Math.max(1, candidateCount)) : 1
+            : mode == RecommendationMode.PRECISE ? Math.min(3, Math.max(1, candidateCount)) : 0;
         return Map.of(
             "type", "object",
             "additionalProperties", false,
@@ -208,10 +402,30 @@ public class LocalModelRecommendationClient {
                     "type", "array",
                     "minItems", minItems,
                     "maxItems", 3,
-                    "items", mode == RecommendationMode.PRECISE
+                    "items", provider == AiProvider.GPT
+                        ? gptRecommendationItemSchema(mode, maxTextLength)
+                        : mode == RecommendationMode.PRECISE
                         ? preciseRecommendationItemSchema(maxTextLength)
                         : recommendationItemSchema(maxTextLength)
                 )
+            )
+        );
+    }
+
+    private Map<String, Object> gptRecommendationItemSchema(RecommendationMode mode, int maxTextLength) {
+        int analysisMax = mode == RecommendationMode.PRECISE ? maxTextLength : Math.min(maxTextLength, 150);
+        int reasonMax = mode == RecommendationMode.PRECISE ? Math.min(maxTextLength, 180) : Math.min(maxTextLength, 120);
+        int valueMax = Math.min(maxTextLength, 120);
+        return Map.of(
+            "type", "object",
+            "additionalProperties", false,
+            "required", List.of("id", "why", "a", "v", "c"),
+            "properties", Map.of(
+                "id", Map.of("type", "integer"),
+                "why", Map.of("type", "string", "maxLength", reasonMax),
+                "a", Map.of("type", "string", "maxLength", analysisMax),
+                "v", Map.of("type", "string", "maxLength", valueMax),
+                "c", Map.of("type", "string", "maxLength", 100)
             )
         );
     }
@@ -248,6 +462,26 @@ public class LocalModelRecommendationClient {
         value.put("t", candidate.title());
         value.put("b", reasonHints(scored));
         value.put("vp", valueHints(candidate));
+        return value;
+    }
+
+    private Map<String, Object> candidateForGptPrompt(ScoredCandidate scored) {
+        var candidate = scored.candidate();
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("id", candidate.showtimeId());
+        value.put("title", candidate.title());
+        value.put("theater", List.of(candidate.providerCode(), candidate.theaterName(), candidate.regionName(), candidate.screenName())
+            .stream()
+            .filter(part -> part != null && !part.isBlank())
+            .toList());
+        value.put("startsAt", candidate.startsAt() == null ? "" : DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(candidate.startsAt()));
+        value.put("price", candidate.minPriceAmount() == null ? "" : candidate.minPriceAmount() + " " + candidate.currencyCode());
+        value.put("seats", seatSummary(candidate.remainingSeatCount(), candidate.totalSeatCount()));
+        value.put("age", candidate.ageRating());
+        value.put("runtimeMinutes", candidate.runtimeMinutes());
+        value.put("fitHints", reasonHints(scored));
+        value.put("valueHints", valueHints(candidate));
+        value.put("cautionHints", cautionHints(scored));
         return value;
     }
 
@@ -316,6 +550,24 @@ public class LocalModelRecommendationClient {
             hints.add("#조건근접");
         }
         return hints.stream().distinct().limit(5).toList();
+    }
+
+    private List<String> cautionHints(ScoredCandidate scored) {
+        var candidate = scored.candidate();
+        List<String> hints = new ArrayList<>();
+        scored.penalties().stream()
+            .map(this::tagPhrase)
+            .filter(value -> !value.isBlank())
+            .forEach(hints::add);
+        candidate.allTags().stream()
+            .filter(tag -> tag != null && tag.trim().toLowerCase(Locale.ROOT).startsWith("content:"))
+            .map(this::tagPhrase)
+            .filter(value -> !value.isBlank())
+            .forEach(hints::add);
+        if (candidate.remainingSeatCount() != null && candidate.remainingSeatCount() <= 10) {
+            hints.add("#좌석주의");
+        }
+        return hints.stream().distinct().limit(4).toList();
     }
 
     private boolean isReasonSourceTag(String tag) {
@@ -414,6 +666,16 @@ public class LocalModelRecommendationClient {
             return "limited";
         }
         return "normal";
+    }
+
+    private String seatSummary(Integer remainingSeatCount, Integer totalSeatCount) {
+        if (remainingSeatCount == null) {
+            return "";
+        }
+        if (totalSeatCount == null || totalSeatCount <= 0) {
+            return remainingSeatCount + " seats left";
+        }
+        return remainingSeatCount + "/" + totalSeatCount + " seats left";
     }
 
     private String extractJson(String content) {

@@ -57,6 +57,27 @@ class RootDotenvLoaderTests {
         }
     }
 
+    @Test
+    void stripsUtf8BomFromFirstKey() throws IOException {
+        Path root = createTempTree("root-dotenv-bom");
+        try {
+            Path repo = Files.createDirectories(root.resolve("repo"));
+            Files.writeString(
+                repo.resolve(".env"),
+                "\ufeffTIDB_HOST=gateway01.ap-northeast-1.prod.aws.tidbcloud.com\nTIDB_DATABASE=daboyeo_dev\n"
+            );
+
+            Map<String, Object> values = RootDotenvLoader.load(repo.resolve("backend"));
+
+            assertThat(values)
+                .containsEntry("TIDB_HOST", "gateway01.ap-northeast-1.prod.aws.tidbcloud.com")
+                .containsEntry("TIDB_DATABASE", "daboyeo_dev")
+                .doesNotContainKey("\ufeffTIDB_HOST");
+        } finally {
+            deleteRecursively(root);
+        }
+    }
+
     private static Path createTempTree(String prefix) throws IOException {
         Path parent = Files.createDirectories(Path.of("build", "tmp", "tests"));
         return Files.createTempDirectory(parent, prefix);
