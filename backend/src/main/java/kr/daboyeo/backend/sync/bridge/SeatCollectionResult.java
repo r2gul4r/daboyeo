@@ -1,4 +1,4 @@
-package kr.daboyeo.backend.sync;
+package kr.daboyeo.backend.sync.bridge;
 
 import java.util.List;
 import java.util.Map;

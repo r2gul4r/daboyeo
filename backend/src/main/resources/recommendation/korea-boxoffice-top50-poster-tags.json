@@ -1,0 +1,409 @@
+{
+  "source": {
+    "checkedAt": "2026-04-30",
+    "genreLookupUrlTemplate": "https://cinematheque.kr/cine/view/{movieCd}",
+    "note": "genres are based on each movie detail page plus conservative obvious content tags when the source page is too broad; moods, pace, audiences, and avoid are recommendation tags inferred from the movie itself."
+  },
+  "movies": {
+    "20129370": {
+      "genres": ["history", "action"],
+      "moods": ["heroic", "tense", "immersive"],
+      "pace": "medium",
+      "audiences": ["friends", "alone"],
+      "avoid": ["violence", "loud"],
+      "ageRating": "15"
+    },
+    "20182530": {
+      "genres": ["comedy"],
+      "moods": ["funny", "light", "exciting"],
+      "pace": "fast",
+      "audiences": ["friends", "family"],
+      "avoid": ["violence"],
+      "ageRating": "15"
+    },
+    "20150976": {
+      "genres": ["fantasy", "drama", "adventure"],
+      "moods": ["visual", "warm", "sad"],
+      "pace": "medium",
+      "audiences": ["friends", "family"],
+      "avoid": ["sad_ending"],
+      "ageRating": "12"
+    },
+    "20137048": {
+      "genres": ["drama"],
+      "moods": ["warm", "sad", "immersive"],
+      "pace": "slow",
+      "audiences": ["family", "alone"],
+      "avoid": ["sad_ending"],
+      "ageRating": "12"
+    },
+    "20184889": {
+      "genres": ["action", "sf", "adventure"],
+      "moods": ["exciting", "heroic", "visual"],
+      "pace": "fast",
+      "audiences": ["friends", "family"],
+      "avoid": ["too_long", "violence", "loud"],
+      "ageRating": "12"
+    },
+    "20197803": {
+      "genres": ["animation", "musical", "family"],
+      "moods": ["warm", "visual", "comfort"],
+      "pace": "medium",
+      "audiences": ["family", "child"],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20148048": {
+      "genres": ["action", "drama"],
+      "moods": ["exciting", "funny", "tense"],
+      "pace": "fast",
+      "audiences": ["friends"],
+      "avoid": ["violence"],
+      "ageRating": "15"
+    },
+    "20212866": {
+      "genres": ["history", "drama", "thriller"],
+      "moods": ["tense", "serious", "immersive"],
+      "pace": "medium",
+      "audiences": ["alone", "friends"],
+      "avoid": ["dark", "violence"],
+      "ageRating": "12"
+    },
+    "20124034": {
+      "genres": ["crime", "action", "comedy"],
+      "moods": ["funny", "exciting", "tense"],
+      "pace": "fast",
+      "audiences": ["friends"],
+      "avoid": ["violence"],
+      "ageRating": "15"
+    },
+    "20127593": {
+      "genres": ["drama", "comedy", "family"],
+      "moods": ["warm", "sad", "comfort"],
+      "pace": "slow",
+      "audiences": ["family", "alone"],
+      "avoid": ["sad_ending"],
+      "ageRating": "15"
+    },
+    "20148851": {
+      "genres": ["action", "drama"],
+      "moods": ["tense", "heroic", "immersive"],
+      "pace": "fast",
+      "audiences": ["friends", "alone"],
+      "avoid": ["violence"],
+      "ageRating": "15"
+    },
+    "20204548": {
+      "genres": ["crime", "action", "thriller"],
+      "moods": ["exciting", "tense", "funny"],
+      "pace": "fast",
+      "audiences": ["friends"],
+      "avoid": ["violence"],
+      "ageRating": "15"
+    },
+    "20183867": {
+      "genres": ["adventure", "family", "fantasy"],
+      "moods": ["light", "warm", "funny"],
+      "pace": "medium",
+      "audiences": ["family", "date", "child"],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20124079": {
+      "genres": ["history", "drama"],
+      "moods": ["immersive", "serious", "warm"],
+      "pace": "medium",
+      "audiences": ["alone", "friends"],
+      "avoid": ["complex"],
+      "ageRating": "15"
+    },
+    "20186202": {
+      "genres": ["fantasy", "drama", "adventure"],
+      "moods": ["visual", "warm", "immersive"],
+      "pace": "medium",
+      "audiences": ["friends", "family"],
+      "avoid": ["sad_ending"],
+      "ageRating": "12"
+    },
+    "20162869": {
+      "genres": ["drama"],
+      "moods": ["warm", "sad", "immersive"],
+      "pace": "medium",
+      "audiences": ["alone", "friends"],
+      "avoid": ["sad_ending"],
+      "ageRating": "15"
+    },
+    "20234675": {
+      "genres": ["mystery", "horror"],
+      "moods": ["tense", "dark", "immersive"],
+      "pace": "medium",
+      "audiences": ["alone", "friends"],
+      "avoid": ["dark", "violence"],
+      "ageRating": "15"
+    },
+    "20156564": {
+      "genres": ["action", "thriller"],
+      "moods": ["tense", "dark", "exciting"],
+      "pace": "fast",
+      "audiences": ["friends", "alone"],
+      "avoid": ["violence", "loud"],
+      "ageRating": "15"
+    },
+    "20228797": {
+      "genres": ["action", "crime"],
+      "moods": ["exciting", "tense", "funny"],
+      "pace": "fast",
+      "audiences": ["friends"],
+      "avoid": ["violence"],
+      "ageRating": "15"
+    },
+    "20134803": {
+      "genres": ["drama", "history"],
+      "moods": ["serious", "immersive", "warm"],
+      "pace": "slow",
+      "audiences": ["alone"],
+      "avoid": ["complex"],
+      "ageRating": "15"
+    },
+    "20177478": {
+      "genres": ["action", "adventure", "fantasy", "sf"],
+      "moods": ["exciting", "heroic", "visual"],
+      "pace": "fast",
+      "audiences": ["friends", "family"],
+      "avoid": ["violence", "loud"],
+      "ageRating": "12"
+    },
+    "20225061": {
+      "genres": ["action", "adventure", "sf", "thriller"],
+      "moods": ["visual", "immersive", "exciting"],
+      "pace": "medium",
+      "audiences": ["friends", "family"],
+      "avoid": ["too_long", "loud"],
+      "ageRating": "12"
+    },
+    "20226411": {
+      "genres": ["crime", "action", "thriller"],
+      "moods": ["exciting", "tense", "funny"],
+      "pace": "fast",
+      "audiences": ["friends"],
+      "avoid": ["violence"],
+      "ageRating": "15"
+    },
+    "20148493": {
+      "genres": ["action", "adventure", "fantasy", "sf"],
+      "moods": ["exciting", "heroic", "visual"],
+      "pace": "fast",
+      "audiences": ["friends", "family"],
+      "avoid": ["violence", "loud"],
+      "ageRating": "12"
+    },
+    "20183782": {
+      "genres": ["drama"],
+      "moods": ["tense", "dark", "serious"],
+      "pace": "medium",
+      "audiences": ["alone", "friends"],
+      "avoid": ["complex", "dark"],
+      "ageRating": "15"
+    },
+    "20136803": {
+      "genres": ["animation", "adventure", "family", "comedy", "musical", "fantasy"],
+      "moods": ["warm", "visual", "comfort"],
+      "pace": "medium",
+      "audiences": ["family", "child"],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20149120": {
+      "genres": ["sf"],
+      "moods": ["immersive", "visual", "serious"],
+      "pace": "slow",
+      "audiences": ["alone", "friends"],
+      "avoid": ["too_long", "complex"],
+      "ageRating": "12"
+    },
+    "20185485": {
+      "genres": ["drama", "music"],
+      "moods": ["exciting", "warm", "immersive"],
+      "pace": "medium",
+      "audiences": ["friends", "alone"],
+      "avoid": ["loud"],
+      "ageRating": "12"
+    },
+    "20145507": {
+      "genres": ["crime", "comedy"],
+      "moods": ["funny", "light", "exciting"],
+      "pace": "fast",
+      "audiences": ["friends"],
+      "avoid": ["violence"],
+      "ageRating": "15"
+    },
+    "20184621": {
+      "genres": ["comedy", "action"],
+      "moods": ["exciting", "funny", "light"],
+      "pace": "fast",
+      "audiences": ["friends", "family"],
+      "avoid": ["loud"],
+      "ageRating": "12"
+    },
+    "20126674": {
+      "genres": ["sf", "action"],
+      "moods": ["tense", "dark", "immersive"],
+      "pace": "medium",
+      "audiences": ["alone", "friends"],
+      "avoid": ["violence", "dark"],
+      "ageRating": "15"
+    },
+    "20126091": {
+      "genres": ["history", "drama"],
+      "moods": ["serious", "immersive", "tense"],
+      "pace": "medium",
+      "audiences": ["alone", "friends"],
+      "avoid": ["complex"],
+      "ageRating": "15"
+    },
+    "20121621": {
+      "genres": ["action", "sf", "adventure"],
+      "moods": ["exciting", "heroic", "visual"],
+      "pace": "fast",
+      "audiences": ["friends", "family"],
+      "avoid": ["violence", "loud"],
+      "ageRating": "12"
+    },
+    "20235974": {
+      "genres": ["animation"],
+      "moods": ["warm", "funny", "comfort"],
+      "pace": "medium",
+      "audiences": ["family", "child", "friends"],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20159364": {
+      "genres": ["action", "sf", "thriller"],
+      "moods": ["exciting", "tense", "heroic"],
+      "pace": "fast",
+      "audiences": ["friends", "family"],
+      "avoid": ["violence", "loud"],
+      "ageRating": "12"
+    },
+    "20136064": {
+      "genres": ["adventure"],
+      "moods": ["exciting", "funny", "light"],
+      "pace": "fast",
+      "audiences": ["friends", "family"],
+      "avoid": ["violence"],
+      "ageRating": "12"
+    },
+    "20131102": {
+      "genres": ["drama"],
+      "moods": ["warm", "funny", "light"],
+      "pace": "medium",
+      "audiences": ["family", "friends"],
+      "avoid": [],
+      "ageRating": "15"
+    },
+    "20252432": {
+      "genres": ["animation"],
+      "moods": ["funny", "light", "bright"],
+      "pace": "fast",
+      "audiences": ["family", "child", "friends"],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20192206": {
+      "genres": ["adventure", "drama"],
+      "moods": ["tense", "exciting", "serious"],
+      "pace": "fast",
+      "audiences": ["friends"],
+      "avoid": ["violence", "loud"],
+      "ageRating": "12"
+    },
+    "20194376": {
+      "genres": ["action", "drama"],
+      "moods": ["exciting", "heroic", "visual"],
+      "pace": "fast",
+      "audiences": ["friends", "alone"],
+      "avoid": ["loud"],
+      "ageRating": "12"
+    },
+    "20196309": {
+      "genres": ["action", "adventure", "comedy", "sf"],
+      "moods": ["exciting", "funny", "heroic"],
+      "pace": "fast",
+      "audiences": ["friends", "family"],
+      "avoid": ["violence", "loud"],
+      "ageRating": "12"
+    },
+    "20151228": {
+      "genres": ["action"],
+      "moods": ["funny", "exciting", "light"],
+      "pace": "fast",
+      "audiences": ["friends"],
+      "avoid": ["violence"],
+      "ageRating": "15"
+    },
+    "20110659": {
+      "genres": ["action", "adventure"],
+      "moods": ["exciting", "visual", "loud"],
+      "pace": "fast",
+      "audiences": ["friends"],
+      "avoid": ["loud", "violence"],
+      "ageRating": "12"
+    },
+    "20136068": {
+      "genres": ["drama"],
+      "moods": ["immersive", "warm", "heroic"],
+      "pace": "medium",
+      "audiences": ["family", "friends"],
+      "avoid": ["sad_ending"],
+      "ageRating": "12"
+    },
+    "20242837": {
+      "genres": ["history", "drama"],
+      "moods": ["warm", "sad", "immersive"],
+      "pace": "slow",
+      "audiences": ["date", "alone"],
+      "avoid": ["sad_ending"],
+      "ageRating": "12"
+    },
+    "20112207": {
+      "genres": ["action"],
+      "moods": ["exciting", "tense", "visual"],
+      "pace": "fast",
+      "audiences": ["friends", "alone"],
+      "avoid": ["violence", "loud"],
+      "ageRating": "15"
+    },
+    "20210028": {
+      "genres": ["action", "adventure", "sf"],
+      "moods": ["exciting", "heroic", "warm"],
+      "pace": "fast",
+      "audiences": ["friends", "family"],
+      "avoid": ["violence", "loud"],
+      "ageRating": "12"
+    },
+    "20239670": {
+      "genres": ["crime", "action", "thriller"],
+      "moods": ["exciting", "tense", "funny"],
+      "pace": "fast",
+      "audiences": ["friends"],
+      "avoid": ["violence"],
+      "ageRating": "15"
+    },
+    "20159646": {
+      "genres": ["action"],
+      "moods": ["tense", "serious", "immersive"],
+      "pace": "medium",
+      "audiences": ["alone", "friends"],
+      "avoid": ["violence", "dark"],
+      "ageRating": "15"
+    },
+    "20110302": {
+      "genres": ["history", "action", "drama"],
+      "moods": ["heroic", "tense", "immersive"],
+      "pace": "fast",
+      "audiences": ["friends", "alone"],
+      "avoid": ["violence"],
+      "ageRating": "15"
+    }
+  }
+}

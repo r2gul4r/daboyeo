@@ -71,10 +71,10 @@ public record RecommendationProperties(
         gptModel = defaultString(gptModel, "gpt-5.5");
         gptFastReasoningEffort = defaultString(gptFastReasoningEffort, "low");
         gptPreciseReasoningEffort = defaultString(gptPreciseReasoningEffort, "high");
-        gptFastAiCandidateLimit = clamp(gptFastAiCandidateLimit, 6, 3, 10);
-        gptPreciseAiCandidateLimit = clamp(gptPreciseAiCandidateLimit, 8, 3, 12);
-        gptFastMaxTokens = clamp(gptFastMaxTokens, 520, 320, 900);
-        gptPreciseMaxTokens = clamp(gptPreciseMaxTokens, 900, 520, 1400);
+        gptFastAiCandidateLimit = clamp(gptFastAiCandidateLimit, 8, 5, 12);
+        gptPreciseAiCandidateLimit = clamp(gptPreciseAiCandidateLimit, 12, 8, 16);
+        gptFastMaxTokens = clamp(gptFastMaxTokens, 720, 420, 1000);
+        gptPreciseMaxTokens = clamp(gptPreciseMaxTokens, 1300, 900, 1800);
         minStartBufferMinutes = minStartBufferMinutes == null ? 20 : Math.max(0, minStartBufferMinutes);
         fastAiCandidateLimit = clamp(fastAiCandidateLimit, 5, 3, 8);
         preciseAiCandidateLimit = clamp(preciseAiCandidateLimit, 5, 3, 8);
@@ -133,7 +133,7 @@ public record RecommendationProperties(
 
     public int responseTextMaxLengthFor(AiProvider provider, RecommendationMode mode) {
         if (provider == AiProvider.GPT) {
-            return mode == RecommendationMode.FAST ? 140 : 220;
+            return mode == RecommendationMode.FAST ? 180 : 320;
         }
         return responseTextMaxLength;
     }

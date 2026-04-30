@@ -107,22 +107,27 @@ public class LiveMovieRepository {
             LEFT JOIN movies m ON m.id = st.movie_id
             LEFT JOIN theaters t ON t.id = st.theater_id
             LEFT JOIN screens sc ON sc.id = st.screen_id
-            WHERE st.show_date = :showDate
-              AND st.starts_at IS NOT NULL
+            WHERE st.starts_at IS NOT NULL
               AND t.latitude IS NOT NULL
               AND t.longitude IS NOT NULL
               AND t.latitude BETWEEN :minLat AND :maxLat
               AND t.longitude BETWEEN :minLng AND :maxLng
-              AND TIME(st.starts_at) BETWEEN :timeStart AND :timeEnd
+              AND st.starts_at >= :startDateTime
+              AND st.starts_at <= :endDateTime
             """);
+
+        LocalDateTime startDt = LocalDateTime.of(criteria.date(), criteria.timeStart());
+        LocalDateTime endDt = LocalDateTime.of(criteria.date(), criteria.timeEnd());
+        if (criteria.timeEnd().isBefore(criteria.timeStart())) {
+            endDt = endDt.plusDays(1);
+        }
 
         MapSqlParameterSource params = new MapSqlParameterSource()
             .addValue("earthRadiusKm", EARTH_RADIUS_KM)
             .addValue("lat", criteria.lat())
             .addValue("lng", criteria.lng())
-            .addValue("showDate", criteria.date())
-            .addValue("timeStart", criteria.timeStart())
-            .addValue("timeEnd", criteria.timeEnd())
+            .addValue("startDateTime", startDt)
+            .addValue("endDateTime", endDt)
             .addValue("minLat", criteria.lat().doubleValue() - latitudeDelta(criteria.radiusKm().doubleValue()))
             .addValue("maxLat", criteria.lat().doubleValue() + latitudeDelta(criteria.radiusKm().doubleValue()))
             .addValue("minLng", criteria.lng().doubleValue() - longitudeDelta(criteria.radiusKm().doubleValue(), criteria.lat().doubleValue()))

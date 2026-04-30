@@ -101,6 +101,33 @@ class RecommendationServiceQualityTests {
     }
 
     @Test
+    void recommendationDisplayTextDecodesHtmlEntities() {
+        RecommendationService service = service();
+        ShowtimeCandidate first = candidateWithDisplayText(
+            1L,
+            10L,
+            "&#40;Dub&#41; A&amp;B",
+            "A&#39;s Cinema",
+            "Seoul &gt; East",
+            "1&amp;2"
+        );
+        List<ShowtimeCandidate> candidates = List.of(first);
+        List<ScoredCandidate> scored = List.of(scored(first, 94));
+        when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class))).thenReturn(candidates);
+        when(showtimeRepository.countStoredShowtimes()).thenReturn(1);
+        when(scorer.score(any(TagProfile.class), anyList(), any())).thenReturn(scored);
+        when(localModelClient.rankAndExplain(any(), any(), anyList())).thenReturn(Optional.empty());
+
+        RecommendationResponse response = service.recommend(request());
+
+        assertThat(response.recommendations()).hasSize(1);
+        assertThat(response.recommendations().get(0).title()).isEqualTo("(Dub) A&B");
+        assertThat(response.recommendations().get(0).theaterName()).isEqualTo("A's Cinema");
+        assertThat(response.recommendations().get(0).regionName()).isEqualTo("Seoul > East");
+        assertThat(response.recommendations().get(0).screenName()).isEqualTo("1&2");
+    }
+
+    @Test
     void aiResultsTreatSameTitleAsSameMovieWhenIdsDiffer() {
         RecommendationService service = service();
         ShowtimeCandidate first = candidate(1L, 10L, "Same Movie");
@@ -191,7 +218,7 @@ class RecommendationServiceQualityTests {
 
         assertThat(response.recommendations()).hasSize(1);
         assertThat(response.recommendations().get(0).reason()).doesNotContain("겹치는 신호", "우선 추천");
-        assertThat(response.recommendations().get(0).reason()).contains("#가볍게", "#부담적은러닝타임", "#12세");
+        assertThat(response.recommendations().get(0).reason()).contains("#가볍게", "#애니메이션");
         assertThat(response.recommendations().get(0).analysisPoint()).isBlank();
         assertThat(response.recommendations().get(0).valuePoint()).isNotEqualTo("Test Theater");
         assertThat(response.recommendations().get(0).valuePoint()).contains("#", "상영", "#12000원", "#좌석여유");
@@ -338,6 +365,40 @@ class RecommendationServiceQualityTests {
 
     private ScoredCandidate scored(ShowtimeCandidate candidate, int score) {
         return new ScoredCandidate(candidate, score, List.of("mood:light"), List.of());
+    }
+
+    private ShowtimeCandidate candidateWithDisplayText(
+        long showtimeId,
+        long movieId,
+        String title,
+        String theaterName,
+        String regionName,
+        String screenName
+    ) {
+        return new ShowtimeCandidate(
+            movieId,
+            showtimeId,
+            title,
+            "lotte",
+            "external-" + showtimeId,
+            theaterName,
+            regionName,
+            screenName,
+            "",
+            "",
+            LocalDate.now(),
+            LocalDateTime.now().plusHours(2),
+            null,
+            50,
+            100,
+            12_000,
+            "KRW",
+            "",
+            "",
+            "12",
+            120,
+            Set.of("mood:light", "genre:animation")
+        );
     }
 
     private ShowtimeCandidate candidate(long showtimeId, long movieId, String title) {

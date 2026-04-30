@@ -2,89 +2,231 @@
 
 ## Current Task
 
-- task: `CGV .env key access-scope check without direct API call`
-- phase: `playwright_devtools_file_inspection`
-- scope: `Inspect redacted .env key presence, repo CGV signing paths, and CGV page-loaded frontend files/resources through Playwright/DevTools-style observation without making direct API calls.`
-- verification_target: `Report what the current .env keys can potentially access, clearly separate code-inferred signed API scope from browser-confirmed CGV homepage scope, and do not reveal secret values.`
-- previous_task_note: `The prior CGV realtime seat-map implementation is verified locally; this is a new read-only access-scope investigation.`
-- runtime_dependency_note: `Direct CGV API calls, admin-like paths, status-code probes, login-token use, and endpoint guessing/scanning are explicitly prohibited. The current pass uses Playwright to inspect only public CGV page UI plus already-loaded frontend resources/request traces.`
+- task: `PR #2 kmh regional search and nearby refresh selective integration`
+- phase: `verified`
+- scope: `Inspect PR #2 ([작업 수정 내용], kmh -> lsh), reject unsafe branch-wide merge, and selectively integrate only the described region-condition search, frontend map fixes, and backend live/nearby refresh/sync cleanup changes while preserving existing uncommitted recommendation/GPT/poster work.`
+- verification_target: `The selected frontend region-search/map fixes and backend nearby refresh flow are imported against current lsh and are visible from Spring-served 8080 static pages without wholesale PR churn; recommendation work remains intact, and focused Java/JS/Python/static checks pass where feasible.`
+- previous_task_note: `PR #1 selected allMovies frontend changes and the GPT recommendation enhancement remain uncommitted local work; preserve them unless a PR #2 change is intentionally reconciled.`
+- runtime_dependency_note: `GitHub PR #2 has no review comments or review threads, but GitHub reports mergeable=false and branch diff is broad. Direct merge is unsafe because it includes 200+ changed files and conflicts with current local work.`
+- spring_runtime_note: `Spring is running on localhost:5500 after rebuilding bootJar with the corrected Kakao JS key in the Spring static index mirror.`
 
 ## Orchestration Profile
 
-- score_total: `5`
-- score_breakdown: `2 external CGV homepage/browser dependency, 2 secret/access-scope boundary, 1 explicit direct API prohibition`
-- hard_triggers: `external_source_dependency; secret handling boundary; browser verification requested`
-- selected_rules: `single-session; read-only investigation except STATE/ERROR_LOG; do not print .env values; do not call CGV API directly; use Playwright browser UI and DevTools-style loaded-resource inspection; do not access admin-like paths, use login tokens, probe status codes, or scan/guess endpoints`
-- selected_skills: `playwright`
+- score_total: `9`
+- score_breakdown: `2 cross-branch PR integration, 2 backend live/nearby behavior change, 1 collector/sync external-request flow, 1 cleanup/persistence behavior, 1 frontend search/map behavior, 1 existing dirty worktree overlap, 1 verification`
+- hard_triggers: `cross-branch import; backend live/nearby behavior change; collector/sync external request flow; cleanup/retention behavior; existing dirty worktree overlap; high investigation uncertainty; frontend search/map route changes`
+- selected_rules: `single-session; selective import only; preserve current recommendation/GPT/poster changes; mirror imported index frontend into Spring static resources; do not merge PR wholesale; do not copy unrelated PR churn; do not run public crawl/deployed smoke checks; no PR close/merge/push unless explicitly requested`
+- selected_skills: `none`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
-- spawn_decision: `no spawn; user did not request delegation and the work is a narrow read-only inspection with one browser-use blocker`
-- efficiency_basis: `Handoff cost is higher than benefit because the result depends on one local .env inspection, one repo code path check, and one browser-use runtime surface`
-- selection_reason: `the user explicitly forbade direct API calls and asked for Playwright/DevTools-style inspection of CGV loaded files, so observed page resources and code-inferred key scope must remain separate`
+- spawn_decision: `no spawn; user did not request delegation and the import depends on a single dirty working tree with tightly coupled config, sync, repository, and route decisions`
+- efficiency_basis: `Handoff cost is higher than benefit because safe selection requires comparing PR #2 against current lsh, preserving local recommendation work, and manually merging application.yml/config without overwriting user changes`
+- selection_reason: `User asked to bring only the described PR #2 changes. Live PR inspection found PR #2 kmh -> lsh with mergeable=false and a broad 228-file diff, so the safe approach is selective integration from frozen file evidence.`
 
 ## Evaluation Plan
 
-- evaluation_need: `light`
+- evaluation_need: `full`
 - project_invariants:
   - `Do not print, commit, or document real DB passwords, OAuth tokens, cookies, API keys, tunnel tokens, or OAuth auth paths.`
   - `Do not overwrite unrelated frontend/backend user edits.`
+  - `Do not delete current R2 poster assets, live movie/map pages, or current recommendation backend/poster work while handling PR #2.`
+  - `Preserve provider raw data characteristics and avoid changing shared data model semantics beyond the nearby refresh and cleanup contract.`
 - task_acceptance:
-  - `Spring exposes GET /api/cgv/seat-layout for siteNo, screeningDate, screenNo, screenSequence, and optional seatAreaNo.`
-  - `The endpoint calls the Python CGV collector's build_seat_layout and returns live CGV layout JSON with fetchedAt/source metadata.`
-  - `The frontend page loads live layout data from the endpoint and can auto-refresh it while preserving x/y/w/h coordinate positions.`
-  - `Seats, row labels, zone boxes, and entrances are positioned from x/y/w/h values without converting to a fake uniform grid.`
-  - `The UI distinguishes available, sold, unavailable, special, and unknown status while preserving provider metadata access for debugging.`
-  - `No CGV secret, cookies, or signing implementation is moved into frontend code.`
+  - `Open PR #2 is identified and its actionable contents are separated from unrelated branch churn.`
+  - `Whole-branch merge is avoided because it conflicts with current lsh and includes many unrelated files.`
+  - `Frontend region-condition search and map behavior are imported only where they fit the current frontend route structure.`
+  - `live/nearby triggers bounded background showtime refresh for nearby theaters without blocking the API response.`
+  - `LOTTE_CINEMA theater-targeted discovery and MEGABOX area-targeted discovery are wired only through the selected sync/collector path.`
+  - `Startup showtime sync remains disabled and bounded showtime/seat snapshot cleanup uses the selected retention contract.`
+  - `Current recommendation/GPT/poster files remain intact unless directly and intentionally merged.`
 - non_goals:
-  - `No secret extraction from browser bundles.`
-  - `No hardcoded CGV_API_SECRET, cookies, IDs, passwords, or account setup.`
-  - `No direct browser-to-CGV signed API call from frontend.`
-  - `No DB schema migration unless the existing seat snapshot/layout contract is insufficient.`
-  - `No persistence of live seat layout responses unless explicitly requested.`
-  - `No deployed-domain or browser automation check.`
+  - `No DB write or schema migration unless an existing migration is required by selected code.`
+  - `No model-provider installation or API-key setup.`
+  - `No PR merge, branch force-push, GitHub comment, or PR close action unless explicitly requested.`
+  - `No deployed-domain, external crawl, public-runtime smoke, or browser check unless explicitly requested.`
 - hard_checks:
-  - `Update STATE before code edits.`
-  - `python -m py_compile collectors/cgv/collector.py scripts/cgv_collector_demo.py`
-  - `node --check frontend/src/js/pages/cgvSeatMap.js`
-  - `Focused Spring test or Java compile for CgvSeatMapController/PythonCollectorBridge.`
-  - `JSON parse check for the CGV sample fixture.`
-  - `Static search confirms no real CGV secret was introduced into frontend/static files.`
+  - `Update STATE before any implementation edits.`
+  - `Inspect origin/lsh...origin/kmh and selected files before importing.`
+  - `Preserve current frontend/src/assets/R2/posters, current frontend/src/pages route structure, and recommendation backend changes unless directly justified.`
+  - `Do not copy PR STATE.md, ERROR_LOG.md, MULTI_AGENT_LOG.md, recommendation files, or unrelated docs/assets into current worktree.`
+  - `Manually merge application.yml and configuration so current GPT settings are not dropped.`
+  - `Run focused Java/JS/Python checks and git diff --check where feasible.`
 - llm_review_rubric:
-  - `Coordinate geometry should stay faithful to CGV x/y/w/h instead of becoming a synthetic row/column map.`
-  - `Signed API failures should surface as backend API failures without leaking stderr, secret, or stack trace to the browser.`
+  - `Nearby refresh should be asynchronous/bounded and should not make live/nearby depend on long collector calls.`
+  - `Provider-targeted discovery should stay provider-specific without collapsing raw-provider details.`
+  - `Cleanup retention should be explicit and not erase data beyond the configured window.`
+  - `Imported frontend search/map code should point to existing regions/routes and avoid breaking current navigation.`
 - evidence_required:
-  - `Python compile result`
-  - `JS syntax check result`
-  - `Focused backend test/compile result`
-  - `Sample JSON parse/layout summary`
-  - `Secret placeholder/static scan result`
+  - `GitHub PR #2 metadata and changed-file evidence`
+  - `Diff evidence for selected import`
+  - `Focused Java/JS/Python/static verification results`
 
 ## Writer Slot
 
 - writer_slot: `main`
-- write_sets: `STATE.md, ERROR_LOG.md only for required task/error logging`
+- write_sets: `STATE.md, ERROR_LOG.md if material errors occur, selected backend live/sync/config/repository files, selected collector helpers, selected frontend region-search/map files, Spring static mirrors for index/style/script/map/region constants; no backend recommendation files except existing dirty work preservation`
 
 ## Contract Freeze
 
-- status: `frozen`
-- source_basis: `Root .env redacted key-state scan plus collectors/cgv/api.py, collectors/cgv/collector.py, PythonCollectorBridge, CgvSeatMapController source inspection, Playwright browser UI observation, and CGV page-loaded frontend resource/request traces.`
-- output_code: `none`
-- output_tests: `source inspection, redacted env inspection, Playwright browser UI snapshot, loaded resource/request trace inspection, and workspace verification commands`
+- status: `frozen for selective PR #2 integration`
+- source_basis: `User pasted PR #2 summary and asked to bring only the changed parts; GitHub check found PR #2 [작업 수정 내용] from kmh to lsh with no comments but mergeable=false and a broad branch diff.`
+- output_code: `Do not merge origin/kmh wholesale. Selectively integrate only region-condition search, frontend map fixes, live/nearby background showtime refresh, Lotte/Megabox targeted discovery support, startup sync disablement, and bounded cleanup changes that fit current lsh. Preserve current recommendation/GPT/poster work.`
+- output_tests: `focused Gradle tests for changed backend paths when feasible, node --check for changed JS, Python compile/static checks for changed collectors/scripts, and git diff --check.`
 - output_docs: `none`
-- write_sets: `STATE.md, ERROR_LOG.md`
+- write_sets: `STATE.md; backend/src/main/java/kr/daboyeo/backend/domain/LiveMovieSearchCriteria.java; backend/src/main/java/kr/daboyeo/backend/service/LiveMovieService.java; backend/src/main/java/kr/daboyeo/backend/repository/LiveMovieRepository.java; backend/src/main/java/kr/daboyeo/backend/config/CollectorSyncProperties.java; backend/src/main/java/kr/daboyeo/backend/sync/**; backend/src/main/resources/application.yml via manual merge; selected collectors/** or scripts/** needed by targeted discovery; frontend/index.html; frontend/src/css/style.css; frontend/src/css/kakaoMap.css; frontend/src/css/movies.css; frontend/src/js/api/kakaoMap.js; frontend/src/js/constants/**; frontend/src/js/liveMovies.js; frontend/src/js/pages/script.js; backend/src/main/resources/static/index.html; backend/src/main/resources/static/src/css/style.css; backend/src/main/resources/static/src/css/kakaoMap.css; backend/src/main/resources/static/src/js/api/kakaoMap.js; backend/src/main/resources/static/src/js/constants/**; backend/src/main/resources/static/src/js/pages/script.js; do not touch backend recommendation files for PR import`
 
 ## Reviewer
 
 - review_required: `self-review only; no subagent because user did not request delegation`
-- reviewer_focus: `secret redaction, no direct CGV API calls, no admin-like endpoint access, no endpoint scanning, Playwright browser evidence stated without overstating access`
+- reviewer_focus: `unsafe branch churn, config overwrite, startup collector side effects, cleanup retention risk, provider discovery boundaries, preservation of current recommendation/GPT/poster work`
 
 ## Last Update
 
-- timestamp: `2026-04-29 16:38:26 +09:00`
-- note: `Current .env has CGV_API_SECRET set and no CGV_ID/CGV_PASSWORD values; direct API validation was not run by request. User approved Playwright browser UI fallback after browser-use confirmed only selected tab metadata.`
+- timestamp: `2026-04-30 15:46:00 +09:00`
+- timestamp: `2026-04-30 16:18:00 +09:00`
+- timestamp: `2026-04-30 17:43:00 +09:00`
+- note: `Reclassified PR #2 runtime check into a narrow runtime_fix. score_total remains 9; selected profile remains single-session/no-spawn because the issue is a Spring static mirror mismatch. User confirmed Kakao Maps is registered for port 5500 and the frontend key is correct; Spring on localhost:5500 served index.html with the old Kakao JS key, so backend static index must be aligned and the boot jar refreshed.`
+- timestamp: `2026-04-30 17:48:00 +09:00`
+- note: `Verified Spring localhost:5500 Kakao Maps key correction. backend static index now uses the same Kakao JS key as frontend/index.html, bootJar was rebuilt with system gradle, Spring was restarted on localhost:5500, /api/health returned 200, and /index.html contains the frontend key with the old key absent.`
+- note: `Verified PR #2 Spring static mirror correction. score_total remains 9; single-session; backend static index/style/script/map/region constants now mirror selected frontend files, bootJar was rebuilt, Spring restarted as PID 2368, and 8080/index.html contains kmh region/nearby markers.`
 
 ## Verification Results
+
+- spring_5500_kakao_key_fix_20260430:
+  - `timestamp`: `2026-04-30 17:48:00 +09:00`
+  - `classification`: `score_total 9 continuation; single-session/no-spawn; runtime_fix inside the frozen PR #2 static mirror scope.`
+  - `root_cause`: `frontend/index.html used the valid Kakao JS key for the localhost:5500 setup, but backend/src/main/resources/static/index.html still used the old key, so Spring-served index on port 5500 loaded the wrong Kakao SDK URL.`
+  - `implementation`: `Updated backend static index.html to use the frontend Kakao JS key, rebuilt bootJar with system gradle, and restarted Spring on localhost:5500.`
+  - `verification`: `GET /api/health on localhost:5500 returned 200; GET /index.html returned 200 with dapi.kakao.com, the frontend Kakao key present, the old key absent, and #map present; backend/build/resources/main/static/index.html also contains the corrected key.`
+  - `tool_gap`: `In-app browser automation could not be used because node_repl failed to start with Access denied, so verification used local HTTP/static checks.`
+  - `diff_check`: `git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit light runtime fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification port 5500 made the key mismatch visible; reviewer_findings Spring static mirrors must include key-bearing script tags, not only local JS/CSS files; verification_outcome clean; next_gate_adjustment compare external SDK script tags when mirroring frontend pages into Spring static resources.`
+
+- kmh_index_static_mirror_20260430:
+  - `timestamp`: `2026-04-30 17:32:35 +09:00`
+  - `classification`: `score_total 9 continuation; full evaluation; single-session; no spawn because the fix was a static mirror gap inside the already frozen PR #2 selective import.`
+  - `root_cause`: `frontend/index.html had the kmh region/nearby changes, but http://127.0.0.1:8080/index.html is served from backend/src/main/resources/static/index.html, which was still old.`
+  - `implementation`: `Copied the selected imported frontend index dependencies into Spring static mirrors: index.html, style.css, kakaoMap.css, kakaoMap.js, script.js, and constants/regions.js where needed.`
+  - `verification`: `node --check passed for backend static script.js, kakaoMap.js, and regions.js; static index contains region-select-wrapper, nearby-section, DABOYEO_REGIONS, clusterer, and module kakaoMap.js markers.`
+  - `runtime`: `gradle bootJar passed; Spring jar restarted on 127.0.0.1:8080 as PID 2368; GET /api/health returned 200; GET /index.html?static=kmh returned HasRegionSelect=true, HasNearbySection=true, HasRegionsModule=true.`
+  - `diff_check`: `git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification user observed runtime page mismatch, revealing frontend-source import was not enough for Spring-served static pages; reviewer_findings route served by 8080 now matches selected kmh index frontend; verification_outcome clean; next_gate_adjustment when importing frontend for a Spring-served page, mirror frontend files into backend static before runtime signoff.`
+
+- pr2_kmh_nearby_refresh_region_map_selective_integration_20260430:
+  - `timestamp`: `2026-04-30 16:18:00 +09:00`
+  - `classification`: `score_total 9; full evaluation; single-session; no spawn because the user did not request delegation and safe import depended on one dirty working tree plus tightly coupled config/sync/frontend route decisions.`
+  - `github_pr`: `PR #2 [작업 수정 내용] from kmh to lsh; no issue comments, no review threads, head b7a8147, base bdd0c61, mergeable=false, 228 changed files.`
+  - `merge_risk`: `origin/kmh was not merged wholesale because it contains broad frontend/backend/docs/db churn, route moves, recommendation file overlap, and conflicts with current uncommitted work.`
+  - `backend`: `Imported nearby background showtime refresh, provider-target resolver, bridge/showtime/seat package reorganization, startup showtime sync gate, 3-day showtime/seat cleanup, Lotte theater-targeted discovery, Megabox area-targeted discovery, LiveMovieRepository overnight time query, and LiveMovieSearchCriteria cross-midnight support.`
+  - `config`: `application.yml was manually merged so PR sync/demo/CORS settings were added while current GPT recommendation settings and frontend-origins config were preserved.`
+  - `frontend`: `Imported current-route-safe region select data, main-page 3-step region selector, embedded nearby map section, map module, liveMovies region-coordinate resolution, overnight time filtering, and supporting CSS while keeping src/pages routes and excluding src/basic route rewrites/API client deletions.`
+  - `collectors_scripts`: `Added Lotte ticketing page caching and showtime location-link repair for Lotte/Megabox ingest; skipped unrelated seat-status normalization change and branch-wide docs/db churn.`
+  - `preservation`: `Existing recommendation/GPT/poster files, current daboyeoAi pages, PR #1 allMovies import, CGV seat-layout controller, and current R2/static assets were preserved.`
+  - `verification`: `node --check passed for frontend/src/js/pages/script.js, frontend/src/js/api/kakaoMap.js, frontend/src/js/liveMovies.js, and frontend/src/js/constants/regions.js; python -m py_compile passed for collectors/lotte/collector.py and scripts/ingest/collect_all_to_tidb.py; focused Gradle tests passed outside the sandbox for LiveMovieServiceNearbyRefreshTests, NearbyShowtimeRefreshServiceTests, ShowtimeSyncSchedulerTests, ShowtimeCleanupServiceTests, ShowtimeSyncServiceTests, and CgvSeatMapControllerTests; git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification user added frontend map scope mid-run and Gradle exposed the missing cross-midnight criteria method; reviewer_findings PR is useful but unsafe as a full merge, and current-route selective import avoided API/client and route regressions; verification_outcome clean; next_gate_adjustment include frontend map/liveMovies in future region-search imports before testing.`
+
+- pr1_ksg_frontend_selective_integration_20260430:
+  - `timestamp`: `2026-04-30 15:31:24 +09:00`
+  - `classification`: `score_total 8; full evaluation; single-session; no spawn because user did not request delegation and the import decision depended on current lsh routes, assets, and dirty recommendation work.`
+  - `github_pr`: `Open PR #1 [슬기] 프론트 from ksg to lsh; no issue comments, no review threads, head e08c53c, base bdd0c61, mergeable=false.`
+  - `merge_risk`: `HEAD..origin/ksg would delete current R2 poster assets, cgvSeatMap/movie/map pages, liveMovies, map data, and other current lsh frontend files while also conflicting with STATE/ERROR_LOG/backend recommendation files. Whole-branch merge was rejected.`
+  - `implementation`: `Selected only frontend/src/pages/allMovies.html and frontend/src/css/allMovies.css from origin/ksg, then repaired favicon paths for the current src/pages route.`
+  - `preservation`: `Current frontend/src/pages route structure, index/script seat routes, frontend/src/assets/R2/posters, existing daboyeoAi changes, backend recommendation changes, and untracked poster tag catalog were preserved.`
+  - `excluded`: `goods_events/** was not imported because it adds a crawler/package with external public-request behavior and is not wired into the current app request; ksg branch-wide basic/ page moves were also excluded to avoid route deletion.`
+  - `verification`: `node --check passed for frontend/src/js/pages/script.js, frontend/src/js/pages/daboyeoAi.js, and backend/src/main/resources/static/src/js/pages/daboyeoAi.js; git diff --check passed with CRLF warnings only; WORKSPACE_CONTEXT required sections were found.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification initial PowerShell pipe git apply failed on UTF-8 patch handling and was resolved via git diff --output; reviewer_findings PR is not safe to merge wholesale but allMovies visual cleanup is safe after path correction; verification_outcome clean; next_gate_adjustment require explicit user approval before importing goods_events crawler or rewriting ksg branch.`
+
+- gpt_fast_precise_analysis_enhancement_20260430:
+  - `timestamp`: `2026-04-30 14:59:50 +09:00`
+  - `classification`: `score_total 7; full evaluation; single-session; no spawn because user did not request delegation and GPT prompt contract, candidate payload, configuration, and tests were tightly coupled.`
+  - `implementation`: `GPT default candidate windows were widened from fast=6/precise=8 to fast=8/precise=12, GPT max tokens were increased to fast=720/precise=1300, and GPT response text limits were widened to fast=180/precise=320 while local model limits stayed compact.`
+  - `prompt_contract`: `GPT fast now uses GPT_FAST single-pass evidence-based comparison; GPT precise now uses GPT_PRECISE full-candidate comparison with poster taste, avoid-risk handling, practical showtime value, and tradeoff versus nearby candidates.`
+  - `candidate_payload`: `GPT candidate JSON now includes tasteMatch, scheduleFit, practicalValue, watchRisks, and precise-only tradeoffHints in addition to fitHints, without exposing raw scores, matchedTags, or penalties.`
+  - `response_quality`: `RecommendationService now preserves longer GPT precise reason/value/analysis text before falling back to grounded code-generated text, while local mode still normalizes compact tag-style responses.`
+  - `tests`: `Focused Gradle tests passed for LocalModelRecommendationClientTests, RecommendationServiceCandidateFilterTests, and RecommendationServiceQualityTests after fixing a fast/precise prompt-boundary test failure.`
+  - `runtime`: `gradle bootJar passed outside the sandbox; Spring boot jar restarted on 127.0.0.1:8080 as PID 7200; GET /api/health returned 200.`
+  - `verification`: `node --check passed for frontend/src/js/pages/daboyeoAi.js and backend/src/main/resources/static/src/js/pages/daboyeoAi.js; git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification fast prompt still mentioned precise-only tradeoffHints until tests caught it; reviewer_findings GPT is richer but remains grounded to supplied candidates; verification_outcome clean with known sandbox Gradle native-platform.dll issue logged as resolved; next_gate_adjustment if GPT live latency is acceptable, consider showing a slightly richer GPT precise result label in UI copy.`
+
+- poster_tag_catalog_and_back_button_20260430:
+  - `timestamp`: `2026-04-30 14:37:42 +09:00`
+  - `classification`: `score_total 7; full evaluation; single-session; no spawn because user did not request delegation and the metadata catalog, service loader, tests, static mirror, and browser-comment fix were tightly coupled.`
+  - `source_lookup`: `Fetched each of the 50 movie detail pages by movieCd from https://cinematheque.kr/cine/view/{movieCd}; source genres were used as the primary basis, with conservative obvious recommendation tags added for mood, pace, audience, and avoid signals.`
+  - `implementation`: `Added korea-boxoffice-top50-poster-tags.json keyed by movieCd and updated PosterSeedService to load those per-movie tags while keeping the random 12 poster seed flow unchanged.`
+  - `preference_profile`: `PreferenceProfileBuilderTests now verifies that liked poster seeds add movie-specific genre/mood/audience weights such as action/history/comedy/fantasy instead of only genre:popular.`
+  - `ui_fix`: `daboyeoAi.js no longer moves aiBackButton into the split layout; renderSplitLayout calls resetBackButtonToTopbar, and browser DOM on the poster step shows the button under banner before DABOYEO instead of main > section > div > button.`
+  - `runtime`: `gradle bootJar passed earlier in this task; Spring boot jar restarted on 127.0.0.1:8080 as PID 13740; GET /api/health returned 200.`
+  - `tag_coverage`: `Node JSON check returned manifestCount=50, tagCount=50, missing=[], emptyGenres=[].`
+  - `poster_seed_api`: `GET /api/recommendation/poster-seed?limit=12 returned 12 items with movie-specific tags; sampled results included 설국열차 sf/action, 범죄도시2 crime/action/thriller, 캡틴 아메리카: 시빌 워 action/sf/thriller, 명량 history/action, 겨울왕국 2 animation/musical/family.`
+  - `browser_check`: `In-app browser loaded /src/pages/daboyeoAi.html?v=20260430-poster-tags, advanced through audience, mood, avoid, and poster steps, and captured a poster-step screenshot; DOM hierarchy confirmed aiBackButton stayed in the topbar banner.`
+  - `verification`: `node --check passed for frontend/src/js/pages/daboyeoAi.js and backend/src/main/resources/static/src/js/pages/daboyeoAi.js; focused Gradle tests passed after re-running outside the sandbox; git diff --check passed with CRLF warnings only; WORKSPACE_CONTEXT.toml required section checks passed.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification user clarified per-poster metadata was required, so broad seed defaults were replaced with a searched per-movie catalog; reviewer_findings random poster flow and static mirror stayed intact; verification_outcome clean with known sandbox Gradle/PowerShell JSON parser issues logged as resolved; next_gate_adjustment if metadata quality needs more precision, store explicit source genre text beside normalized tags.`
+
+- ai_recommendation_fallback_differentiation_20260430:
+  - `timestamp`: `2026-04-30 13:55:28 +09:00`
+  - `classification`: `score_total 7; full evaluation; single-session; no spawn because user did not request delegation and scoring, derived tags, poster seed defaults, and runtime response quality were tightly coupled.`
+  - `implementation`: `ShowtimeCandidate.allTags now derives conservative recommendation tags from current provider titles, age ratings, formats, and screen hints for obvious animation/child/family, date/friends/light, horror/thriller/tense, music/live, calm/immersive, and premium visual cases. Raw provider persistence was not changed.`
+  - `poster_seed`: `PosterSeedService no longer assigns generic visual/immersive moods, broad alone/friends/family audiences, or rank-derived pace to every KOBIS/R2 poster seed. genre:popular remains a lightweight seed weight but PreferenceProfileBuilder no longer exposes it as a liked genre for analysis text.`
+  - `response_text`: `RecommendationService decodes HTML entities in display fields, maps known English genre tags to Korean labels, and suppresses generic provider genre labels such as genre:일반콘텐트, genre:popular, and MEGA-only style labels from reason/analysis tags.`
+  - `tests`: `gradle test --tests RecommendationScorerTests --tests PreferenceProfileBuilderTests --tests RecommendationServiceQualityTests passed after fixing an Optional import compile failure.`
+  - `runtime`: `gradle bootJar passed; Spring boot jar restarted on 127.0.0.1:8080 as PID 20208; GET /api/health returned 200; provider health reports local and GPT offline, so recommendation status is honest fallback.`
+  - `api_comparison`: `Four POST /api/recommendations checks returned 3 fallback cards each: child/light ranked Super Mario and animation titles; friends/tense ranked 살목지 first with #스릴러/#긴장감/#공포; alone/calm ranked 류이치 사카모토: 코다 first; date/exciting ranked 악마는 프라다를 입는다 2 first.`
+  - `poster_seed_check`: `GET /api/recommendation/poster-seed?limit=12 returned 12 seeds with genres=popular and empty moods/audiences/pace for the sampled first item.`
+  - `verification`: `git diff --check passed with CRLF warnings only; git status shows expected modified task files only; WORKSPACE_CONTEXT.toml required section checks passed.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification runtime comparison revealed poster seed flattening and generic provider label noise after the first derived-tag pass; reviewer_findings fallback now differentiates obvious personas without claiming live model success or mutating raw DB data; verification_outcome clean; next_gate_adjustment if future poster seed metadata becomes richer, replace genre:popular placeholder with real seed genres instead of adding broad defaults.`
+
+- ai_recommendation_display_entity_decode_20260430:
+  - `timestamp`: `2026-04-30 13:31:23 +09:00`
+  - `classification`: `score_total 6; light evaluation; single-session; no spawn because the concrete defect was one backend response-mapping path plus a focused test.`
+  - `quality_probe`: `Four representative recommendation requests returned fallback recommendations after showtime recovery; the date/exciting case exposed a literal HTML entity title &#40;더빙&#41; 슈퍼 마리오 갤럭시.`
+  - `implementation`: `RecommendationService now decodes basic named and numeric HTML entities in user-facing RecommendationItem title, theaterName, regionName, screenName, and sanitized AI/fallback text. Raw provider persistence was not changed.`
+  - `test_update`: `RecommendationServiceQualityTests adds recommendationDisplayTextDecodesHtmlEntities covering numeric entities, amp, apostrophe, and greater-than in display fields.`
+  - `runtime`: `Stopped stale Spring PID 19872, rebuilt boot jar with gradle bootJar, and restarted Spring as PID 14040 on 127.0.0.1:8080.`
+  - `verification`: `node --check passed for frontend/src/js/pages/daboyeoAi.js; sandbox Gradle failed on native-platform.dll, then elevated RecommendationServiceQualityTests passed; gradle bootJar passed; GET /api/health returned 200; recommendation POST returned fallback with 3 items and title (더빙) 슈퍼 마리오 갤럭시 with has_entity=false; git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit light fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification read-only quality probe became a narrow implementation after literal provider HTML entities appeared in user-facing titles; reviewer_findings display text is cleaned at API boundary while raw provider data remains preserved; verification_outcome runtime and tests are clean; next_gate_adjustment after data freshness, test multiple persona payloads before judging final demo polish.`
+
+- ai_recommendation_demo_runtime_recovery_20260430:
+  - `timestamp`: `2026-04-30 13:21:57 +09:00`
+  - `classification`: `score_total 7; full evaluation; single-session; no spawn because server health, DB freshness, provider ingest, and recommendation response were sequentially dependent.`
+  - `server`: `Spring boot jar is running as PID 19872 on 127.0.0.1:8080; GET /api/health returned 200.`
+  - `static_assets`: `GET /src/pages/daboyeoAi.html returned 200 and loaded daboyeoAi.js with cache-bust markers; GET /src/assets/R2/posters/25-20183782-20183782.webp returned 200 with 795766 bytes.`
+  - `poster_seed`: `GET /api/recommendation/poster-seed?limit=12 returned 12 local seed movies with /src/assets/R2/posters/*.webp URLs.`
+  - `provider_health`: `GET /api/recommendation/providers/health returned local and GPT providers as offline, so demo recommendations should present fallback honestly rather than live model analysis.`
+  - `before_recovery`: `POST /api/recommendations returned status no_usable_showtimes; TiDB read-only coverage showed total_showtimes=634, max_starts_at=2026-04-29 22:25:00, future_now=0, future_plus_30m=0.`
+  - `dry_run`: `collect_all_to_tidb.py --provider all --all-provider-dates --max-provider-dates 1 --limit-schedules 20 --dry-run found Lotte 2026-04-30 and Megabox 20260430 provider dates.`
+  - `ingest`: `Megabox bounded write for 20260430 upserted movies=28, theaters=11, screens=200, showtimes=200, movie_tags=71, seat snapshots=0.`
+  - `after_recovery`: `TiDB coverage showed total_showtimes=834, max_starts_at=2026-04-30 22:55:00, future_now=200, future_plus_30m=200, all currently from MEGABOX.`
+  - `recommendation_api`: `POST /api/recommendations with aiProvider=gpt returned status fallback, model gpt-5.5, recommendationCount=3, firstTitle=슈퍼 마리오 갤럭시.`
+  - `environment_notes`: `Default sandbox background Spring process did not persist; server was started outside sandbox. Default sandbox Python could not import PyMySQL, while the user Python environment already had PyMySQL 1.1.2.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification read-only runtime verification became bounded DB freshness recovery after no_usable_showtimes and future_now=0; reviewer_findings demo is presentable as fallback, not live GPT/local analysis, and poster images use local R2 assets; verification_outcome runtime recovered; next_gate_adjustment refresh future showtime coverage before judging recommendation UI or model quality.`
+
+- cgv_key_scope_no_direct_call:
+  - `timestamp`: `2026-04-29 17:31:21 +09:00`
+  - `env_scope`: `Root .env has CGV_API_SECRET set and TiDB connection values set; no CGV_ID or CGV_PASSWORD value was present in the redacted key-state scan.`
+  - `code_inferred_scope`: `collectors/cgv/api.py signs requests with X-TIMESTAMP and X-SIGNATURE using CGV_API_SECRET and defines public booking/display collection paths for movie list, movie attributes, regions/sites, dates by movie, schedules by movie, and seat data.`
+  - `browser_observed_scope`: `Public CGV UI showed movie chart, booking flow, theater/date/showtime selection, and remaining/total seat counts; clicking a showtime produced a login-required modal before seat selection.`
+  - `loaded_resource_trace`: `The already-loaded homepage trace showed public CGV display/common/OIDC/ad/analytics resources; no admin, manager, or backoffice path was observed or tested.`
+  - `explicit_non_actions`: `No direct CGV API request was made by curl, Python, Postman, fetch, HEAD, OPTIONS, or admin-token flow; no endpoint guessing or scanning was performed.`
+
+- cgv_signature_scope_static_only:
+  - `timestamp`: `2026-04-29 17:42:51 +09:00`
+  - `method`: `Static repo inspection only; no CGV network request, browser navigation, status probe, or endpoint guessing.`
+  - `secret_state`: `.env contains CGV_API_SECRET set; no CGV login username/password key is set.`
+  - `implemented_signed_paths`: `searchAtktTopPostrList, searchAtktTopPostrAttrList, searchAllRegionAndSite, searchSiteScnscYmdListByMov, searchSchByMov, and searchIfSeatData.`
+  - `inferred_access_ceiling`: `Movie catalog/attributes, region and theater master data, available screening dates, showtime schedules with booking keys and remaining/total seat counts, and seat layout/status data for a chosen public screening if required booking keys are known.`
+  - `not_supported_by_current_evidence`: `No account profile, payment, reservation-confirmation, member-only mypage, or admin/manager/backoffice access path was found in the CGV signing client or probe script.`
+
+- cgv_official_loaded_file_security_inspection:
+  - `timestamp`: `2026-04-30 09:51:15 +09:00`
+  - `method`: `Normal browser loads of https://cgv.co.kr/, /cnm/movieBook, and /cnm/movieBook/movie plus CDP response-body inspection of loaded CGV JS/resources; no custom signed API call, no endpoint probing, no login token, and no admin-like direct access.`
+  - `coverage`: `111 unique CGV resources, 63 unique CGV JS files, about 3.6 MB of CGV JS, 15 naturally loaded api.cgv.co.kr paths, and 129 endpoint strings found in loaded public JS.`
+  - `public_signing_key`: `The public CGV chunk 1453-58ae862b23257487.js contains an interceptor that creates X-TIMESTAMP and X-SIGNATURE using HmacSHA256 over timestamp|pathname|body; the embedded 43-character signing string equals the local .env CGV_API_SECRET without printing the value.`
+  - `signing_scope`: `The frontend applies the signature to request URLs starting with https://api.cgv.co.kr and https://event.cgv.co.kr, sets credentials=include, and adds Bearer accessToken when an accessToken cookie is present.`
+  - `naturally_loaded_api_paths`: `/act/resv/actResv/searchHeaderActSiteList; /cnm/atkt/searchAtktTopPostrAttrList; /cnm/atkt/searchAtktTopPostrList; /cnm/atkt/searchOnlyCgvMovList; /cnm/atkt/searchSscnsCdList; /cnm/site/searchAllRegionAndSite; /com/bznsCom/mngrNtce/selectMngrNtceProcedure; /com/bznsCom/screnMng/checkScrenUrlValid; /com/bznsCom/user/searchComcdValList; /met/dsp/scrDsp/search* display paths; /met/emrg/searchMainEmrg.`
+  - `static_endpoint_surface`: `Loaded public JS references many cinema/booking read endpoints including searchIfSeatData, searchSchByMov, searchSiteScnscYmdListByMov, seat price/info paths, site/theater paths, and activity reservation search paths; it also references payment/member/write-like paths, but static references do not prove access without server-side auth/session.`
+  - `security_interpretation`: `The CGV_API_SECRET is effectively public because it is shipped in CGV frontend JS; X-SIGNATURE alone should not be treated as authorization. Real protection must come from cookies/accessToken/server-side authorization and business checks.`
+  - `risk_boundary`: `No /admin, /manager, or /backoffice path was observed in the inspected public route JS; payment/member/reservation endpoints exist in public bundles but were not called or tested for authorization.`
 
 - cgv_api_fetch_attempt_20260429:
   - `timestamp`: `2026-04-29 15:45:53 +09:00`

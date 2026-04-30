@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.IntStream;
 import kr.daboyeo.backend.config.RecommendationProperties;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.AiProvider;
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.PosterChoices;
@@ -169,6 +170,28 @@ class RecommendationServiceCandidateFilterTests {
         ArgumentCaptor<List<ScoredCandidate>> aiCandidates = ArgumentCaptor.forClass(List.class);
         verify(localModelClient).rankAndExplain(eq(AiProvider.GPT), eq(RecommendationMode.FAST), any(TagProfile.class), aiCandidates.capture());
         assertThat(aiCandidates.getValue()).hasSize(4);
+    }
+
+    @Test
+    void gptPreciseUsesWiderDefaultCandidatePoolThanLocalPrecise() {
+        RecommendationService service = service(20);
+        List<ShowtimeCandidate> candidates = IntStream.rangeClosed(1, 13)
+            .mapToObj(index -> candidate(index, "Candidate " + index))
+            .toList();
+        List<ScoredCandidate> scored = IntStream.rangeClosed(1, 13)
+            .mapToObj(index -> scored(candidates.get(index - 1), 100 - index))
+            .toList();
+        when(showtimeRepository.findUpcomingCandidates(anyInt(), any(LocalDateTime.class)))
+            .thenReturn(candidates);
+        when(scorer.score(any(TagProfile.class), any(), any())).thenReturn(scored);
+        when(localModelClient.rankAndExplain(any(AiProvider.class), any(), any(), any())).thenReturn(Optional.empty());
+
+        service.recommend(request("precise", null, "gpt"));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<ScoredCandidate>> aiCandidates = ArgumentCaptor.forClass(List.class);
+        verify(localModelClient).rankAndExplain(eq(AiProvider.GPT), eq(RecommendationMode.PRECISE), any(TagProfile.class), aiCandidates.capture());
+        assertThat(aiCandidates.getValue()).hasSize(12);
     }
 
     @Test

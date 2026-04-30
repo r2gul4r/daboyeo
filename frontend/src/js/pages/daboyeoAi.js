@@ -296,15 +296,6 @@ function resetBackButtonToTopbar() {
   }
 }
 
-function moveBackButtonToStepPane(leftPane) {
-  backButton.hidden = false;
-  backButton.style.position = "absolute";
-  backButton.style.top = "-90px";
-  backButton.style.left = "0";
-  backButton.style.marginBottom = "0";
-  leftPane.appendChild(backButton);
-}
-
 function shuffleItems(items) {
   const copy = [...items];
 
@@ -601,12 +592,7 @@ function renderSplitLayout({ kicker, titleParts, description, extraLeft, content
   const section = createElement("section", "ai-split-layout");
 
   const leftPane = createElement("div", "ai-split-left");
-
-  if (stepBackMap[state.step]) {
-    moveBackButtonToStepPane(leftPane);
-  } else {
-    resetBackButtonToTopbar();
-  }
+  resetBackButtonToTopbar();
 
   leftPane.appendChild(renderTitle(titleParts));
 

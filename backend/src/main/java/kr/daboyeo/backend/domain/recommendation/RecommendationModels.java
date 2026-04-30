@@ -290,7 +290,91 @@ public final class RecommendationModels {
                 all.add("mood:visual");
                 all.add("content:loud");
             }
+            addProviderDerivedTags(all, screen);
             return all;
+        }
+
+        private void addProviderDerivedTags(Set<String> all, String screen) {
+            String text = normalizeForTagInference(title + " " + String.join(" ", all));
+            String age = normalizeForTagInference(ageRating + " " + String.join(" ", all));
+
+            if (containsAny(age, "age_rating:all", "전체", "all")) {
+                all.add("audience:child");
+                all.add("audience:family");
+                all.add("mood:light");
+            } else if (containsAny(age, "age_rating:12", "12")) {
+                all.add("audience:friends");
+                all.add("audience:date");
+            } else if (containsAny(age, "age_rating:19", "19", "청불", "adult")) {
+                all.add("mood:tense");
+                all.add("content:adult");
+            }
+
+            if (containsAny(text, "마리오", "짱구", "키키", "더빙", "애니", "극장판")) {
+                all.add("genre:animation");
+                all.add("mood:light");
+                all.add("mood:visual");
+                all.add("audience:child");
+                all.add("audience:family");
+            }
+
+            if (containsAny(text, "악마는 프라다")) {
+                all.add("mood:light");
+                all.add("mood:warm");
+                all.add("mood:funny");
+                all.add("audience:date");
+                all.add("audience:friends");
+            }
+
+            if (containsAny(text, "살목지", "미이라", "호러", "공포", "스릴러")) {
+                all.add("genre:horror");
+                all.add("genre:thriller");
+                all.add("mood:tense");
+                all.add("audience:friends");
+                all.add("content:dark");
+                all.add("content:violence");
+            }
+
+            if (containsAny(text, "헤일메리", "sf", "사이언스", "우주")) {
+                all.add("genre:drama");
+                all.add("mood:immersive");
+                all.add("mood:calm");
+            }
+
+            if (containsAny(text, "라이브", "밴드", "콘서트", "공연", "비발디", "사카모토")) {
+                all.add("genre:music");
+                all.add("mood:immersive");
+                all.add("mood:exciting");
+                all.add("audience:friends");
+            }
+
+            if (containsAny(text, "[f]", "르누아르", "류이치", "사토상")) {
+                all.add("mood:calm");
+                all.add("mood:immersive");
+                all.add("pace:slow");
+            }
+
+            if (screen.contains("atmos") || screen.contains("dolby")) {
+                all.add("mood:visual");
+                all.add("mood:exciting");
+                all.add("content:loud");
+            }
+        }
+
+        private String normalizeForTagInference(String value) {
+            return value == null ? "" : value.toLowerCase(Locale.ROOT);
+        }
+
+        private boolean containsAny(String value, String... needles) {
+            if (value == null || value.isBlank()) {
+                return false;
+            }
+            for (String needle : needles) {
+                if (needle != null && !needle.isBlank() && value.contains(needle.toLowerCase(Locale.ROOT))) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

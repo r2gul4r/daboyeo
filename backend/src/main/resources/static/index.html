@@ -10,6 +10,7 @@
   <link rel="icon" type="image/png" sizes="45x45" href="favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="./src/css/style.css">
+  <link rel="stylesheet" href="./src/css/kakaoMap.css">
 </head>
 
 <body>
@@ -25,12 +26,39 @@
       <div class="form-row">
         <div class="form-group">
           <label>지역</label>
-          <div class="wrapper">
-            <div class="input-wrapper">
-              <i class="fas fa-map-marker-alt"></i>
-              <input type="text" id="regionInput" placeholder="지역 검색(전체)">
+          <div class="wrapper region-select-wrapper">
+            <input type="hidden" id="regionInput" value="">
+            <div class="custom-select-container main-region">
+              <div class="custom-select" id="sidoContainer">
+                <div class="select-display" id="sidoDisplay">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <span>시/도 선택</span>
+                  <i class="fas fa-chevron-down arrow"></i>
+                </div>
+                <ul class="select-options" id="sidoOptions"></ul>
+              </div>
             </div>
-            <a class="btn-map" id="locationMapBtn" href="./src/pages/movieTheaterMap.html?v=20260427-logo"><i class="fas fa-location-dot"></i> 내 위치</a>
+            <div class="region-sub-row">
+              <div class="custom-select-container">
+                <div class="custom-select disabled" id="gugunContainer">
+                  <div class="select-display" id="gugunDisplay">
+                    <span>시/군/구 선택</span>
+                    <i class="fas fa-chevron-down arrow"></i>
+                  </div>
+                  <ul class="select-options" id="gugunOptions"></ul>
+                </div>
+              </div>
+              <div class="custom-select-container">
+                <div class="custom-select disabled" id="dongContainer">
+                  <div class="select-display" id="dongDisplay">
+                    <span>읍/면/동 선택</span>
+                    <i class="fas fa-chevron-down arrow"></i>
+                  </div>
+                  <ul class="select-options" id="dongOptions"></ul>
+                </div>
+              </div>
+              <button class="btn-map" id="locationBtn" type="button"><i class="fas fa-location-dot"></i> 지도에서 찾기</button>
+            </div>
           </div>
         </div>
       </div>
@@ -123,6 +151,32 @@
       <span>현재 <b class="blue" id="movieCount">1,234</b>개 영화 상영 중</span>
       <span>최저가 절감액 <b class="blue" id="savingsAmount">₩2,456,789</b></span>
     </div>
+
+    <section id="nearby-section">
+      <button id="close-nearby" title="닫기" type="button"><i class="fas fa-xmark"></i></button>
+
+      <div style="margin-bottom: 20px;">
+        <h2>내 주변 영화관 마킹 서비스</h2>
+        <p id="user-address-info">현재 위치 파악 중...</p>
+        <p style="margin-top: 5px;">현재 위치에서 가장 가까운 <span id="nearby-count" style="font-weight: bold; color: var(--purple50);">0</span>개의 극장 검색 결과</p>
+      </div>
+
+      <div class="nearby-search-bar">
+        <input type="text" id="map-region-search" placeholder="지도 안에서 지역 검색 (예: 성수역, 잠실역)">
+        <button id="map-region-search-btn" type="button">이 위치로 찾기</button>
+      </div>
+      <p id="map-region-search-feedback" style="margin-bottom: 10px; font-size: 0.9rem; color: var(--gray100);">지도 기준 위치를 다시 지정할 수 있습니다.</p>
+
+      <div class="nearby-layout">
+        <div class="map-container" style="position: relative;">
+          <div id="map" style="width: 100%; height: 100%;"></div>
+          <button id="go-to-my-location" title="내 위치로 이동" type="button">
+            <i class="fas fa-location-arrow"></i>
+          </button>
+        </div>
+        <div id="nearby-list" class="nearby-list-container"></div>
+      </div>
+    </section>
 
     <!-- Now Playing Movies Section -->
     <div class="now-playing-section" id="movies">
@@ -304,12 +358,18 @@
 
   <!-- Kakao SDK -->
   <script
-    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0520b1a822c33d45a0a7075152d340fa&libraries=services"></script>
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e07b7fda3e9cfefd771009dcc1fb97fa&libraries=services,clusterer"></script>
 
   <script src="./src/js/include.js"></script>
   <script src="./src/js/pages/common.js"></script>
+  <script type="module">
+    import { REGIONS } from './src/js/constants/regions.js';
+
+    window.DABOYEO_REGIONS = REGIONS;
+    window.dispatchEvent(new Event('daboyeo:regions-ready'));
+  </script>
   <script src="./src/js/pages/script.js"></script>
-  <script src="./src/js/api/kakaoMap.js"></script>
+  <script type="module" src="./src/js/api/kakaoMap.js"></script>
 </body>
 
 </html>

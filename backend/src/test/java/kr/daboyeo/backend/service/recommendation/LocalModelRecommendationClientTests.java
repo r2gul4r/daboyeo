@@ -73,15 +73,43 @@ class LocalModelRecommendationClientTests {
         assertThat(prompt).contains(
             "User profile:",
             "Candidates:",
-            "fast: make a quick but grounded comparison",
+            "Decision style: GPT_FAST",
+            "single-pass but evidence-based comparison",
             "\"why\"",
             "\"a\"",
             "\"v\"",
             "\"c\"",
+            "tasteMatch",
             "fitHints",
-            "valueHints",
-            "cautionHints"
+            "scheduleFit",
+            "practicalValue",
+            "watchRisks"
         );
+        assertThat(prompt).doesNotContain("tradeoffHints", "\"score\"", "\"matchedTags\"", "\"penalties\"");
+    }
+
+    @Test
+    void gptPrecisePromptRequestsComparativeTradeoffAnalysis() {
+        TagProfile profile = new TagProfile();
+        profile.setAudience("friends");
+        profile.setMood("immersive");
+        profile.addAvoid(List.of("too_long", "loud"));
+        profile.addLikedGenre("sf");
+
+        String prompt = client.buildPrompt(AiProvider.GPT, RecommendationMode.PRECISE, profile, List.of(scoredCandidate()));
+
+        assertThat(prompt).contains(
+            "Decision style: GPT_PRECISE",
+            "Evaluate every supplied candidate",
+            "why each selected candidate beats a nearby alternative",
+            "poster taste",
+            "avoid-risk handling",
+            "tradeoff versus another candidate",
+            "tasteMatch",
+            "scheduleFit",
+            "tradeoffHints"
+        );
+        assertThat(prompt).contains("Never invent movies, theaters, prices, seats, runtimes, showtimes, or booking availability.");
         assertThat(prompt).doesNotContain("\"score\"", "\"matchedTags\"", "\"penalties\"");
     }
 

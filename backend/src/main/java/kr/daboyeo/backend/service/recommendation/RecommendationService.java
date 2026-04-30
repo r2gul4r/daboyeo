@@ -11,8 +11,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import kr.daboyeo.backend.config.RecommendationProperties;
@@ -53,6 +55,9 @@ public class RecommendationService {
         "(선택한\\s*분위기|겹치는\\s*신호|신호가\\s*있|우선\\s*추천|분위기\\s*잘\\s*맞|조건과\\s*가까운\\s*후보)"
     );
     private static final Pattern USER_TAG_PATTERN = Pattern.compile("#[\\p{L}\\p{N}:_\\-]+");
+    private static final Pattern HTML_ENTITY_PATTERN = Pattern.compile(
+        "&(#\\d+|#x[0-9a-fA-F]+|amp|lt|gt|quot|apos);"
+    );
 
     private final RecommendationProperties properties;
     private final PosterSeedService posterSeedService;
@@ -364,9 +369,9 @@ public class RecommendationService {
                 }
                 return toItem(
                     scored,
-                    qualityReason(pick.reason(), scored, provider),
+                    qualityReason(pick.reason(), scored, mode, provider),
                     pick.caution(),
-                    qualityValuePoint(pick.valuePoint(), scored.candidate(), provider),
+                    qualityValuePoint(pick.valuePoint(), scored.candidate(), mode, provider),
                     profile,
                     mode,
                     provider,
@@ -388,10 +393,10 @@ public class RecommendationService {
             .toList();
     }
 
-    private String qualityReason(String reason, ScoredCandidate scored, AiProvider provider) {
+    private String qualityReason(String reason, ScoredCandidate scored, RecommendationMode mode, AiProvider provider) {
         String sanitized = sanitizeUserFacingText(reason);
         if (provider == AiProvider.GPT && !isWeakNarrativeReason(sanitized, scored.candidate())) {
-            return limitText(sanitized, 170);
+            return limitText(sanitized, mode == RecommendationMode.PRECISE ? 220 : 170);
         }
         if (isWeakReason(sanitized, scored.candidate())) {
             return groundedReason(scored);
@@ -449,10 +454,10 @@ public class RecommendationService {
         return joinTags(tags, 4);
     }
 
-    private String qualityValuePoint(String valuePoint, ShowtimeCandidate candidate, AiProvider provider) {
+    private String qualityValuePoint(String valuePoint, ShowtimeCandidate candidate, RecommendationMode mode, AiProvider provider) {
         String sanitized = sanitizeUserFacingText(valuePoint);
         if (provider == AiProvider.GPT && !isWeakNarrativeValuePoint(sanitized, candidate)) {
-            return limitText(sanitized, 140);
+            return limitText(sanitized, mode == RecommendationMode.PRECISE ? 170 : 140);
         }
         if (isWeakValuePoint(sanitized, candidate)) {
             return groundedValuePoint(candidate);
@@ -555,7 +560,7 @@ public class RecommendationService {
             case "content:loud" -> "#큰소리주의";
             default -> {
                 if (normalized.startsWith("genre:")) {
-                    yield "#" + normalized.substring("genre:".length()).replace('_', '-');
+                    yield "#" + genreLabel(normalized.substring("genre:".length()));
                 }
                 yield "";
             }
@@ -563,12 +568,17 @@ public class RecommendationService {
     }
 
     private boolean isReasonSourceTag(String tag) {
-        return tag != null && !tag.trim().toLowerCase(Locale.ROOT).startsWith("content:");
+        if (tag == null) {
+            return false;
+        }
+        String normalized = tag.trim().toLowerCase(Locale.ROOT);
+        return !normalized.startsWith("content:") && !isGenericGenreTag(normalized);
     }
 
     private String genreLabel(String genre) {
         String normalized = genre == null ? "" : genre.trim().toLowerCase(Locale.ROOT).replace('_', '-');
         return switch (normalized) {
+            case "popular" -> "\uC778\uAE30\uC791";
             case "action" -> "액션";
             case "adventure" -> "어드벤처";
             case "animation" -> "애니메이션";
@@ -587,6 +597,22 @@ public class RecommendationService {
             case "thriller" -> "스릴러";
             default -> normalized.isBlank() ? "장르" : normalized;
         };
+    }
+
+    private boolean isGenericGenreTag(String tag) {
+        if (tag == null || tag.isBlank()) {
+            return false;
+        }
+        String normalized = tag.trim().toLowerCase(Locale.ROOT).replace('_', '-');
+        if (normalized.startsWith("genre:")) {
+            normalized = normalized.substring("genre:".length());
+        }
+        return normalized.equals("popular")
+            || normalized.equals("general")
+            || normalized.equals("general-content")
+            || normalized.equals("mega only")
+            || normalized.equals("mega-only")
+            || normalized.equals("\uC77C\uBC18\uCF58\uD150\uD2B8");
     }
 
     private String seatHint(Integer remainingSeatCount, Integer totalSeatCount) {
@@ -730,16 +756,16 @@ public class RecommendationService {
         return new RecommendationItem(
             candidate.movieId(),
             candidate.showtimeId(),
-            candidate.title(),
+            displayText(candidate.title()),
             scored.score(),
             blankToDefault(sanitizeUserFacingText(reason), "#조건근접"),
             resolvedAnalysisPoint,
             blankToDefault(sanitizeUserFacingText(caution), ""),
             blankToDefault(sanitizeUserFacingText(valuePoint), valuePoint(candidate)),
             candidate.providerCode(),
-            candidate.theaterName(),
-            candidate.regionName(),
-            candidate.screenName(),
+            displayText(candidate.theaterName()),
+            displayText(candidate.regionName()),
+            displayText(candidate.screenName()),
             candidate.showDate(),
             candidate.startsAt(),
             candidate.minPriceAmount(),
@@ -763,7 +789,7 @@ public class RecommendationService {
         if (provider == AiProvider.GPT) {
             String sanitized = sanitizeUserFacingText(analysisPoint);
             if (!sanitized.isBlank() && !INTERNAL_TEXT_PATTERN.matcher(sanitized).find()) {
-                return limitText(sanitized, mode == RecommendationMode.PRECISE ? 220 : 150);
+                return limitText(sanitized, mode == RecommendationMode.PRECISE ? 320 : 180);
             }
             return analysisPoint(scored, profile);
         }
@@ -799,16 +825,19 @@ public class RecommendationService {
         Set<String> likedGenres = profile == null ? Set.of() : profile.likedGenres();
         for (String tag : candidate.allTags()) {
             String normalized = tag == null ? "" : tag.toLowerCase(Locale.ROOT);
-            if (normalized.startsWith("genre:") && likedGenres.contains(normalized)) {
+            if (normalized.startsWith("genre:") && !isGenericGenreTag(normalized) && likedGenres.contains(normalized)) {
                 return "#" + genreLabel(normalized.substring("genre:".length())) + "취향";
             }
         }
-        if (!likedGenres.isEmpty()) {
-            String preferredGenre = likedGenres.iterator().next();
-            return "#" + genreLabel(preferredGenre.substring("genre:".length())) + "취향";
+        Optional<String> preferredGenre = likedGenres.stream()
+            .filter(tag -> !isGenericGenreTag(tag))
+            .findFirst();
+        if (preferredGenre.isPresent()) {
+            String preferredGenreValue = preferredGenre.orElseThrow();
+            return "#" + genreLabel(preferredGenreValue.substring("genre:".length())) + "취향";
         }
         return candidate.allTags().stream()
-            .filter(tag -> tag != null && tag.toLowerCase(Locale.ROOT).startsWith("genre:"))
+            .filter(tag -> tag != null && tag.toLowerCase(Locale.ROOT).startsWith("genre:") && !isGenericGenreTag(tag))
             .map(tag -> "#" + genreLabel(tag.substring("genre:".length())) + "계열")
             .findFirst()
             .orElse("#장르근접");
@@ -844,9 +873,61 @@ public class RecommendationService {
         if (value == null || value.isBlank()) {
             return "";
         }
-        String sanitized = INTERNAL_TEXT_PATTERN.matcher(value).replaceAll(" ");
+        String sanitized = INTERNAL_TEXT_PATTERN.matcher(decodeHtmlEntities(value)).replaceAll(" ");
         sanitized = sanitized.replaceAll("\\s+", " ").trim();
         return sanitized.replaceAll("[\\p{Punct}\\s]+", "").isBlank() ? "" : sanitized;
+    }
+
+    private String displayText(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return decodeHtmlEntities(value).replaceAll("\\s+", " ").trim();
+    }
+
+    private String decodeHtmlEntities(String value) {
+        if (value == null || value.isBlank() || !value.contains("&")) {
+            return value == null ? "" : value;
+        }
+        Matcher matcher = HTML_ENTITY_PATTERN.matcher(value);
+        StringBuilder decoded = new StringBuilder();
+        while (matcher.find()) {
+            matcher.appendReplacement(decoded, Matcher.quoteReplacement(resolveHtmlEntity(matcher.group(1))));
+        }
+        matcher.appendTail(decoded);
+        return decoded.toString();
+    }
+
+    private String resolveHtmlEntity(String entity) {
+        if (entity == null || entity.isBlank()) {
+            return "";
+        }
+        if (entity.startsWith("#x") || entity.startsWith("#X")) {
+            return codePointEntity(entity.substring(2), 16, "&" + entity + ";");
+        }
+        if (entity.startsWith("#")) {
+            return codePointEntity(entity.substring(1), 10, "&" + entity + ";");
+        }
+        return switch (entity) {
+            case "amp" -> "&";
+            case "lt" -> "<";
+            case "gt" -> ">";
+            case "quot" -> "\"";
+            case "apos" -> "'";
+            default -> "&" + entity + ";";
+        };
+    }
+
+    private String codePointEntity(String value, int radix, String fallback) {
+        try {
+            int codePoint = Integer.parseInt(value, radix);
+            if (!Character.isValidCodePoint(codePoint)) {
+                return fallback;
+            }
+            return new String(Character.toChars(codePoint));
+        } catch (NumberFormatException ex) {
+            return fallback;
+        }
     }
 
     private String movieKey(ScoredCandidate scored) {

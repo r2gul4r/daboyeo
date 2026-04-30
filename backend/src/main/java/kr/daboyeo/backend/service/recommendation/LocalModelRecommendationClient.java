@@ -242,8 +242,8 @@ public class LocalModelRecommendationClient {
     private String systemPrompt(AiProvider provider, RecommendationMode mode) {
         if (provider == AiProvider.GPT) {
             return mode == RecommendationMode.PRECISE
-                ? "You are a careful Korean movie recommendation analyst. Use only the supplied candidates. Compare user context, avoided elements, poster taste, and showtime practicality. Return JSON only. Do not invent movies, theaters, prices, scores, ids, or hidden fields."
-                : "You are a concise Korean movie recommendation analyst. Use only the supplied candidates. Be faster than deep analysis but more grounded than a local tag ranker. Return JSON only. Do not invent movies, theaters, prices, scores, ids, or hidden fields.";
+                ? "You are a careful Korean movie recommendation analyst. Use only the supplied candidates. Do deep comparative reasoning across user context, avoided elements, poster taste, practical showtime value, and tradeoffs between close candidates. Return JSON only. Do not invent movies, theaters, prices, scores, ids, seats, runtimes, or hidden fields."
+                : "You are a concise Korean movie recommendation analyst. Use only the supplied candidates. Be faster than deep analysis but still compare the supplied evidence more intelligently than a local tag ranker. Return JSON only. Do not invent movies, theaters, prices, scores, ids, seats, runtimes, or hidden fields.";
         }
         return mode == RecommendationMode.PRECISE
             ? "Rerank only given showtimes and write one Korean hashtag analysis. Return JSON only. No prose, invention, scores, or raw tokens."
@@ -286,20 +286,24 @@ public class LocalModelRecommendationClient {
         TagProfile profile,
         List<ScoredCandidate> candidates
     ) {
+        TagProfile safeProfile = profile == null ? new TagProfile() : profile;
         try {
             String candidateJson = objectMapper.writeValueAsString(candidates.stream()
-                .map(scored -> provider == AiProvider.GPT ? candidateForGptPrompt(scored) : candidateForPrompt(scored))
+                .map(scored -> provider == AiProvider.GPT ? candidateForGptPrompt(scored, safeProfile, mode) : candidateForPrompt(scored))
                 .toList());
             if (provider == AiProvider.GPT) {
                 String pickInstruction = mode == RecommendationMode.PRECISE && candidates.size() >= 3
                     ? "Pick exactly 3 objects from candidates."
                     : "Pick 1 to " + Math.min(3, candidates.size()) + " objects from candidates.";
                 String depth = mode == RecommendationMode.PRECISE
-                    ? "deep: compare tradeoffs, avoid risks, poster taste, and showtime practicality before choosing."
-                    : "fast: make a quick but grounded comparison, then explain the strongest practical fit.";
+                    ? "Decision style: GPT_PRECISE. Evaluate every supplied candidate before choosing. Compare user intent, poster taste, avoid risks, showtime practicality, and why each selected candidate beats a nearby alternative."
+                    : "Decision style: GPT_FAST. Make a single-pass but evidence-based comparison across the supplied candidates. Prioritize the strongest practical fit and do not write exhaustive tradeoffs.";
                 String itemContract = mode == RecommendationMode.PRECISE
-                    ? "why=2 short Korean sentences; a=deeper Korean analysis about context/poster taste/avoidance; v=practical showtime value; c=short caution or empty string."
-                    : "why=1 Korean sentence; a=one Korean analysis point; v=one practical showtime value; c=short caution or empty string.";
+                    ? "why=2 short Korean sentences naming the decisive fit; a=2-3 Korean sentences covering poster taste, avoid-risk handling, and tradeoff versus another candidate; v=one Korean sentence about practical showtime/theater value; c=short Korean caution or empty string."
+                    : "why=1 Korean sentence naming the decisive fit; a=one Korean sentence about taste or context; v=one Korean sentence about practical showtime/theater value; c=short Korean caution or empty string.";
+                String comparisonFields = mode == RecommendationMode.PRECISE
+                    ? "- watchRisks/tradeoffHints: reasons to be careful or compare against nearby options"
+                    : "- watchRisks: reasons to be careful";
                 return """
                     User profile:
                     - audience=%s
@@ -310,17 +314,26 @@ public class LocalModelRecommendationClient {
                     Candidates:
                     %s
 
-                    Method: %s
+                    Use these candidate fields:
+                    - tasteMatch: poster and genre evidence for this user
+                    - fitHints: direct fit signals
+                    - scheduleFit/practicalValue: booking-time and theater practicality
+                    %s
+
+                    Method:
+                    %s
                     %s
                     Return only {"r":[{"id":1,"why":"...","a":"...","v":"...","c":"..."}]}.
                     %s
-                    Do not mention scores, raw tags, field names, or unavailable facts.
+                    Do not mention scores, raw tags, JSON field names, or unavailable facts.
+                    Never invent movies, theaters, prices, seats, runtimes, showtimes, or booking availability.
                     """.formatted(
-                    profile.audience(),
-                    profile.mood(),
-                    profile.avoid(),
-                    analysisHints(profile),
+                    safeProfile.audience(),
+                    safeProfile.mood(),
+                    safeProfile.avoid(),
+                    analysisHints(safeProfile),
                     candidateJson,
+                    comparisonFields,
                     depth,
                     pickInstruction,
                     itemContract
@@ -339,10 +352,10 @@ public class LocalModelRecommendationClient {
                     a=copy one hashtag from liked when liked is not empty; otherwise one short hashtag from b.
                     No underscores, combined tags, title, prose, field names, raw tokens, or score. Max %d chars.
                     """.formatted(
-                    profile.audience(),
-                    profile.mood(),
-                    profile.avoid(),
-                    analysisHints(profile),
+                    safeProfile.audience(),
+                    safeProfile.mood(),
+                    safeProfile.avoid(),
+                    analysisHints(safeProfile),
                     candidateJson,
                     pickInstruction,
                     properties.responseTextMaxLength()
@@ -356,9 +369,9 @@ public class LocalModelRecommendationClient {
                 Pick max 3 ids from JSON. why=b tags only. v=vp tags only.
                 Korean hashtags only, max %d chars each. No title, prose, field names, raw tokens, or score.
                 """.formatted(
-                profile.audience(),
-                profile.mood(),
-                profile.avoid(),
+                safeProfile.audience(),
+                safeProfile.mood(),
+                safeProfile.avoid(),
                 mode.wireValue(),
                 candidateJson,
                 properties.responseTextMaxLength()
@@ -414,8 +427,9 @@ public class LocalModelRecommendationClient {
 
     private Map<String, Object> gptRecommendationItemSchema(RecommendationMode mode, int maxTextLength) {
         int analysisMax = mode == RecommendationMode.PRECISE ? maxTextLength : Math.min(maxTextLength, 150);
-        int reasonMax = mode == RecommendationMode.PRECISE ? Math.min(maxTextLength, 180) : Math.min(maxTextLength, 120);
-        int valueMax = Math.min(maxTextLength, 120);
+        int reasonMax = mode == RecommendationMode.PRECISE ? Math.min(maxTextLength, 220) : Math.min(maxTextLength, 140);
+        int valueMax = mode == RecommendationMode.PRECISE ? Math.min(maxTextLength, 170) : Math.min(maxTextLength, 130);
+        int cautionMax = mode == RecommendationMode.PRECISE ? Math.min(maxTextLength, 140) : Math.min(maxTextLength, 100);
         return Map.of(
             "type", "object",
             "additionalProperties", false,
@@ -425,7 +439,7 @@ public class LocalModelRecommendationClient {
                 "why", Map.of("type", "string", "maxLength", reasonMax),
                 "a", Map.of("type", "string", "maxLength", analysisMax),
                 "v", Map.of("type", "string", "maxLength", valueMax),
-                "c", Map.of("type", "string", "maxLength", 100)
+                "c", Map.of("type", "string", "maxLength", cautionMax)
             )
         );
     }
@@ -465,7 +479,7 @@ public class LocalModelRecommendationClient {
         return value;
     }
 
-    private Map<String, Object> candidateForGptPrompt(ScoredCandidate scored) {
+    private Map<String, Object> candidateForGptPrompt(ScoredCandidate scored, TagProfile profile, RecommendationMode mode) {
         var candidate = scored.candidate();
         Map<String, Object> value = new LinkedHashMap<>();
         value.put("id", candidate.showtimeId());
@@ -475,14 +489,89 @@ public class LocalModelRecommendationClient {
             .filter(part -> part != null && !part.isBlank())
             .toList());
         value.put("startsAt", candidate.startsAt() == null ? "" : DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(candidate.startsAt()));
-        value.put("price", candidate.minPriceAmount() == null ? "" : candidate.minPriceAmount() + " " + candidate.currencyCode());
+        value.put("price", priceSummary(candidate.minPriceAmount(), candidate.currencyCode()));
         value.put("seats", seatSummary(candidate.remainingSeatCount(), candidate.totalSeatCount()));
         value.put("age", candidate.ageRating());
         value.put("runtimeMinutes", candidate.runtimeMinutes());
+        value.put("tasteMatch", tasteMatchHints(scored, profile));
         value.put("fitHints", reasonHints(scored));
-        value.put("valueHints", valueHints(candidate));
-        value.put("cautionHints", cautionHints(scored));
+        value.put("scheduleFit", scheduleFit(candidate));
+        value.put("practicalValue", valueHints(candidate));
+        value.put("watchRisks", cautionHints(scored));
+        if (mode == RecommendationMode.PRECISE) {
+            value.put("tradeoffHints", tradeoffHints(scored, profile));
+        }
         return value;
+    }
+
+    private String priceSummary(Integer amount, String currencyCode) {
+        if (amount == null) {
+            return "";
+        }
+        String currency = currencyCode == null || currencyCode.isBlank() ? "KRW" : currencyCode.trim();
+        return amount + " " + currency;
+    }
+
+    private List<String> tasteMatchHints(ScoredCandidate scored, TagProfile profile) {
+        if (profile == null) {
+            return List.of();
+        }
+        List<String> hints = new ArrayList<>();
+        var likedGenres = profile.likedGenres();
+        scored.candidate().allTags().stream()
+            .map(tag -> tag == null ? "" : tag.trim().toLowerCase(Locale.ROOT))
+            .filter(tag -> tag.startsWith("genre:") && likedGenres.contains(tag))
+            .map(this::genreAnalysisHint)
+            .filter(value -> !value.isBlank())
+            .forEach(hints::add);
+        if (hints.isEmpty()) {
+            hints.addAll(analysisHints(profile));
+        }
+        return hints.stream().distinct().limit(4).toList();
+    }
+
+    private String scheduleFit(kr.daboyeo.backend.domain.recommendation.RecommendationModels.ShowtimeCandidate candidate) {
+        List<String> parts = new ArrayList<>();
+        if (candidate.startsAt() != null) {
+            parts.add(DateTimeFormatter.ofPattern("MM-dd HH:mm").format(candidate.startsAt()));
+        }
+        if (!candidate.theaterName().isBlank()) {
+            parts.add(candidate.theaterName());
+        }
+        String seat = seatSummary(candidate.remainingSeatCount(), candidate.totalSeatCount());
+        if (!seat.isBlank()) {
+            parts.add(seat);
+        }
+        if (candidate.runtimeMinutes() != null) {
+            parts.add(candidate.runtimeMinutes() + "min");
+        }
+        return String.join(" / ", parts);
+    }
+
+    private List<String> tradeoffHints(ScoredCandidate scored, TagProfile profile) {
+        var candidate = scored.candidate();
+        List<String> hints = new ArrayList<>();
+        List<String> risks = cautionHints(scored);
+        if (!risks.isEmpty()) {
+            hints.add("risk=" + String.join(" ", risks));
+        }
+        List<String> taste = tasteMatchHints(scored, profile);
+        if (!taste.isEmpty()) {
+            hints.add("taste=" + String.join(" ", taste));
+        }
+        String seat = seatHint(candidate.remainingSeatCount(), candidate.totalSeatCount());
+        if ("limited".equals(seat)) {
+            hints.add("practical=limited seats");
+        } else if ("enough".equals(seat)) {
+            hints.add("practical=seat-friendly");
+        }
+        if (candidate.runtimeMinutes() != null && candidate.runtimeMinutes() >= 140) {
+            hints.add("runtime=long");
+        }
+        if (candidate.startsAt() != null) {
+            hints.add("time=" + DateTimeFormatter.ofPattern("HH:mm").format(candidate.startsAt()));
+        }
+        return hints.stream().distinct().limit(5).toList();
     }
 
     private List<String> analysisHints(TagProfile profile) {

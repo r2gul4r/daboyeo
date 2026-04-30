@@ -1,12 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
   const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
+  const DEFAULT_REGION = "전체";
   const AI_PAGE_URL = "./src/pages/daboyeoAi.html";
   const DIRECT_COMPARE_PAGE_URL = "./src/pages/movies.html";
   const SEAT_MBTI_PAGE_URL = "./src/pages/seatRecommendMbti.html";
   const TIME_RANGE_PARAMS = {
     morning: { timeStart: "06:00", timeEnd: "10:59" },
     brunch: { timeStart: "11:00", timeEnd: "16:59" },
-    night: { timeStart: "17:00", timeEnd: "23:59" },
+    night: { timeStart: "17:00", timeEnd: "02:00" },
   };
 
   const dateInput = document.getElementById("dateInput");
@@ -23,8 +24,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const regionInput = document.getElementById("regionInput");
   const seatFlowTriggers = document.querySelectorAll("[data-seat-flow]");
 
+  const sidoContainer = document.getElementById("sidoContainer");
+  const gugunContainer = document.getElementById("gugunContainer");
+  const dongContainer = document.getElementById("dongContainer");
+  const sidoDisplay = document.getElementById("sidoDisplay");
+  const gugunDisplay = document.getElementById("gugunDisplay");
+  const dongDisplay = document.getElementById("dongDisplay");
+  const sidoOptions = document.getElementById("sidoOptions");
+  const gugunOptions = document.getElementById("gugunOptions");
+  const dongOptions = document.getElementById("dongOptions");
+
   let currentDate = new Date();
   let currentPersonCount = 1;
+  let selectedSido = "";
+  let selectedGugun = "";
+  let selectedDong = "";
+  let regionSelectInitialized = false;
+  let pendingRestoreRegion = null;
 
   function initializeDateInput() {
     if (!dateInput || dateInput.value) {
@@ -71,8 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
         dateCell.classList.add("disabled");
       } else {
         dateCell.addEventListener("click", () => {
-          const selectedDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          dateInput.value = selectedDate;
+          dateInput.value = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           if (calendar) {
             calendar.style.display = "none";
           }
@@ -95,12 +110,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function normalizeRegion(value) {
     const trimmed = value?.trim() || "";
-    return trimmed || "전체";
+    return trimmed && trimmed !== DEFAULT_REGION ? trimmed : DEFAULT_REGION;
+  }
+
+  function selectedRegion() {
+    if (sidoContainer && selectedSido) {
+      const dong = selectedDong && selectedDong !== DEFAULT_REGION ? selectedDong : "";
+      return normalizeRegion(`${selectedSido} ${selectedGugun} ${dong}`);
+    }
+    return normalizeRegion(regionInput?.value);
+  }
+
+  function syncHiddenRegionInput() {
+    if (regionInput) {
+      const region = selectedRegion();
+      regionInput.value = region === DEFAULT_REGION ? "" : region;
+    }
   }
 
   function buildSearchContext() {
     return {
-      region: normalizeRegion(regionInput?.value),
+      region: selectedRegion(),
       date: dateInput?.value || "",
       timeRange: selectedTimeRange(),
       personCount: currentPersonCount,
@@ -135,14 +165,163 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function closeAllSelects() {
+    document.querySelectorAll(".custom-select").forEach((select) => select.classList.remove("active"));
+  }
+
+  function displayText(display, value) {
+    const span = display?.querySelector("span");
+    if (span) {
+      span.textContent = value;
+    }
+  }
+
+  function populateOptions(listEl, options) {
+    if (!listEl) {
+      return;
+    }
+
+    listEl.innerHTML = "";
+    options.forEach((option) => {
+      const li = document.createElement("li");
+      li.dataset.value = option;
+      li.textContent = option;
+      listEl.appendChild(li);
+    });
+  }
+
+  function markSelected(listEl, value) {
+    listEl?.querySelectorAll("li").forEach((item) => {
+      item.classList.toggle("selected", item.dataset.value === value);
+    });
+  }
+
+  function setupCustomSelect(container, display, optionsList, onSelect) {
+    if (!container || !display || !optionsList) {
+      return;
+    }
+
+    display.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (container.classList.contains("disabled")) {
+        return;
+      }
+
+      const wasActive = container.classList.contains("active");
+      closeAllSelects();
+      if (!wasActive) {
+        container.classList.add("active");
+      }
+    });
+
+    optionsList.addEventListener("click", (event) => {
+      const item = event.target.closest("li");
+      if (!item) {
+        return;
+      }
+
+      const value = item.dataset.value || "";
+      displayText(display, item.textContent || value);
+      markSelected(optionsList, value);
+      container.classList.remove("active");
+      onSelect(value);
+      syncHiddenRegionInput();
+    });
+  }
+
+  function regionData() {
+    return window.DABOYEO_REGIONS && typeof window.DABOYEO_REGIONS === "object" ? window.DABOYEO_REGIONS : {};
+  }
+
+  function setRegionSelection(region) {
+    if (!regionSelectInitialized || !region || region === DEFAULT_REGION) {
+      return;
+    }
+
+    const regions = regionData();
+    const [sido, gugun, ...dongParts] = region.split(/\s+/);
+    if (!sido || !regions[sido]) {
+      return;
+    }
+
+    selectedSido = sido;
+    displayText(sidoDisplay, sido);
+    markSelected(sidoOptions, sido);
+
+    const guguns = Object.keys(regions[selectedSido] || {});
+    populateOptions(gugunOptions, guguns);
+    gugunContainer?.classList.remove("disabled");
+
+    if (gugun && regions[selectedSido]?.[gugun]) {
+      selectedGugun = gugun;
+      displayText(gugunDisplay, gugun);
+      markSelected(gugunOptions, gugun);
+      populateOptions(dongOptions, [DEFAULT_REGION, ...(regions[selectedSido][gugun] || [])]);
+      dongContainer?.classList.remove("disabled");
+    }
+
+    const dong = dongParts.join(" ");
+    if (dong) {
+      selectedDong = dong;
+      displayText(dongDisplay, dong);
+      markSelected(dongOptions, dong);
+    }
+
+    syncHiddenRegionInput();
+  }
+
+  function initializeRegionSelects() {
+    if (regionSelectInitialized || !sidoContainer || !sidoOptions) {
+      return;
+    }
+
+    const regions = regionData();
+    const sidoList = Object.keys(regions);
+    if (sidoList.length === 0) {
+      window.addEventListener("daboyeo:regions-ready", initializeRegionSelects, { once: true });
+      return;
+    }
+
+    populateOptions(sidoOptions, sidoList);
+    setupCustomSelect(sidoContainer, sidoDisplay, sidoOptions, (value) => {
+      selectedSido = value;
+      selectedGugun = "";
+      selectedDong = "";
+      displayText(gugunDisplay, "시/군/구 선택");
+      displayText(dongDisplay, "읍/면/동 선택");
+      populateOptions(gugunOptions, Object.keys(regions[value] || {}));
+      populateOptions(dongOptions, []);
+      gugunContainer?.classList.remove("disabled");
+      dongContainer?.classList.add("disabled");
+    });
+
+    setupCustomSelect(gugunContainer, gugunDisplay, gugunOptions, (value) => {
+      selectedGugun = value;
+      selectedDong = "";
+      displayText(dongDisplay, "읍/면/동 선택");
+      populateOptions(dongOptions, [DEFAULT_REGION, ...(regions[selectedSido]?.[value] || [])]);
+      dongContainer?.classList.remove("disabled");
+    });
+
+    setupCustomSelect(dongContainer, dongDisplay, dongOptions, (value) => {
+      selectedDong = value;
+    });
+
+    regionSelectInitialized = true;
+    setRegionSelection(pendingRestoreRegion);
+  }
+
   function restoreSearchContext() {
     const context = readSearchContext();
     if (!context) {
       return;
     }
 
-    if (regionInput) {
-      regionInput.value = context.region === "전체" ? "" : context.region;
+    pendingRestoreRegion = context.region;
+    setRegionSelection(context.region);
+
+    if (regionInput && context.region !== DEFAULT_REGION) {
+      regionInput.value = context.region;
     }
 
     if (dateInput && context.date) {
@@ -167,7 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = AI_PAGE_URL;
   }
 
-  function buildDirectCompareUrl(searchContext) {
+  function buildDirectCompareUrl(searchContext, coordinates) {
     const timeRange = TIME_RANGE_PARAMS[searchContext.timeRange] || TIME_RANGE_PARAMS.morning;
     const params = new URLSearchParams({
       region: searchContext.region,
@@ -177,14 +356,43 @@ document.addEventListener("DOMContentLoaded", () => {
       personCount: String(searchContext.personCount),
     });
 
+    if (coordinates) {
+      params.set("lat", String(coordinates.lat));
+      params.set("lng", String(coordinates.lng));
+    }
+
     return `${DIRECT_COMPARE_PAGE_URL}?${params.toString()}`;
   }
 
-  function openDirectCompare(event) {
+  function geocodeRegion(region) {
+    if (
+      !region
+      || region === DEFAULT_REGION
+      || !window.kakao
+      || !kakao.maps
+      || !kakao.maps.services
+    ) {
+      return Promise.resolve(null);
+    }
+
+    return new Promise((resolve) => {
+      const geocoder = new kakao.maps.services.Geocoder();
+      geocoder.addressSearch(region, (result, status) => {
+        if (status === kakao.maps.services.Status.OK && result.length > 0) {
+          resolve({ lat: Number(result[0].y), lng: Number(result[0].x) });
+          return;
+        }
+        resolve(null);
+      });
+    });
+  }
+
+  async function openDirectCompare(event) {
     event?.preventDefault();
     const searchContext = buildSearchContext();
     saveSearchContext(searchContext);
-    window.location.href = buildDirectCompareUrl(searchContext);
+    const coordinates = await geocodeRegion(searchContext.region);
+    window.location.href = buildDirectCompareUrl(searchContext, coordinates);
   }
 
   function openSeatFlow(flow) {
@@ -222,13 +430,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (calendar) {
-    document.addEventListener("click", (event) => {
-      if (!event.target.closest(".form-group")) {
-        calendar.style.display = "none";
-      }
-    });
-  }
+  document.addEventListener("click", (event) => {
+    if (calendar && !event.target.closest(".form-group")) {
+      calendar.style.display = "none";
+    }
+    if (!event.target.closest(".custom-select")) {
+      closeAllSelects();
+    }
+  });
 
   if (increaseBtn) {
     increaseBtn.addEventListener("click", (event) => {
@@ -267,6 +476,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   initializeDateInput();
+  initializeRegionSelects();
   restoreSearchContext();
   updatePersonCount();
 });

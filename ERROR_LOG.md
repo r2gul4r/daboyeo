@@ -397,3 +397,51 @@ Do not rewrite existing entries; append only.
   summary: `browser-use URL 네비게이션이 Codex app-server 경로 오류로 실패`
   details: `CGV 홈페이지를 browser-use로 열어 .env CGV_API_SECRET 접근 가능 범위를 확인하려 했지만, 탭 생성과 about:blank 스크린샷은 성공한 반면 tab.goto("https://cgv.co.kr/")와 tab.goto("https://www.cgv.co.kr/")가 모두 "failed to start codex app-server: 지정된 경로를 찾을 수 없습니다. (os error 3)"로 실패했다. 이후 http://127.0.0.1:5500/ 이동은 정상 동작해 browser-use 전체 고장이 아니라 외부 도메인 네비게이션 경로 문제로 좁혀졌다. 사용자가 직접 https://cgv.co.kr/ 를 연 뒤 browser-use tabs.list 로 URL과 제목 "깊이 빠져 보다, CGV"는 확인했지만, DOM snapshot, screenshot, dev logs는 같은 app-server 오류로 실패했다. 직접 CGV API 호출은 사용자 요청에 따라 실행하지 않았다.`
   status: `open`
+
+- time: `2026-04-30 13:19:30 +09:00`
+  location: `AI recommendation runtime recovery`
+  summary: `샌드박스 background 서버와 PyMySQL 경로가 런타임 점검을 막음`
+  details: `Spring jar는 foreground 실행에서 정상 기동됐지만 샌드박스 내부 background 실행 프로세스는 명령 종료 뒤 유지되지 않아 127.0.0.1:8080 연결이 끊겼다. 샌드박스 밖에서 같은 jar를 PID 19872로 실행해 /api/health 200을 확인했다. 또한 기본 sandbox Python에서는 PyMySQL import가 실패했지만 사용자 Python site-packages에는 PyMySQL 1.1.2가 이미 있어 escalated 환경에서 read-only DB coverage probe를 수행했다.`
+  status: `resolved`
+
+- time: `2026-04-30 13:31:23 +09:00`
+  location: `AI recommendation jar restart`
+  summary: `새 boot jar 첫 재시작이 기존 8080 서버와 충돌`
+  details: `RecommendationService 수정 후 bootJar는 성공했지만, 기존 Spring PID 19872가 포트 8080을 계속 점유해 첫 새 jar 실행 PID 19036이 "Port 8080 was already in use"로 종료됐다. netstat로 PID 19872 점유를 확인하고 sandbox 밖에서 종료한 뒤 새 jar를 PID 14040으로 재시작해 /api/health 200과 추천 API entity 디코딩 결과를 확인했다.`
+  status: `resolved`
+
+- time: `2026-04-30 13:50:21 +09:00`
+  location: `AI recommendation fallback differentiation`
+  summary: `RecommendationService 기본 장르 필터 추가 중 Optional import 누락으로 compileJava 실패`
+  details: `genre:popular 및 genre:일반콘텐트 같은 임시/기본 장르를 사유와 분석 포인트에서 제외하도록 RecommendationService를 수정한 뒤 focused Gradle test를 실행했지만 java.util.Optional import가 빠져 compileJava가 실패했다. import를 추가한 뒤 같은 focused test 세트가 통과했다.`
+  status: `resolved`
+
+- time: `2026-04-30 14:37:42 +09:00`
+  location: `poster tag verification`
+  summary: `샌드박스 Gradle native-platform.dll 로딩 실패`
+  details: `포스터 태그/AI 페이지 버튼 수정 후 focused Gradle test를 샌드박스에서 실행했지만 native-platform.dll 로딩 실패로 Gradle이 시작되지 않았다. 같은 명령을 정상 Windows 권한으로 재실행해 PreferenceProfileBuilderTests, RecommendationScorerTests, RecommendationServiceQualityTests가 통과했다. PowerShell JSON 파서는 인코딩 문제로 포스터 manifest 파싱을 실패해 Node JSON 파싱으로 50/50 태그 커버리지를 확인했다.`
+  status: `resolved`
+
+- time: `2026-04-30 14:59:50 +09:00`
+  location: `GPT recommendation analysis enhancement`
+  summary: `샌드박스 Gradle 시작 실패와 fast 프롬프트 테스트 경계 누락`
+  details: `GPT fast/precise 프롬프트 강화 후 focused Gradle test와 bootJar가 샌드박스에서 native-platform.dll 로딩 실패로 시작되지 않았다. 정상 Windows 권한으로 재실행했다. 첫 테스트 실행은 fast 프롬프트 안내문에 precise 전용 tradeoffHints 단어가 남아 실패했으며, 모드별 안내문을 분리한 뒤 LocalModelRecommendationClientTests, RecommendationServiceCandidateFilterTests, RecommendationServiceQualityTests가 통과했다.`
+  status: `resolved`
+
+- time: `2026-04-30 15:36:00 +09:00`
+  location: `PR #1 selected patch import`
+  summary: `PowerShell native pipe 기반 git apply가 UTF-8 patch 적용에 실패`
+  details: `origin/ksg의 allMovies 파일만 선별 적용하려고 git diff 출력을 PowerShell pipe로 git apply에 넘겼지만 한글 포함 패치가 적용되지 않았다. 3-way 적용은 처음에 Git index lock 접근이 sandbox에서 막혔고, 권한 상승 후에도 같은 patch 적용 실패가 반복됐다. git diff --output으로 patch 파일을 만든 뒤 git apply로 적용해 해결했고 임시 patch 파일은 삭제했다.`
+  status: `resolved`
+
+- time: `2026-04-30 16:18:00 +09:00`
+  location: `PR #2 nearby refresh focused tests`
+  summary: `샌드박스 Gradle 시작 실패와 LiveMovieSearchCriteria 자정 넘김 누락`
+  details: `PR #2 선별 import 후 focused Gradle test를 샌드박스에서 실행했지만 native-platform.dll 로딩 실패로 Gradle이 시작되지 않았다. 정상 Windows 권한으로 재실행하자 LiveMovieDemoDataService가 PR의 LiveMovieSearchCriteria.matchesTime() 변경까지 필요로 해 compileJava가 실패했다. LiveMovieSearchCriteria에 자정 넘김 허용과 matchesTime/crossesMidnight를 추가한 뒤 nearby refresh/showtime cleanup/sync/CGV seat focused test 세트가 통과했다.`
+  status: `resolved`
+
+- time: `2026-04-30 17:44:00 +09:00`
+  location: `Spring 5500 Kakao Maps runtime check`
+  summary: `backend 폴더 안에 Gradle wrapper가 없어 첫 bootJar 재시작 명령 실패`
+  details: `Spring을 localhost:5500에서 재기동하려고 backend 폴더에서 .\gradlew.bat bootJar를 실행했지만 이 repo에는 backend/build.gradle만 있고 wrapper가 없어 CommandNotFoundException이 발생했다. 시스템 gradle bootJar 경로로 재시도한다.`
+  status: `resolved - 시스템 gradle bootJar로 재빌드하고 Spring을 localhost:5500에서 재기동했다.`

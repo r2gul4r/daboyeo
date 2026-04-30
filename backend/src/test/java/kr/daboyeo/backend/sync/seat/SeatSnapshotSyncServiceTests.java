@@ -1,4 +1,4 @@
-package kr.daboyeo.backend.sync;
+package kr.daboyeo.backend.sync.seat;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import kr.daboyeo.backend.config.CollectorSyncProperties;
+import kr.daboyeo.backend.sync.bridge.CollectorProvider;
+import kr.daboyeo.backend.sync.bridge.PythonCollectorBridge;
+import kr.daboyeo.backend.sync.bridge.SeatCollectionResult;
 import org.junit.jupiter.api.Test;
 
 class SeatSnapshotSyncServiceTests {

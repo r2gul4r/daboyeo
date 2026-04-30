@@ -54,10 +54,6 @@ public record LiveMovieSearchCriteria(
         LocalTime resolvedTimeStart = timeStart == null ? LocalTime.of(6, 0) : timeStart;
         LocalTime resolvedTimeEnd = timeEnd == null ? LocalTime.of(23, 59) : timeEnd;
 
-        if (resolvedTimeStart.isAfter(resolvedTimeEnd)) {
-            throw new IllegalArgumentException("timeStart는 timeEnd보다 늦을 수 없어.");
-        }
-
         BigDecimal resolvedRadiusKm = radiusKm == null ? DEFAULT_RADIUS_KM : radiusKm;
         if (resolvedRadiusKm.signum() <= 0 || resolvedRadiusKm.doubleValue() > 50) {
             throw new IllegalArgumentException("radiusKm는 0보다 크고 50 이하여야 해.");
@@ -82,6 +78,20 @@ public record LiveMovieSearchCriteria(
             query == null ? "" : query.trim(),
             resolvedLimit
         );
+    }
+
+    public boolean crossesMidnight() {
+        return timeEnd.isBefore(timeStart);
+    }
+
+    public boolean matchesTime(LocalTime value) {
+        if (value == null) {
+            return false;
+        }
+        if (crossesMidnight()) {
+            return !value.isBefore(timeStart) || !value.isAfter(timeEnd);
+        }
+        return !value.isBefore(timeStart) && !value.isAfter(timeEnd);
     }
 
     private static List<String> normalizeList(List<String> values) {
