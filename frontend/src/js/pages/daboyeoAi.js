@@ -777,7 +777,7 @@ function renderPosterCard(movie) {
 
 function renderPosterStep() {
   if (state.posters.status === "loading" || state.posters.status === "idle") {
-    return renderLoadingMessage("포스터를 가져오는 중", "잠깐만 기다려줘.");
+    return renderLoadingMessage("포스터를 가져오는 중", "잠시만 기다려주세요.");
   }
   if (state.posters.status === "error") {
     return renderErrorPanel("포스터를 가져오지 못했어", state.posters.error?.message,
@@ -797,7 +797,7 @@ function renderPosterStep() {
   const rightTop = createElement("div", "ai-poster-right-top");
   rightTop.style.display = "flex";
   rightTop.style.justifyContent = "flex-end";
-  rightTop.style.marginBottom = "60px";
+  rightTop.style.marginBottom = "40px";
 
   const nextBatchBtn = createElement("button", "ai-batch-button", ">");
   nextBatchBtn.type = "button";
@@ -824,12 +824,7 @@ function renderPosterStep() {
   content.style.position = "relative";
   content.style.width = "100%";
 
-  const fakeKicker = createElement("p", "ai-kicker", "AI GUIDE 04");
-  fakeKicker.style.visibility = "hidden";
-  fakeKicker.setAttribute("aria-hidden", "true");
-
   content.appendChild(rightTop);
-  content.appendChild(fakeKicker);
   content.appendChild(grid);
   content.appendChild(ctaRow);
 
