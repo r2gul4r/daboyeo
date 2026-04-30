@@ -1,8 +1,9 @@
-package kr.daboyeo.backend.sync;
+package kr.daboyeo.backend.sync.seat;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
+import kr.daboyeo.backend.sync.bridge.CollectorProvider;
 import org.junit.jupiter.api.Test;
 
 class SeatSnapshotStatusNormalizerTests {

@@ -94,6 +94,7 @@ public class CollectorBundleIngestCommand {
             upsertTheaters(normalizedBundle.theaters());
             upsertScreens(normalizedBundle.screens());
             upsertShowtimes(normalizedBundle.showtimes());
+            repairShowtimeLinks();
             connection.commit();
             return result;
         } catch (Exception exception) {
@@ -342,6 +343,37 @@ public class CollectorBundleIngestCommand {
         }
     }
 
+    private void repairShowtimeLinks() throws SQLException {
+        String sql = """
+            UPDATE showtimes s
+            JOIN theaters t
+              ON t.provider_code = s.provider_code
+             AND t.external_theater_id = s.external_theater_id
+            LEFT JOIN screens sc
+              ON sc.provider_code = s.provider_code
+             AND sc.external_theater_id = s.external_theater_id
+             AND sc.external_screen_id = s.external_screen_id
+            SET s.theater_id = t.id,
+                s.screen_id = COALESCE(sc.id, s.screen_id),
+                s.region_name = COALESCE(NULLIF(s.region_name, ''), t.region_name),
+                s.region_code = COALESCE(NULLIF(s.region_code, ''), t.region_code)
+            WHERE s.provider_code = ?
+              AND s.external_theater_id IS NOT NULL
+              AND (
+                s.theater_id IS NULL
+                OR (sc.id IS NOT NULL AND s.screen_id IS NULL)
+                OR s.region_name IS NULL
+                OR s.region_name = ''
+                OR s.region_code IS NULL
+                OR s.region_code = ''
+              )
+            """;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, providerCode);
+            statement.executeUpdate();
+        }
+    }
+
     private Long findId(String table, String column, String providerCode, String externalId) throws SQLException {
         if (externalId == null || externalId.isBlank()) {
             return null;
@@ -387,7 +419,7 @@ public class CollectorBundleIngestCommand {
         return objectMapper.writeValueAsString(value == null ? Map.of() : value);
     }
 
-    private static String normalizeProviderCode(String providerCode) {
+    static String normalizeProviderCode(String providerCode) {
         if (providerCode == null || providerCode.isBlank()) {
             throw new IllegalArgumentException("--provider is required.");
         }

@@ -36,6 +36,22 @@ function normalizeText(value, fallback = '') {
   return text.trim() || fallback;
 }
 
+function isWithinSelectedTimeRange(itemTime) {
+  const start = normalizeText(currentSearchConfig.timeStart, '06:00');
+  const end = normalizeText(currentSearchConfig.timeEnd, '23:59');
+  const target = normalizeText(itemTime);
+
+  if (!target) {
+    return false;
+  }
+
+  if (end < start) {
+    return target >= start || target <= end;
+  }
+
+  return target >= start && target <= end;
+}
+
 function cssToken(value) {
   return normalizeText(value, 'ALL').replace(/[^0-9A-Z]/gi, '').toUpperCase() || 'ALL';
 }
@@ -141,8 +157,8 @@ function updateSearchInfoUI() {
 function hasExplicitCoordinates() {
   const lat = Number(currentSearchConfig.lat);
   const lng = Number(currentSearchConfig.lng);
-  return Number.isFinite(lat) && Number.isFinite(lng)
-    && !(Math.abs(lat - MOCK_DEFAULTS.lat) < 0.0001 && Math.abs(lng - MOCK_DEFAULTS.lng) < 0.0001);
+  // Only return true if coordinates are NOT the default Seoul City Hall ones
+  return lat !== 0 && lng !== 0 && lat !== MOCK_DEFAULTS.lat && lng !== MOCK_DEFAULTS.lng;
 }
 
 function shouldResolveRegionCoordinates() {
@@ -340,8 +356,7 @@ function applyFilters() {
       || norm.title.toLowerCase().includes(searchFilterValue)
       || norm.theater.toLowerCase().includes(searchFilterValue);
 
-    const itemTime = norm.start_time;
-    const matchTime = itemTime >= currentSearchConfig.timeStart && itemTime <= currentSearchConfig.timeEnd;
+    const matchTime = isWithinSelectedTimeRange(norm.start_time);
 
     const seatRatio = norm.total_seats > 0 ? (norm.available_seats / norm.total_seats) * 100 : 0;
     let matchSeats = seatFilters.includes('all');
@@ -476,7 +491,7 @@ function renderScheduleList() {
     const norm = item.normalized;
     const matchMovie = norm.title === currentSelectedMovie;
     const matchProvider = currentTab === 'ALL' || norm.provider === currentTab;
-    const matchTime = norm.start_time >= currentSearchConfig.timeStart && norm.start_time <= currentSearchConfig.timeEnd;
+    const matchTime = isWithinSelectedTimeRange(norm.start_time);
 
     return matchMovie && matchProvider && matchTime;
   });

@@ -10,6 +10,9 @@ import kr.daboyeo.backend.domain.LiveMovieSchedule;
 import kr.daboyeo.backend.domain.LiveMovieSearchCriteria;
 import kr.daboyeo.backend.domain.SeatState;
 import kr.daboyeo.backend.repository.LiveMovieRepository;
+import kr.daboyeo.backend.sync.nearby.NearbyShowtimeRefreshService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -18,10 +21,12 @@ import org.springframework.stereotype.Service;
 public class LiveMovieService {
 
     private static final String DEMO_WARNING = "demo sample data returned because database lookup failed.";
+    private static final Logger logger = LoggerFactory.getLogger(LiveMovieService.class);
 
     private final LiveMovieRepository repository;
     private final SeatStateCalculator seatStateCalculator;
     private final LiveMovieDemoDataService demoDataService;
+    private final NearbyShowtimeRefreshService nearbyShowtimeRefreshService;
     private final boolean liveFallbackEnabled;
     private final Clock clock;
 
@@ -29,11 +34,13 @@ public class LiveMovieService {
         LiveMovieRepository repository,
         SeatStateCalculator seatStateCalculator,
         LiveMovieDemoDataService demoDataService,
+        NearbyShowtimeRefreshService nearbyShowtimeRefreshService,
         @Value("${daboyeo.demo.live-fallback-enabled:true}") boolean liveFallbackEnabled
     ) {
         this.repository = repository;
         this.seatStateCalculator = seatStateCalculator;
         this.demoDataService = demoDataService;
+        this.nearbyShowtimeRefreshService = nearbyShowtimeRefreshService;
         this.liveFallbackEnabled = liveFallbackEnabled;
         this.clock = Clock.system(ZoneId.of("Asia/Seoul"));
     }
@@ -41,6 +48,7 @@ public class LiveMovieService {
     public LiveMovieResponse findNearby(LiveMovieSearchCriteria criteria) {
         try {
             List<LiveMovieScheduleItem> results = toItems(repository.findNearbySchedules(criteria), criteria);
+            triggerNearbyRefresh(criteria);
             if (results.isEmpty() && liveFallbackEnabled) {
                 return nearbyResponse(
                     criteria,
@@ -119,6 +127,14 @@ public class LiveMovieService {
             limit,
             clock
         );
+    }
+
+    private void triggerNearbyRefresh(LiveMovieSearchCriteria criteria) {
+        try {
+            nearbyShowtimeRefreshService.requestRefresh(criteria);
+        } catch (RuntimeException exception) {
+            logger.warn("Nearby refresh request failed for date={} lat={} lng={}", criteria.date(), criteria.lat(), criteria.lng(), exception);
+        }
     }
 
     private List<LiveMovieScheduleItem> toItems(List<LiveMovieSchedule> schedules, LiveMovieSearchCriteria criteria) {

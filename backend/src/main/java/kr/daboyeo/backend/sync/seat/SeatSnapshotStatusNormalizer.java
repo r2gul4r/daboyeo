@@ -1,7 +1,8 @@
-package kr.daboyeo.backend.sync;
+package kr.daboyeo.backend.sync.seat;
 
 import java.util.Locale;
 import java.util.Map;
+import kr.daboyeo.backend.sync.bridge.CollectorProvider;
 import org.springframework.stereotype.Component;
 
 @Component

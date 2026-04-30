@@ -1,4 +1,4 @@
-package kr.daboyeo.backend.sync;
+package kr.daboyeo.backend.sync.showtime;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -8,6 +8,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import kr.daboyeo.backend.config.CollectorSyncProperties;
 import kr.daboyeo.backend.ingest.CollectorBundleIngestCommand;
 import kr.daboyeo.backend.ingest.CollectorBundlePersistenceService;
+import kr.daboyeo.backend.sync.bridge.CollectorProvider;
+import kr.daboyeo.backend.sync.bridge.PythonCollectorBridge;
+import kr.daboyeo.backend.sync.bridge.ShowtimeCollectionRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -20,16 +23,19 @@ public class ShowtimeSyncService {
     private final CollectorSyncProperties properties;
     private final PythonCollectorBridge collectorBridge;
     private final CollectorBundlePersistenceService persistenceService;
+    private final ShowtimeCleanupService cleanupService;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     public ShowtimeSyncService(
         CollectorSyncProperties properties,
         PythonCollectorBridge collectorBridge,
-        CollectorBundlePersistenceService persistenceService
+        CollectorBundlePersistenceService persistenceService,
+        ShowtimeCleanupService cleanupService
     ) {
         this.properties = properties;
         this.collectorBridge = collectorBridge;
         this.persistenceService = persistenceService;
+        this.cleanupService = cleanupService;
     }
 
     public void syncDailyShowtimes() {
@@ -67,6 +73,7 @@ public class ShowtimeSyncService {
                     syncMegaboxDiscovered(playDate);
                 }
             }
+            cleanupExpiredShowtimes(baseDate);
             logger.info("Showtime sync completed for baseDate={}.", baseDate);
         } finally {
             running.set(false);
@@ -160,11 +167,31 @@ public class ShowtimeSyncService {
     }
 
     private void syncLotteDiscovered(LocalDate playDate) {
-        PythonCollectorBridge.ProviderDiscoveryPayload discovery = collectorBridge.collectShowtimeDiscovery(CollectorProvider.LOTTE_CINEMA, playDate);
+        logger.info(
+            "Showtime auto-discovery starting provider={} date={} movieLimit={} cinemaLimit={} perCinemaLimit={} totalTargetLimit={}",
+            CollectorProvider.LOTTE_CINEMA,
+            playDate,
+            properties.getShowtimes().getDiscoveryMovieLimit(),
+            properties.getShowtimes().getDiscoveryLotteCinemaLimit(),
+            properties.getShowtimes().getDiscoveryLotteMovieTargetLimit(),
+            properties.getShowtimes().getDiscoveryLotteTotalTargetLimit()
+        );
+        PythonCollectorBridge.ProviderDiscoveryPayload discovery;
+        try {
+            discovery = collectorBridge.collectShowtimeDiscovery(CollectorProvider.LOTTE_CINEMA, playDate);
+        } catch (Exception exception) {
+            logger.error("Showtime auto-discovery failed for provider={} date={}", CollectorProvider.LOTTE_CINEMA, playDate, exception);
+            return;
+        }
         if (discovery.targets().isEmpty()) {
             logger.info("Showtime auto-discovery found no working LOTTE_CINEMA targets for date={}.", playDate);
             return;
         }
+        logger.info(
+            "Showtime auto-discovery found {} LOTTE_CINEMA targets for date={}.",
+            discovery.targets().size(),
+            playDate
+        );
         for (Map<String, Object> target : discovery.targets()) {
             ShowtimeCollectionRequest request = new ShowtimeCollectionRequest(
                 CollectorProvider.LOTTE_CINEMA,
@@ -180,11 +207,29 @@ public class ShowtimeSyncService {
     }
 
     private void syncMegaboxDiscovered(LocalDate playDate) {
-        PythonCollectorBridge.ProviderDiscoveryPayload discovery = collectorBridge.collectShowtimeDiscovery(CollectorProvider.MEGABOX, playDate);
+        logger.info(
+            "Showtime auto-discovery starting provider={} date={} movieLimit={} bundleLimit={}",
+            CollectorProvider.MEGABOX,
+            playDate,
+            properties.getShowtimes().getDiscoveryMovieLimit(),
+            properties.getShowtimes().getDiscoveryMegaboxBundleLimit()
+        );
+        PythonCollectorBridge.ProviderDiscoveryPayload discovery;
+        try {
+            discovery = collectorBridge.collectShowtimeDiscovery(CollectorProvider.MEGABOX, playDate);
+        } catch (Exception exception) {
+            logger.error("Showtime auto-discovery failed for provider={} date={}", CollectorProvider.MEGABOX, playDate, exception);
+            return;
+        }
         if (discovery.targets().isEmpty()) {
             logger.info("Showtime auto-discovery found no working MEGABOX targets for date={}.", playDate);
             return;
         }
+        logger.info(
+            "Showtime auto-discovery found {} MEGABOX targets for date={}.",
+            discovery.targets().size(),
+            playDate
+        );
         for (Map<String, Object> target : discovery.targets()) {
             ShowtimeCollectionRequest request = new ShowtimeCollectionRequest(
                 CollectorProvider.MEGABOX,
@@ -205,6 +250,20 @@ public class ShowtimeSyncService {
 
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private void cleanupExpiredShowtimes(LocalDate baseDate) {
+        if (!properties.getShowtimes().isCleanupEnabled()) {
+            return;
+        }
+        ShowtimeCleanupRepository.CleanupCounts counts = cleanupService.cleanupForBaseDate(baseDate);
+        logger.info(
+            "Showtime cleanup completed for baseDate={} deletedShowtimes={} deletedSeatSnapshots={} deletedSeatSnapshotItems={}",
+            baseDate,
+            counts.deletedShowtimes(),
+            counts.deletedSeatSnapshots(),
+            counts.deletedSeatSnapshotItems()
+        );
     }
 
     private long validCgvTargets() {

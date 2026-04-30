@@ -248,21 +248,31 @@ import { REGIONS } from "../constants/regions.js";
         alert("지역(시/도, 시/군/구)을 선택해주세요.");
         return;
       }
-
       const context = buildSearchContext();
       saveSearchContext(context);
 
-      // --- Geocoding selected region ---
+      // Clean address for geocoder: remove '전체'
+      const sido = selectedSido || "";
+      const gugun = selectedGugun || "";
+      const dong = (selectedDong === "전체" || !selectedDong) ? "" : selectedDong;
+      const address = `${sido} ${gugun} ${dong}`.trim();
+
+      console.log("Geocoding address:", address);
       const geocoder = new kakao.maps.services.Geocoder();
-      const address = `${selectedSido} ${selectedGugun} ${selectedDong === "전체" ? "" : selectedDong}`.trim();
-      
+
+      if (!address || address === "전체") {
+        window.location.href = `${MOVIES_PAGE_URL}?region=${encodeURIComponent(context.region)}`;
+        return;
+      }
+
       geocoder.addressSearch(address, (result, status) => {
         if (status === kakao.maps.services.Status.OK) {
           const lat = result[0].y;
           const lng = result[0].x;
+          console.log(`Geocoding success: ${lat}, ${lng}`);
           window.location.href = `${MOVIES_PAGE_URL}?region=${encodeURIComponent(context.region)}&lat=${lat}&lng=${lng}`;
         } else {
-          // Fallback if geocoding fails (e.g. very new address)
+          console.warn("Geocoding failed for address:", address, status);
           window.location.href = `${MOVIES_PAGE_URL}?region=${encodeURIComponent(context.region)}`;
         }
       });

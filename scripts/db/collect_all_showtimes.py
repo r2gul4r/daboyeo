@@ -13,6 +13,19 @@ from collectors.lotte.collector import LotteCinemaCollector
 from collectors.megabox.collector import MegaboxCollector
 from collectors.common.tidb import connect_tidb
 
+
+def load_theater_id_map(conn, provider_code):
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT external_theater_id, id
+            FROM theaters
+            WHERE provider_code = %s
+            """,
+            (provider_code,),
+        )
+        return {str(external_id): theater_id for external_id, theater_id in cursor.fetchall() if external_id}
+
 def sanitize_date(date_str):
     if not date_str:
         return None
@@ -88,15 +101,17 @@ def sanitize_datetime(date_str, time_str):
 
 def upsert_showtimes(conn, records):
     if not records: return
+    theater_maps = {}
     with conn.cursor() as cursor:
         sql = """
         INSERT INTO showtimes (
-            provider_code, external_showtime_key, movie_title, theater_name,
+            provider_code, external_showtime_key, movie_title, theater_name, theater_id,
             external_movie_id, external_theater_id, external_screen_id,
             screen_name, screen_type, show_date, starts_at, ends_at,
             total_seat_count, remaining_seat_count, booking_url, raw_json, last_collected_at
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
         ON DUPLICATE KEY UPDATE
+            theater_id = COALESCE(VALUES(theater_id), theater_id),
             remaining_seat_count = VALUES(remaining_seat_count),
             raw_json = VALUES(raw_json),
             last_collected_at = VALUES(last_collected_at)
@@ -107,14 +122,20 @@ def upsert_showtimes(conn, records):
             p_date = str(r['play_date'])
             if len(p_date) == 8 and "-" not in p_date:
                 p_date = f"{p_date[:4]}-{p_date[4:6]}-{p_date[6:]}"
+
+            provider_code = str(r['provider'])
+            if provider_code not in theater_maps:
+                theater_maps[provider_code] = load_theater_id_map(conn, provider_code)
+            external_theater_id = str(r['cinema_id'])
+            theater_id = theater_maps[provider_code].get(external_theater_id)
             
             starts_at = sanitize_datetime(p_date, r.get('start_time'))
             ends_at = sanitize_datetime(p_date, r.get('end_time'))
 
             data.append((
-                r['provider'], str(r.get('play_schedule_no') or r.get('booking_key', {}).get('play_sequence') or r.get('play_sequence')),
+                provider_code, str(r.get('play_schedule_no') or r.get('booking_key', {}).get('play_sequence') or r.get('play_sequence')),
                 r['movie_name'], r['cinema_name'],
-                str(r['movie_no']), str(r['cinema_id']), str(r.get('screen_id') or ""),
+                theater_id, str(r['movie_no']), external_theater_id, str(r.get('screen_id') or r.get('theater_no') or ""),
                 r.get('screen_name'), r.get('screen_type'), p_date,
                 starts_at, ends_at,
                 r.get('total_seat_count'), r.get('remaining_seat_count'),

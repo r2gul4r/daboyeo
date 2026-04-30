@@ -1,5 +1,6 @@
-package kr.daboyeo.backend.sync;
+package kr.daboyeo.backend.sync.showtime;
 
+import kr.daboyeo.backend.config.CollectorSyncProperties;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,14 +13,20 @@ public class ShowtimeSyncScheduler {
 
     private static final Logger logger = LoggerFactory.getLogger(ShowtimeSyncScheduler.class);
 
+    private final CollectorSyncProperties properties;
     private final ShowtimeSyncService service;
 
-    public ShowtimeSyncScheduler(ShowtimeSyncService service) {
+    public ShowtimeSyncScheduler(CollectorSyncProperties properties, ShowtimeSyncService service) {
+        this.properties = properties;
         this.service = service;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void runOnStartup() {
+        if (!properties.getShowtimes().isStartupEnabled()) {
+            logger.info("Skipping startup showtime sync because daboyeo.sync.showtimes.startup-enabled=false.");
+            return;
+        }
         runSync("startup");
     }
 

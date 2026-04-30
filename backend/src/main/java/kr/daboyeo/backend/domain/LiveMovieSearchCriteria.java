@@ -80,6 +80,20 @@ public record LiveMovieSearchCriteria(
         );
     }
 
+    public boolean crossesMidnight() {
+        return timeEnd.isBefore(timeStart);
+    }
+
+    public boolean matchesTime(LocalTime value) {
+        if (value == null) {
+            return false;
+        }
+        if (crossesMidnight()) {
+            return !value.isBefore(timeStart) || !value.isAfter(timeEnd);
+        }
+        return !value.isBefore(timeStart) && !value.isAfter(timeEnd);
+    }
+
     private static List<String> normalizeList(List<String> values) {
         if (values == null) {
             return List.of();

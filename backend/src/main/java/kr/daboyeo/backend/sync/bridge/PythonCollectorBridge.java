@@ -1,4 +1,4 @@
-package kr.daboyeo.backend.sync;
+package kr.daboyeo.backend.sync.bridge;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,6 +61,8 @@ public class PythonCollectorBridge {
         env.put("PLAY_DATE", provider == CollectorProvider.LOTTE_CINEMA ? playDate.toString() : playDate.toString().replace("-", ""));
         env.put("DISCOVERY_MOVIE_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryMovieLimit()));
         env.put("DISCOVERY_CINEMA_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryLotteCinemaLimit()));
+        env.put("DISCOVERY_LOTTE_MOVIE_TARGET_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryLotteMovieTargetLimit()));
+        env.put("DISCOVERY_LOTTE_TOTAL_TARGET_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryLotteTotalTargetLimit()));
         env.put("DISCOVERY_BUNDLE_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryMegaboxBundleLimit()));
         env.put("PREFERRED_CINEMA_IDS", String.join("||", properties.getShowtimes().getLottePreferredCinemaIds()));
         env.put("PREFERRED_CINEMA_NAMES", String.join("||", properties.getShowtimes().getLottePreferredCinemaNames()));
@@ -69,6 +71,26 @@ public class PythonCollectorBridge {
         return new ProviderDiscoveryPayload(
             listOfMaps(payload.get("targets"))
         );
+    }
+
+    public ProviderDiscoveryPayload collectLotteNearbyDiscovery(java.time.LocalDate playDate, String cinemaSelector) {
+        Map<String, String> env = new LinkedHashMap<>();
+        env.put("PLAY_DATE", playDate.toString());
+        env.put("CINEMA_SELECTOR", cinemaSelector);
+        env.put("DISCOVERY_MOVIE_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryMovieLimit()));
+        env.put("DISCOVERY_LOTTE_MOVIE_TARGET_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryLotteMovieTargetLimit()));
+        Map<String, Object> payload = executeJsonScript(buildNearbyLotteDiscoveryScript(), env);
+        return new ProviderDiscoveryPayload(listOfMaps(payload.get("targets")));
+    }
+
+    public ProviderDiscoveryPayload collectMegaboxNearbyDiscovery(java.time.LocalDate playDate, String areaCode) {
+        Map<String, String> env = new LinkedHashMap<>();
+        env.put("PLAY_DATE", playDate.toString().replace("-", ""));
+        env.put("AREA_CODE", areaCode);
+        env.put("DISCOVERY_MOVIE_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryMovieLimit()));
+        env.put("DISCOVERY_BUNDLE_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryMegaboxBundleLimit()));
+        Map<String, Object> payload = executeJsonScript(buildNearbyMegaboxDiscoveryScript(), env);
+        return new ProviderDiscoveryPayload(listOfMaps(payload.get("targets")));
     }
 
     public SeatCollectionResult collectSeatSnapshot(SeatCollectionRequest request) {
@@ -196,7 +218,9 @@ public class PythonCollectorBridge {
                 collector = LotteCinemaCollector()
                 play_date = os.environ['PLAY_DATE']
                 movie_limit = int(os.environ.get('DISCOVERY_MOVIE_LIMIT', '20'))
-                cinema_limit = int(os.environ.get('DISCOVERY_CINEMA_LIMIT', '2'))
+                cinema_limit = int(os.environ.get('DISCOVERY_CINEMA_LIMIT', '6'))
+                per_cinema_limit = int(os.environ.get('DISCOVERY_LOTTE_MOVIE_TARGET_LIMIT', '5'))
+                total_target_limit = int(os.environ.get('DISCOVERY_LOTTE_TOTAL_TARGET_LIMIT', '12'))
                 preferred_ids = {item.strip() for item in os.environ.get('PREFERRED_CINEMA_IDS', '').split('||') if item.strip()}
                 preferred = [item.strip() for item in os.environ.get('PREFERRED_CINEMA_NAMES', '').split('||') if item.strip()]
                 movies = [row for row in collector.build_movie_records() if row.get('movie_no')][:movie_limit]
@@ -210,6 +234,7 @@ public class PythonCollectorBridge {
                     selector = collector.build_cinema_selector(cinema.get('raw') or {})
                     if not selector:
                         continue
+                    matched_movies = 0
                     for movie in movies:
                         movie_no = str(movie.get('movie_no') or '').strip()
                         if not movie_no:
@@ -223,10 +248,18 @@ public class PythonCollectorBridge {
                             targets.append({
                                 'cinema_selector': selector,
                                 'representation_movie_code': movie_no,
+                                'movie_name': movie.get('movie_name'),
+                                'cinema_id': cinema.get('cinema_id'),
                                 'cinema_name': cinema.get('cinema_name'),
                                 'schedule_count': len(schedules),
                             })
-                            break
+                            matched_movies += 1
+                            if matched_movies >= per_cinema_limit:
+                                break
+                            if len(targets) >= total_target_limit:
+                                break
+                    if len(targets) >= total_target_limit:
+                        break
                 Path(os.environ['OUTPUT_JSON_PATH']).write_text(
                     json.dumps({'targets': targets}, ensure_ascii=False),
                     encoding='utf-8'
@@ -241,6 +274,12 @@ public class PythonCollectorBridge {
                 movie_limit = int(os.environ.get('DISCOVERY_MOVIE_LIMIT', '20'))
                 bundle_limit = int(os.environ.get('DISCOVERY_BUNDLE_LIMIT', '2'))
                 area_codes = [item.strip() for item in os.environ.get('MEGABOX_AREA_CODES', '').split('||') if item.strip()]
+                if not area_codes:
+                    area_codes = [
+                        str(row.get('area_code') or '').strip()
+                        for row in collector.build_area_records(play_de)
+                        if str(row.get('area_code') or '').strip()
+                    ]
                 movies = [row for row in collector.build_movie_records(play_de) if row.get('movie_no')][:movie_limit]
                 targets = []
                 for area_code in area_codes:
@@ -272,6 +311,77 @@ public class PythonCollectorBridge {
                 )
                 """;
         };
+    }
+
+    private static String buildNearbyLotteDiscoveryScript() {
+        return """
+            import json, os
+            from pathlib import Path
+            from collectors.lotte.collector import LotteCinemaCollector
+            collector = LotteCinemaCollector()
+            play_date = os.environ['PLAY_DATE']
+            cinema_selector = os.environ['CINEMA_SELECTOR']
+            movie_limit = int(os.environ.get('DISCOVERY_MOVIE_LIMIT', '20'))
+            target_limit = int(os.environ.get('DISCOVERY_LOTTE_MOVIE_TARGET_LIMIT', '5'))
+            movies = [row for row in collector.build_movie_records() if row.get('movie_no')][:movie_limit]
+            targets = []
+            cinema_id = cinema_selector.split('|')[-1] if '|' in cinema_selector else cinema_selector
+            for movie in movies:
+                movie_no = str(movie.get('movie_no') or '').strip()
+                if not movie_no:
+                    continue
+                schedules = collector.build_schedule_records(
+                    play_date=play_date,
+                    cinema_selector=cinema_selector,
+                    representation_movie_code=movie_no,
+                )
+                if schedules:
+                    targets.append({
+                        'cinema_selector': cinema_selector,
+                        'representation_movie_code': movie_no,
+                        'cinema_id': cinema_id,
+                        'movie_name': movie.get('movie_name'),
+                        'schedule_count': len(schedules),
+                    })
+                    if len(targets) >= target_limit:
+                        break
+            Path(os.environ['OUTPUT_JSON_PATH']).write_text(
+                json.dumps({'targets': targets}, ensure_ascii=False),
+                encoding='utf-8'
+            )
+            """;
+    }
+
+    private static String buildNearbyMegaboxDiscoveryScript() {
+        return """
+            import json, os
+            from pathlib import Path
+            from collectors.megabox.collector import MegaboxCollector
+            collector = MegaboxCollector()
+            play_de = os.environ['PLAY_DATE']
+            area_code = os.environ['AREA_CODE']
+            movie_limit = int(os.environ.get('DISCOVERY_MOVIE_LIMIT', '20'))
+            bundle_limit = int(os.environ.get('DISCOVERY_BUNDLE_LIMIT', '20'))
+            movies = [row for row in collector.build_movie_records(play_de) if row.get('movie_no')][:movie_limit]
+            targets = []
+            for movie in movies:
+                movie_no = str(movie.get('movie_no') or '').strip()
+                if not movie_no:
+                    continue
+                schedules = collector.build_schedule_records(movie_no=movie_no, play_de=play_de, area_cd=area_code)
+                if schedules:
+                    targets.append({
+                        'movie_no': movie_no,
+                        'area_code': area_code,
+                        'schedule_count': len(schedules),
+                    })
+                    if len(targets) >= bundle_limit:
+                        break
+            Path(os.environ['OUTPUT_JSON_PATH']).write_text(
+                json.dumps({'targets': targets}, ensure_ascii=False),
+                encoding='utf-8'
+            )
+            """;
     }
 
     private static String buildSeatScript(CollectorProvider provider) {

@@ -726,6 +726,37 @@ def repair_showtime_movie_links(cursor: Any, provider: str) -> int:
     return cursor.rowcount
 
 
+def repair_showtime_location_links(cursor: Any, provider: str) -> int:
+    cursor.execute(
+        """
+        UPDATE showtimes s
+        JOIN theaters t
+          ON t.provider_code = s.provider_code
+         AND t.external_theater_id = s.external_theater_id
+        LEFT JOIN screens sc
+          ON sc.provider_code = s.provider_code
+         AND sc.external_theater_id = s.external_theater_id
+         AND sc.external_screen_id = s.external_screen_id
+        SET s.theater_id = t.id,
+            s.screen_id = COALESCE(sc.id, s.screen_id),
+            s.region_name = COALESCE(NULLIF(s.region_name, ''), t.region_name),
+            s.region_code = COALESCE(NULLIF(s.region_code, ''), t.region_code)
+        WHERE s.provider_code = %s
+          AND s.external_theater_id IS NOT NULL
+          AND (
+            s.theater_id IS NULL
+            OR (sc.id IS NOT NULL AND s.screen_id IS NULL)
+            OR s.region_name IS NULL
+            OR s.region_name = ''
+            OR s.region_code IS NULL
+            OR s.region_code = ''
+          )
+        """,
+        [provider],
+    )
+    return cursor.rowcount
+
+
 def insert_seat_snapshot(
     cursor: Any,
     provider: str,
@@ -847,6 +878,7 @@ def ingest_lotte(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
         "movie_tags_upserted": 0,
         "movies_backfilled_from_showtimes": 0,
         "showtime_movie_links_repaired": 0,
+        "showtime_location_links_repaired": 0,
         "seat_snapshots_inserted": 0,
         "seat_items_inserted": 0,
     }
@@ -950,6 +982,7 @@ def ingest_lotte(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
     result["movies_backfilled_from_showtimes"] = backfilled
     result["movie_tags_upserted"] += backfill_tags
     result["showtime_movie_links_repaired"] = repair_showtime_movie_links(cursor, LOTTE)
+    result["showtime_location_links_repaired"] = repair_showtime_location_links(cursor, LOTTE)
     return result
 
 
@@ -1005,6 +1038,7 @@ def ingest_megabox(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
         "movie_tags_upserted": 0,
         "movies_backfilled_from_showtimes": 0,
         "showtime_movie_links_repaired": 0,
+        "showtime_location_links_repaired": 0,
         "seat_snapshots_inserted": 0,
         "seat_items_inserted": 0,
     }
@@ -1103,6 +1137,7 @@ def ingest_megabox(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
     result["movies_backfilled_from_showtimes"] = backfilled
     result["movie_tags_upserted"] += backfill_tags
     result["showtime_movie_links_repaired"] = repair_showtime_movie_links(cursor, MEGABOX)
+    result["showtime_location_links_repaired"] = repair_showtime_location_links(cursor, MEGABOX)
     return result
 
 

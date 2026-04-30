@@ -6,26 +6,37 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLRecoverableException;
+import java.sql.SQLTransientConnectionException;
+import java.sql.SQLTransientException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import javax.sql.DataSource;
+import kr.daboyeo.backend.config.CollectorSyncProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CollectorBundlePersistenceService {
 
+    private static final Logger logger = LoggerFactory.getLogger(CollectorBundlePersistenceService.class);
+
     private final DataSource dataSource;
+    private final CollectorSyncProperties properties;
     private final ObjectMapper objectMapper;
     private final TheaterLocationEnricher theaterLocationEnricher;
 
     public CollectorBundlePersistenceService(
         DataSource dataSource,
+        CollectorSyncProperties properties,
         ObjectMapper objectMapper,
         TheaterLocationEnricher theaterLocationEnricher
     ) {
         this.dataSource = dataSource;
+        this.properties = properties;
         this.objectMapper = objectMapper;
         this.theaterLocationEnricher = theaterLocationEnricher;
     }
@@ -45,25 +56,116 @@ public class CollectorBundlePersistenceService {
             return result;
         }
 
-        try (Connection connection = dataSource.getConnection()) {
-            boolean originalAutoCommit = connection.getAutoCommit();
-            connection.setAutoCommit(false);
-            try {
-                upsertMovies(connection, normalizedBundle);
-                upsertTheaters(connection, normalizedBundle);
-                upsertScreens(connection, normalizedBundle);
-                upsertShowtimes(connection, normalizedBundle);
-                connection.commit();
+        int maxRetries = Math.max(properties.getShowtimes().getPersistenceMaxRetries(), 0);
+        long backoffMillis = Math.max(properties.getShowtimes().getPersistenceRetryBackoffMillis(), 0L);
+
+        for (int attempt = 0; attempt <= maxRetries; attempt++) {
+            try (Connection connection = dataSource.getConnection()) {
+                persistWithConnection(connection, providerCode, normalizedBundle);
                 return result;
             } catch (Exception exception) {
-                connection.rollback();
-                throw exception;
-            } finally {
+                if (attempt >= maxRetries || !isRetryableDatabaseException(exception)) {
+                    throw new IllegalStateException("Failed to persist collector bundle for " + providerCode, exception);
+                }
+                logger.warn(
+                    "Retrying collector bundle persist provider={} attempt={} of {} after transient DB failure: {}",
+                    providerCode,
+                    attempt + 1,
+                    maxRetries + 1,
+                    exception.getMessage()
+                );
+                sleepBeforeRetry(backoffMillis);
+            }
+        }
+        throw new IllegalStateException("Failed to persist collector bundle for " + providerCode);
+    }
+
+    private void persistWithConnection(
+        Connection connection,
+        String providerCode,
+        CollectorBundleIngestCommand.NormalizedBundle normalizedBundle
+    ) throws Exception {
+        boolean originalAutoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        Exception pendingFailure = null;
+        try {
+            upsertMovies(connection, normalizedBundle);
+            upsertTheaters(connection, normalizedBundle);
+            upsertScreens(connection, normalizedBundle);
+            upsertShowtimes(connection, normalizedBundle);
+            repairShowtimeLinks(connection, providerCode);
+            connection.commit();
+        } catch (Exception exception) {
+            pendingFailure = exception;
+            rollbackQuietly(connection, exception);
+            throw exception;
+        } finally {
+            restoreAutoCommit(connection, originalAutoCommit, pendingFailure);
+        }
+    }
+
+    private void rollbackQuietly(Connection connection, Exception originalException) {
+        try {
+            connection.rollback();
+        } catch (Exception rollbackException) {
+            originalException.addSuppressed(rollbackException);
+        }
+    }
+
+    private void restoreAutoCommit(Connection connection, boolean originalAutoCommit, Exception pendingFailure) throws Exception {
+        try {
+            if (!connection.isClosed()) {
                 connection.setAutoCommit(originalAutoCommit);
             }
-        } catch (Exception exception) {
-            throw new IllegalStateException("Failed to persist collector bundle for " + providerCode, exception);
+        } catch (Exception restoreException) {
+            if (pendingFailure != null) {
+                pendingFailure.addSuppressed(restoreException);
+                return;
+            }
+            throw restoreException;
         }
+    }
+
+    private void sleepBeforeRetry(long backoffMillis) {
+        if (backoffMillis <= 0L) {
+            return;
+        }
+        try {
+            Thread.sleep(backoffMillis);
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Collector bundle persist retry was interrupted.", interruptedException);
+        }
+    }
+
+    private boolean isRetryableDatabaseException(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof SQLTransientConnectionException
+                || current instanceof SQLRecoverableException
+                || current instanceof SQLTransientException) {
+                return true;
+            }
+            if (current instanceof SQLException sqlException) {
+                String sqlState = sqlException.getSQLState();
+                if (sqlState != null && sqlState.startsWith("08")) {
+                    return true;
+                }
+            }
+            String message = current.getMessage();
+            if (message != null) {
+                String normalized = message.toLowerCase();
+                if (normalized.contains("communications link failure")
+                    || normalized.contains("connection closed")
+                    || normalized.contains("connection reset")
+                    || normalized.contains("broken pipe")
+                    || normalized.contains("eofexception")) {
+                    return true;
+                }
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private void upsertMovies(Connection connection, CollectorBundleIngestCommand.NormalizedBundle bundle) throws Exception {
@@ -260,6 +362,37 @@ public class CollectorBundlePersistenceService {
                 statement.addBatch();
             }
             statement.executeBatch();
+        }
+    }
+
+    private void repairShowtimeLinks(Connection connection, String providerCode) throws SQLException {
+        String sql = """
+            UPDATE showtimes s
+            JOIN theaters t
+              ON t.provider_code = s.provider_code
+             AND t.external_theater_id = s.external_theater_id
+            LEFT JOIN screens sc
+              ON sc.provider_code = s.provider_code
+             AND sc.external_theater_id = s.external_theater_id
+             AND sc.external_screen_id = s.external_screen_id
+            SET s.theater_id = t.id,
+                s.screen_id = COALESCE(sc.id, s.screen_id),
+                s.region_name = COALESCE(NULLIF(s.region_name, ''), t.region_name),
+                s.region_code = COALESCE(NULLIF(s.region_code, ''), t.region_code)
+            WHERE s.provider_code = ?
+              AND s.external_theater_id IS NOT NULL
+              AND (
+                s.theater_id IS NULL
+                OR (sc.id IS NOT NULL AND s.screen_id IS NULL)
+                OR s.region_name IS NULL
+                OR s.region_name = ''
+                OR s.region_code IS NULL
+                OR s.region_code = ''
+              )
+            """;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, CollectorBundleIngestCommand.normalizeProviderCode(providerCode));
+            statement.executeUpdate();
         }
     }
 

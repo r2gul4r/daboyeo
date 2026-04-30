@@ -298,6 +298,6 @@ public class LiveMovieDemoDataService {
 
     private boolean matchesTimeRange(LiveMovieSearchCriteria criteria, LiveMovieSchedule schedule) {
         LocalTime start = LocalTime.parse(schedule.startTime());
-        return !start.isBefore(criteria.timeStart()) && !start.isAfter(criteria.timeEnd());
+        return criteria.matchesTime(start);
     }
 }

@@ -1,4 +1,4 @@
-package kr.daboyeo.backend.sync;
+package kr.daboyeo.backend.sync.seat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
+import kr.daboyeo.backend.sync.bridge.CollectorProvider;
+import kr.daboyeo.backend.sync.bridge.SeatCollectionResult;
 import org.springframework.stereotype.Service;
 
 @Service

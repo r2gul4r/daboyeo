@@ -9,13 +9,16 @@ from .api import LotteCinemaApiClient
 @dataclass
 class LotteCinemaCollector:
     api: LotteCinemaApiClient | None = None
+    _ticketing_page_cache: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.api is None:
             self.api = LotteCinemaApiClient()
 
     def fetch_ticketing_page(self) -> dict[str, Any]:
-        return self.api.fetch_ticketing_page()
+        if self._ticketing_page_cache is None:
+            self._ticketing_page_cache = self.api.fetch_ticketing_page()
+        return self._ticketing_page_cache
 
     def fetch_movies(self) -> list[dict[str, Any]]:
         page = self.fetch_ticketing_page()

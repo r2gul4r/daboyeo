@@ -45,19 +45,26 @@ daboyeo:
     showtimes:
       enabled: ${DABOYEO_SHOWTIME_SYNC_ENABLED:true}
       cron: ${DABOYEO_SHOWTIME_SYNC_CRON:0 0 3 * * *}
-      date-offset-days: ${DABOYEO_SHOWTIME_DATE_OFFSETS:0,1}
+      startup-enabled: ${DABOYEO_SHOWTIME_STARTUP_ENABLED:false}
+      date-offset-days: ${DABOYEO_SHOWTIME_DATE_OFFSETS:0,1,2}
+      cleanup-enabled: ${DABOYEO_SHOWTIME_CLEANUP_ENABLED:true}
+      retention-days: ${DABOYEO_SHOWTIME_RETENTION_DAYS:3}
       auto-discovery-enabled: ${DABOYEO_SHOWTIME_AUTO_DISCOVERY_ENABLED:true}
       discovery-movie-limit: ${DABOYEO_SHOWTIME_DISCOVERY_MOVIE_LIMIT:20}
-      discovery-lotte-cinema-limit: ${DABOYEO_SHOWTIME_DISCOVERY_LOTTE_CINEMA_LIMIT:2}
-      discovery-megabox-bundle-limit: ${DABOYEO_SHOWTIME_DISCOVERY_MEGABOX_BUNDLE_LIMIT:2}
-      lotte-preferred-cinema-ids:
-        - "3037"
-        - "9111"
-      lotte-preferred-cinema-names:
-        - "위례"
-        - "하남미사"
-      megabox-area-codes:
-        - "30"
+      discovery-lotte-cinema-limit: ${DABOYEO_SHOWTIME_DISCOVERY_LOTTE_CINEMA_LIMIT:50}
+      discovery-lotte-movie-target-limit: ${DABOYEO_SHOWTIME_DISCOVERY_LOTTE_MOVIE_TARGET_LIMIT:5}
+      discovery-lotte-total-target-limit: ${DABOYEO_SHOWTIME_DISCOVERY_LOTTE_TOTAL_TARGET_LIMIT:12}
+      discovery-megabox-bundle-limit: ${DABOYEO_SHOWTIME_DISCOVERY_MEGABOX_BUNDLE_LIMIT:20}
+      nearby-refresh-enabled: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_ENABLED:true}
+      nearby-refresh-max-theaters-per-provider: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_MAX_THEATERS_PER_PROVIDER:6}
+      nearby-refresh-today-ttl-minutes: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_TODAY_TTL_MINUTES:60}
+      nearby-refresh-next-day-ttl-minutes: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_NEXT_DAY_TTL_MINUTES:360}
+      nearby-refresh-future-ttl-minutes: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_FUTURE_TTL_MINUTES:1440}
+      persistence-max-retries: ${DABOYEO_SHOWTIME_PERSISTENCE_MAX_RETRIES:2}
+      persistence-retry-backoff-millis: ${DABOYEO_SHOWTIME_PERSISTENCE_RETRY_BACKOFF_MILLIS:1000}
+      lotte-preferred-cinema-ids: []
+      lotte-preferred-cinema-names: []
+      megabox-area-codes: []
     seats:
       enabled: ${DABOYEO_SEAT_SYNC_ENABLED:false}
       cron: ${DABOYEO_SEAT_SYNC_CRON:0 0/30 * * * *}

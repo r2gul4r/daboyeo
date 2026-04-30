@@ -58,17 +58,29 @@ public class CollectorSyncProperties {
 
         private boolean enabled = false;
         private String cron = "0 0 3 * * *";
-        private List<Integer> dateOffsetDays = new ArrayList<>(List.of(0, 1));
+        private boolean startupEnabled = false;
+        private List<Integer> dateOffsetDays = new ArrayList<>(List.of(0, 1, 2));
         private boolean autoDiscoveryEnabled = false;
+        private boolean cleanupEnabled = true;
+        private int retentionDays = 3;
         private int discoveryMovieLimit = 20;
-        private int discoveryLotteCinemaLimit = 2;
-        private int discoveryMegaboxBundleLimit = 2;
+        private int discoveryLotteCinemaLimit = 50;
+        private int discoveryLotteMovieTargetLimit = 5;
+        private int discoveryLotteTotalTargetLimit = 12;
+        private int discoveryMegaboxBundleLimit = 20;
+        private boolean nearbyRefreshEnabled = true;
+        private int nearbyRefreshMaxTheatersPerProvider = 6;
+        private int nearbyRefreshTodayTtlMinutes = 60;
+        private int nearbyRefreshNextDayTtlMinutes = 360;
+        private int nearbyRefreshFutureTtlMinutes = 1440;
+        private int persistenceMaxRetries = 2;
+        private long persistenceRetryBackoffMillis = 1000L;
         private List<CgvTarget> cgvTargets = new ArrayList<>();
         private List<LotteTarget> lotteTargets = new ArrayList<>();
         private List<MegaboxTarget> megaboxTargets = new ArrayList<>();
-        private List<String> lottePreferredCinemaIds = new ArrayList<>(List.of("3037", "9111"));
+        private List<String> lottePreferredCinemaIds = new ArrayList<>();
         private List<String> lottePreferredCinemaNames = new ArrayList<>();
-        private List<String> megaboxAreaCodes = new ArrayList<>(List.of("30"));
+        private List<String> megaboxAreaCodes = new ArrayList<>();
 
         public boolean isEnabled() {
             return enabled;
@@ -86,12 +98,20 @@ public class CollectorSyncProperties {
             this.cron = cron;
         }
 
+        public boolean isStartupEnabled() {
+            return startupEnabled;
+        }
+
+        public void setStartupEnabled(boolean startupEnabled) {
+            this.startupEnabled = startupEnabled;
+        }
+
         public List<Integer> getDateOffsetDays() {
             return dateOffsetDays;
         }
 
         public void setDateOffsetDays(List<Integer> dateOffsetDays) {
-            this.dateOffsetDays = dateOffsetDays == null ? new ArrayList<>(List.of(0, 1)) : new ArrayList<>(dateOffsetDays);
+            this.dateOffsetDays = dateOffsetDays == null ? new ArrayList<>(List.of(0, 1, 2)) : new ArrayList<>(dateOffsetDays);
         }
 
         public boolean isAutoDiscoveryEnabled() {
@@ -100,6 +120,22 @@ public class CollectorSyncProperties {
 
         public void setAutoDiscoveryEnabled(boolean autoDiscoveryEnabled) {
             this.autoDiscoveryEnabled = autoDiscoveryEnabled;
+        }
+
+        public boolean isCleanupEnabled() {
+            return cleanupEnabled;
+        }
+
+        public void setCleanupEnabled(boolean cleanupEnabled) {
+            this.cleanupEnabled = cleanupEnabled;
+        }
+
+        public int getRetentionDays() {
+            return retentionDays;
+        }
+
+        public void setRetentionDays(int retentionDays) {
+            this.retentionDays = retentionDays;
         }
 
         public int getDiscoveryMovieLimit() {
@@ -118,12 +154,84 @@ public class CollectorSyncProperties {
             this.discoveryLotteCinemaLimit = discoveryLotteCinemaLimit;
         }
 
+        public int getDiscoveryLotteMovieTargetLimit() {
+            return discoveryLotteMovieTargetLimit;
+        }
+
+        public void setDiscoveryLotteMovieTargetLimit(int discoveryLotteMovieTargetLimit) {
+            this.discoveryLotteMovieTargetLimit = discoveryLotteMovieTargetLimit;
+        }
+
+        public int getDiscoveryLotteTotalTargetLimit() {
+            return discoveryLotteTotalTargetLimit;
+        }
+
+        public void setDiscoveryLotteTotalTargetLimit(int discoveryLotteTotalTargetLimit) {
+            this.discoveryLotteTotalTargetLimit = discoveryLotteTotalTargetLimit;
+        }
+
         public int getDiscoveryMegaboxBundleLimit() {
             return discoveryMegaboxBundleLimit;
         }
 
         public void setDiscoveryMegaboxBundleLimit(int discoveryMegaboxBundleLimit) {
             this.discoveryMegaboxBundleLimit = discoveryMegaboxBundleLimit;
+        }
+
+        public boolean isNearbyRefreshEnabled() {
+            return nearbyRefreshEnabled;
+        }
+
+        public void setNearbyRefreshEnabled(boolean nearbyRefreshEnabled) {
+            this.nearbyRefreshEnabled = nearbyRefreshEnabled;
+        }
+
+        public int getNearbyRefreshMaxTheatersPerProvider() {
+            return nearbyRefreshMaxTheatersPerProvider;
+        }
+
+        public void setNearbyRefreshMaxTheatersPerProvider(int nearbyRefreshMaxTheatersPerProvider) {
+            this.nearbyRefreshMaxTheatersPerProvider = nearbyRefreshMaxTheatersPerProvider;
+        }
+
+        public int getNearbyRefreshTodayTtlMinutes() {
+            return nearbyRefreshTodayTtlMinutes;
+        }
+
+        public void setNearbyRefreshTodayTtlMinutes(int nearbyRefreshTodayTtlMinutes) {
+            this.nearbyRefreshTodayTtlMinutes = nearbyRefreshTodayTtlMinutes;
+        }
+
+        public int getNearbyRefreshNextDayTtlMinutes() {
+            return nearbyRefreshNextDayTtlMinutes;
+        }
+
+        public void setNearbyRefreshNextDayTtlMinutes(int nearbyRefreshNextDayTtlMinutes) {
+            this.nearbyRefreshNextDayTtlMinutes = nearbyRefreshNextDayTtlMinutes;
+        }
+
+        public int getNearbyRefreshFutureTtlMinutes() {
+            return nearbyRefreshFutureTtlMinutes;
+        }
+
+        public void setNearbyRefreshFutureTtlMinutes(int nearbyRefreshFutureTtlMinutes) {
+            this.nearbyRefreshFutureTtlMinutes = nearbyRefreshFutureTtlMinutes;
+        }
+
+        public int getPersistenceMaxRetries() {
+            return persistenceMaxRetries;
+        }
+
+        public void setPersistenceMaxRetries(int persistenceMaxRetries) {
+            this.persistenceMaxRetries = persistenceMaxRetries;
+        }
+
+        public long getPersistenceRetryBackoffMillis() {
+            return persistenceRetryBackoffMillis;
+        }
+
+        public void setPersistenceRetryBackoffMillis(long persistenceRetryBackoffMillis) {
+            this.persistenceRetryBackoffMillis = persistenceRetryBackoffMillis;
         }
 
         public List<CgvTarget> getCgvTargets() {

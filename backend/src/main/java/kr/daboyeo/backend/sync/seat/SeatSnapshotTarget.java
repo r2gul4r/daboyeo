@@ -1,7 +1,8 @@
-package kr.daboyeo.backend.sync;
+package kr.daboyeo.backend.sync.seat;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import kr.daboyeo.backend.sync.bridge.CollectorProvider;
 
 public record SeatSnapshotTarget(
     long showtimeId,

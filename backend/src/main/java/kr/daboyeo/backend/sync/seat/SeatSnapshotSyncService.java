@@ -1,10 +1,13 @@
-package kr.daboyeo.backend.sync;
+package kr.daboyeo.backend.sync.seat;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import kr.daboyeo.backend.config.CollectorSyncProperties;
+import kr.daboyeo.backend.sync.bridge.PythonCollectorBridge;
+import kr.daboyeo.backend.sync.bridge.SeatCollectionRequest;
+import kr.daboyeo.backend.sync.bridge.SeatCollectionResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

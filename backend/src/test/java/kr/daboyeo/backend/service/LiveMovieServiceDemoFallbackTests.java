@@ -14,6 +14,7 @@ import java.util.List;
 import kr.daboyeo.backend.domain.LiveMovieSearchCriteria;
 import kr.daboyeo.backend.domain.SeatState;
 import kr.daboyeo.backend.repository.LiveMovieRepository;
+import kr.daboyeo.backend.sync.nearby.NearbyShowtimeRefreshService;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataAccessResourceFailureException;
 
@@ -30,6 +31,7 @@ class LiveMovieServiceDemoFallbackTests {
             repository,
             new SeatStateCalculator(),
             new LiveMovieDemoDataService(),
+            mock(NearbyShowtimeRefreshService.class),
             true
         );
 
@@ -49,6 +51,7 @@ class LiveMovieServiceDemoFallbackTests {
             repository,
             new SeatStateCalculator(),
             new LiveMovieDemoDataService(),
+            mock(NearbyShowtimeRefreshService.class),
             true
         );
 
@@ -69,6 +72,7 @@ class LiveMovieServiceDemoFallbackTests {
             repository,
             new SeatStateCalculator(),
             new LiveMovieDemoDataService(),
+            mock(NearbyShowtimeRefreshService.class),
             true
         );
 
