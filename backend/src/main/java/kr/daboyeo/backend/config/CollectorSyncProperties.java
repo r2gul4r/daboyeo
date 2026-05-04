@@ -57,17 +57,23 @@ public class CollectorSyncProperties {
     public static class ShowtimeProperties {
 
         private boolean enabled = false;
-        private String cron = "0 0 3 * * *";
-        private boolean startupEnabled = false;
+        private String cron = "0 0 * * * *";
+        private boolean startupEnabled = true;
+        private boolean includeCgv = false;
         private List<Integer> dateOffsetDays = new ArrayList<>(List.of(0, 1, 2));
         private boolean autoDiscoveryEnabled = false;
         private boolean cleanupEnabled = true;
         private int retentionDays = 3;
-        private int discoveryMovieLimit = 20;
-        private int discoveryLotteCinemaLimit = 50;
-        private int discoveryLotteMovieTargetLimit = 5;
-        private int discoveryLotteTotalTargetLimit = 12;
-        private int discoveryMegaboxBundleLimit = 20;
+        private int discoveryMovieLimit = 5;
+        private int discoveryLotteCinemaLimit = 3;
+        private int discoveryLotteMovieTargetLimit = 1;
+        private int discoveryLotteTotalTargetLimit = 2;
+        private int discoveryMegaboxBundleLimit = 2;
+        private boolean entryRefreshEnabled = true;
+        private int entryRefreshTtlMinutes = 10;
+        private long entryRefreshMaxWaitMillis = 8000L;
+        private int entryRefreshMaxDates = 1;
+        private int entryRefreshMaxSchedulesPerBundle = 40;
         private boolean nearbyRefreshEnabled = true;
         private int nearbyRefreshMaxTheatersPerProvider = 6;
         private int nearbyRefreshTodayTtlMinutes = 60;
@@ -104,6 +110,14 @@ public class CollectorSyncProperties {
 
         public void setStartupEnabled(boolean startupEnabled) {
             this.startupEnabled = startupEnabled;
+        }
+
+        public boolean isIncludeCgv() {
+            return includeCgv;
+        }
+
+        public void setIncludeCgv(boolean includeCgv) {
+            this.includeCgv = includeCgv;
         }
 
         public List<Integer> getDateOffsetDays() {
@@ -176,6 +190,46 @@ public class CollectorSyncProperties {
 
         public void setDiscoveryMegaboxBundleLimit(int discoveryMegaboxBundleLimit) {
             this.discoveryMegaboxBundleLimit = discoveryMegaboxBundleLimit;
+        }
+
+        public boolean isEntryRefreshEnabled() {
+            return entryRefreshEnabled;
+        }
+
+        public void setEntryRefreshEnabled(boolean entryRefreshEnabled) {
+            this.entryRefreshEnabled = entryRefreshEnabled;
+        }
+
+        public int getEntryRefreshTtlMinutes() {
+            return entryRefreshTtlMinutes;
+        }
+
+        public void setEntryRefreshTtlMinutes(int entryRefreshTtlMinutes) {
+            this.entryRefreshTtlMinutes = entryRefreshTtlMinutes;
+        }
+
+        public long getEntryRefreshMaxWaitMillis() {
+            return entryRefreshMaxWaitMillis;
+        }
+
+        public void setEntryRefreshMaxWaitMillis(long entryRefreshMaxWaitMillis) {
+            this.entryRefreshMaxWaitMillis = entryRefreshMaxWaitMillis;
+        }
+
+        public int getEntryRefreshMaxDates() {
+            return entryRefreshMaxDates;
+        }
+
+        public void setEntryRefreshMaxDates(int entryRefreshMaxDates) {
+            this.entryRefreshMaxDates = entryRefreshMaxDates;
+        }
+
+        public int getEntryRefreshMaxSchedulesPerBundle() {
+            return entryRefreshMaxSchedulesPerBundle;
+        }
+
+        public void setEntryRefreshMaxSchedulesPerBundle(int entryRefreshMaxSchedulesPerBundle) {
+            this.entryRefreshMaxSchedulesPerBundle = entryRefreshMaxSchedulesPerBundle;
         }
 
         public boolean isNearbyRefreshEnabled() {

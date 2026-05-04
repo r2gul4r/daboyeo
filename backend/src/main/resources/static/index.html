@@ -358,7 +358,7 @@
 
   <!-- Kakao SDK -->
   <script
-    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e07b7fda3e9cfefd771009dcc1fb97fa&libraries=services,clusterer"></script>
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e07b7fda3e9cfefd771009dcc1fb97fa&autoload=false&libraries=services,clusterer"></script>
 
   <script src="./src/js/include.js"></script>
   <script src="./src/js/pages/common.js"></script>
@@ -368,8 +368,8 @@
     window.DABOYEO_REGIONS = REGIONS;
     window.dispatchEvent(new Event('daboyeo:regions-ready'));
   </script>
-  <script src="./src/js/pages/script.js"></script>
-  <script type="module" src="./src/js/api/kakaoMap.js"></script>
+  <script src="./src/js/pages/script.js?v=20260504-hourly-sync"></script>
+  <script type="module" src="./src/js/api/kakaoMap.js?v=20260504-nearby-sdk"></script>
 </body>
 
 </html>

@@ -634,7 +634,7 @@ Oracle Cloud 서버에는 Spring Boot jar와 필요한 환경변수만 둔다.
 예시:
 
 ```env
-DABOYEO_BACKEND_PORT=8080
+DABOYEO_BACKEND_PORT=5500
 DABOYEO_DB_URL=jdbc:mysql://<tidb-host>:4000/<db>?serverTimezone=Asia/Seoul&characterEncoding=utf8&useSSL=true
 DABOYEO_DB_USERNAME=<db-user>
 DABOYEO_DB_PASSWORD=<db-password>
@@ -864,19 +864,19 @@ git status --short
 Spring 서버:
 
 ```powershell
-Invoke-WebRequest -Uri http://127.0.0.1:8080/api/health -UseBasicParsing
+Invoke-WebRequest -Uri http://127.0.0.1:5500/api/health -UseBasicParsing
 ```
 
 포스터 seed:
 
 ```powershell
-Invoke-WebRequest -Uri "http://127.0.0.1:8080/api/recommendation/poster-seed?limit=3" -UseBasicParsing
+Invoke-WebRequest -Uri "http://127.0.0.1:5500/api/recommendation/poster-seed?limit=3" -UseBasicParsing
 ```
 
 추천 API:
 
 ```powershell
-Invoke-WebRequest -Uri http://127.0.0.1:8080/api/recommendations -Method POST -ContentType "application/json" -Body "<sample-json>" -UseBasicParsing
+Invoke-WebRequest -Uri http://127.0.0.1:5500/api/recommendations -Method POST -ContentType "application/json" -Body "<sample-json>" -UseBasicParsing
 ```
 
 ### 14.3 Gateway 검증

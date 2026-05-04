@@ -1,11 +1,12 @@
-const DEFAULT_API_BASE_URL = "http://127.0.0.1:8080";
+const DEFAULT_API_BASE_URL = "http://127.0.0.1:5500";
+const FRONTEND_DEV_PORTS = new Set(["4173", "5173"]);
 
 export function getApiBaseUrl() {
   if (window.DABOYEO_API_BASE_URL) {
     return window.DABOYEO_API_BASE_URL;
   }
 
-  if (window.location.port === "8080") {
+  if (window.location.protocol.startsWith("http") && !FRONTEND_DEV_PORTS.has(window.location.port)) {
     return window.location.origin;
   }
 
@@ -69,6 +70,13 @@ export async function getPosterSeed(limit = 16) {
 
 export async function getRecommendationProviderHealth() {
   return requestJson("/api/recommendation/providers/health");
+}
+
+export async function refreshShowtimes(reason = "entry") {
+  return requestJson("/api/showtimes/refresh", {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
 }
 
 export async function fetchCgvSeatLayout(params) {

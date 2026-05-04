@@ -341,7 +341,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function performSearch() {
+  function performSearch(event) {
+    event?.preventDefault();
     saveSearchContext(buildSearchContext());
     window.location.href = AI_PAGE_URL;
   }

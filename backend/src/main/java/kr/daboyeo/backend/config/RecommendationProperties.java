@@ -19,6 +19,15 @@ public record RecommendationProperties(
     Integer gptPreciseAiCandidateLimit,
     Integer gptFastMaxTokens,
     Integer gptPreciseMaxTokens,
+    String codexModel,
+    Integer codexFastAiCandidateLimit,
+    Integer codexPreciseAiCandidateLimit,
+    Integer codexFastMaxTokens,
+    Integer codexPreciseMaxTokens,
+    String bridgeToken,
+    Integer bridgeResultTimeoutSeconds,
+    Integer bridgeHeartbeatTtlSeconds,
+    Integer bridgeJobTtlSeconds,
     Integer minStartBufferMinutes,
     Integer fastAiCandidateLimit,
     Integer preciseAiCandidateLimit,
@@ -52,6 +61,15 @@ public record RecommendationProperties(
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             minStartBufferMinutes,
             fastAiCandidateLimit,
             preciseAiCandidateLimit,
@@ -75,6 +93,15 @@ public record RecommendationProperties(
         gptPreciseAiCandidateLimit = clamp(gptPreciseAiCandidateLimit, 12, 8, 16);
         gptFastMaxTokens = clamp(gptFastMaxTokens, 720, 420, 1000);
         gptPreciseMaxTokens = clamp(gptPreciseMaxTokens, 1300, 900, 1800);
+        codexModel = defaultString(codexModel, "codex");
+        codexFastAiCandidateLimit = clamp(codexFastAiCandidateLimit, 12, 8, 24);
+        codexPreciseAiCandidateLimit = clamp(codexPreciseAiCandidateLimit, 20, 12, 30);
+        codexFastMaxTokens = clamp(codexFastMaxTokens, 900, 520, 1400);
+        codexPreciseMaxTokens = clamp(codexPreciseMaxTokens, 1700, 1000, 2400);
+        bridgeToken = defaultString(bridgeToken, "");
+        bridgeResultTimeoutSeconds = clamp(bridgeResultTimeoutSeconds, 90, 5, 300);
+        bridgeHeartbeatTtlSeconds = clamp(bridgeHeartbeatTtlSeconds, 45, 5, 300);
+        bridgeJobTtlSeconds = clamp(bridgeJobTtlSeconds, 180, 30, 600);
         minStartBufferMinutes = minStartBufferMinutes == null ? 20 : Math.max(0, minStartBufferMinutes);
         fastAiCandidateLimit = clamp(fastAiCandidateLimit, 5, 3, 8);
         preciseAiCandidateLimit = clamp(preciseAiCandidateLimit, 5, 3, 8);
@@ -91,10 +118,19 @@ public record RecommendationProperties(
     }
 
     public String modelFor(AiProvider provider, RecommendationMode mode) {
-        return provider == AiProvider.GPT ? gptModel : modelFor(mode);
+        if (provider == AiProvider.GPT) {
+            return gptModel;
+        }
+        if (provider == AiProvider.CODEX) {
+            return codexModel;
+        }
+        return modelFor(mode);
     }
 
     public String baseUrlFor(AiProvider provider) {
+        if (provider == AiProvider.CODEX) {
+            return "";
+        }
         return provider == AiProvider.GPT ? gptBaseUrl : lmStudioBaseUrl;
     }
 
@@ -106,6 +142,9 @@ public record RecommendationProperties(
     }
 
     public String providerLabel(AiProvider provider) {
+        if (provider == AiProvider.CODEX) {
+            return "Codex";
+        }
         return provider == AiProvider.GPT ? "GPT" : "로컬 Gemma";
     }
 
@@ -116,6 +155,9 @@ public record RecommendationProperties(
     public int aiCandidateLimitFor(AiProvider provider, RecommendationMode mode) {
         if (provider == AiProvider.GPT) {
             return mode == RecommendationMode.FAST ? gptFastAiCandidateLimit : gptPreciseAiCandidateLimit;
+        }
+        if (provider == AiProvider.CODEX) {
+            return mode == RecommendationMode.FAST ? codexFastAiCandidateLimit : codexPreciseAiCandidateLimit;
         }
         return aiCandidateLimitFor(mode);
     }
@@ -128,11 +170,14 @@ public record RecommendationProperties(
         if (provider == AiProvider.GPT) {
             return mode == RecommendationMode.FAST ? gptFastMaxTokens : gptPreciseMaxTokens;
         }
+        if (provider == AiProvider.CODEX) {
+            return mode == RecommendationMode.FAST ? codexFastMaxTokens : codexPreciseMaxTokens;
+        }
         return maxTokensFor(mode);
     }
 
     public int responseTextMaxLengthFor(AiProvider provider, RecommendationMode mode) {
-        if (provider == AiProvider.GPT) {
+        if (provider == AiProvider.GPT || provider == AiProvider.CODEX) {
             return mode == RecommendationMode.FAST ? 180 : 320;
         }
         return responseTextMaxLength;

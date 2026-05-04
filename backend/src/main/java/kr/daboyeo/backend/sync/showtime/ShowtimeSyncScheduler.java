@@ -30,7 +30,7 @@ public class ShowtimeSyncScheduler {
         runSync("startup");
     }
 
-    @Scheduled(cron = "${daboyeo.sync.showtimes.cron:0 0 3 * * *}", zone = "${daboyeo.sync.timezone:Asia/Seoul}")
+    @Scheduled(cron = "${daboyeo.sync.showtimes.cron:0 0 * * * *}", zone = "${daboyeo.sync.timezone:Asia/Seoul}")
     public void runOnSchedule() {
         runSync("scheduled");
     }

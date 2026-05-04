@@ -2,86 +2,194 @@
 
 ## Current Task
 
-- task: `PR #2 kmh regional search and nearby refresh selective integration`
+- task: `Codex-scored reserve recommendation pool`
 - phase: `verified`
-- scope: `Inspect PR #2 ([작업 수정 내용], kmh -> lsh), reject unsafe branch-wide merge, and selectively integrate only the described region-condition search, frontend map fixes, and backend live/nearby refresh/sync cleanup changes while preserving existing uncommitted recommendation/GPT/poster work.`
-- verification_target: `The selected frontend region-search/map fixes and backend nearby refresh flow are imported against current lsh and are visible from Spring-served 8080 static pages without wholesale PR churn; recommendation work remains intact, and focused Java/JS/Python/static checks pass where feasible.`
-- previous_task_note: `PR #1 selected allMovies frontend changes and the GPT recommendation enhancement remain uncommitted local work; preserve them unless a PR #2 change is intentionally reconciled.`
-- runtime_dependency_note: `GitHub PR #2 has no review comments or review threads, but GitHub reports mergeable=false and branch diff is broad. Direct merge is unsafe because it includes 200+ changed files and conflicts with current local work.`
-- spring_runtime_note: `Spring is running on localhost:5500 after rebuilding bootJar with the corrected Kakao JS key in the Spring static index mirror.`
+- scope: `Freeze and implement the current conversation goal: keep DB/time/filter selection on the server, pass a wider taste-aware candidate pool to Codex/GPT, let Codex/GPT assign per-candidate recommendation scores, and let the server validate those scores while filling missing result slots with the nearest reserve candidates.`
+- verification_target: `When direct selected-genre current-showing movies are fewer than 3, final recommendations should include the best scored reserve candidates instead of returning only 1-2 items. Codex/GPT prompts and schemas must ask for a bounded score, and the server must clamp no-direct-taste reserve candidates so they cannot look like perfect matches.`
+- previous_task_note: `The previous repair removed weak fillers whenever direct candidates existed, which protected trust but made the UI show too few recommendations when the DB had only 1-2 direct matches.`
+- runtime_dependency_note: `No DB write or crawl is needed; this is recommendation ranking and AI handoff behavior.`
+- spring_runtime_note: `Run focused recommendation service/client tests and bootJar; restart localhost:5500 runtime after implementation verification if changed code compiles.`
+- current_blocker: `none`
+
+## Next Task
+
+- task: `Add separate anime poster pool`
+- status: `queued`
+- scope: `애니 장르 선택 시 보여줄 포스터 후보를 일반 포스터 풀과 별도로 더 보강한다. 추천 설문 장르 필터링과 포스터 seed 데이터 품질을 같이 확인한다.`
+- non_goal: `이번 커밋에서는 구현하지 않고 다음 작업 메모로만 저장한다.`
 
 ## Orchestration Profile
 
-- score_total: `9`
-- score_breakdown: `2 cross-branch PR integration, 2 backend live/nearby behavior change, 1 collector/sync external-request flow, 1 cleanup/persistence behavior, 1 frontend search/map behavior, 1 existing dirty worktree overlap, 1 verification`
-- hard_triggers: `cross-branch import; backend live/nearby behavior change; collector/sync external request flow; cleanup/retention behavior; existing dirty worktree overlap; high investigation uncertainty; frontend search/map route changes`
-- selected_rules: `single-session; selective import only; preserve current recommendation/GPT/poster changes; mirror imported index frontend into Spring static resources; do not merge PR wholesale; do not copy unrelated PR churn; do not run public crawl/deployed smoke checks; no PR close/merge/push unless explicitly requested`
-- selected_skills: `none`
+- score_total: `8`
+- score_breakdown: `3 user-facing recommendation trust regression, 2 AI scoring/schema handoff, 1 wider current-showing candidate pool, 1 server-side score validation, 1 focused service/client tests`
+- hard_triggers: `user-facing recommendation correctness; AI handoff contract change; result filling policy changes from strict taste gate to taste-first reserve fill`
+- selected_rules: `use Selfdex read-only planning discipline; update STATE before implementation edits; keep search-filter and current/future showtime filtering server-side; pass wider taste-aware distinct candidates to Codex/GPT; let Codex/GPT return a bounded score field; clamp reserve/no-direct-taste scores server-side; verify with focused service/client tests, bootJar, runtime smoke, and diff checks`
+- selected_skills: `selfdex`
 - execution_topology: `single-session`
 - orchestration_value: `low`
 - agent_budget: `0`
-- spawn_decision: `no spawn; user did not request delegation and the import depends on a single dirty working tree with tightly coupled config, sync, repository, and route decisions`
-- efficiency_basis: `Handoff cost is higher than benefit because safe selection requires comparing PR #2 against current lsh, preserving local recommendation work, and manually merging application.yml/config without overwriting user changes`
-- selection_reason: `User asked to bring only the described PR #2 changes. Live PR inspection found PR #2 kmh -> lsh with mergeable=false and a broad 228-file diff, so the safe approach is selective integration from frozen file evidence.`
+- spawn_decision: `no spawn; Selfdex was used for read-only planning, but implementation is one coupled RecommendationService/LocalModelRecommendationClient contract and disjoint worker ownership is weak`
+- efficiency_basis: `Candidate ordering, AI schema parsing, score validation, and final item mapping must stay coherent in one lane; delegation would add handoff and rework risk.`
+- selection_reason: `User changed the goal from strict exclusion to showing nearest reserves and asked whether Codex should score candidates from the start.`
 
 ## Evaluation Plan
 
 - evaluation_need: `full`
 - project_invariants:
   - `Do not print, commit, or document real DB passwords, OAuth tokens, cookies, API keys, tunnel tokens, or OAuth auth paths.`
-  - `Do not overwrite unrelated frontend/backend user edits.`
-  - `Do not delete current R2 poster assets, live movie/map pages, or current recommendation backend/poster work while handling PR #2.`
-  - `Preserve provider raw data characteristics and avoid changing shared data model semantics beyond the nearby refresh and cleanup contract.`
+  - `Do not expose secrets, private Kakao admin keys, Codex auth, bridge token, local model URL, or local filesystem paths to browser responses.`
+  - `Do not overwrite unrelated frontend/backend user edits or current R2 poster assets.`
+  - `Preserve existing recommendation flow, Codex bridge runtime, and poster-seed behavior.`
+  - `Preserve same-origin Spring-served frontend behavior on localhost:5500.`
+  - `Preserve /api/showtimes/refresh as a manual server API unless removal becomes necessary, but do not call it from browser entry flows.`
 - task_acceptance:
-  - `Open PR #2 is identified and its actionable contents are separated from unrelated branch churn.`
-  - `Whole-branch merge is avoided because it conflicts with current lsh and includes many unrelated files.`
-  - `Frontend region-condition search and map behavior are imported only where they fit the current frontend route structure.`
-  - `live/nearby triggers bounded background showtime refresh for nearby theaters without blocking the API response.`
-  - `LOTTE_CINEMA theater-targeted discovery and MEGABOX area-targeted discovery are wired only through the selected sync/collector path.`
-  - `Startup showtime sync remains disabled and bounded showtime/seat snapshot cleanup uses the selected retention contract.`
-  - `Current recommendation/GPT/poster files remain intact unless directly and intentionally merged.`
+  - `Explicit preferredGenres remain separate from poster-derived likedGenres in TagProfile.`
+  - `Exact DB/search filters and current/future showtime requirements remain server-owned.`
+  - `AI candidate pools are taste-aware and distinct by movie, but fill with reserve candidates when direct/poster matches are fewer than the provider limit.`
+  - `Codex/GPT response schema includes a bounded numeric score field and prompt tells the model to score from supplied evidence only.`
+  - `Server clamps model scores so no-direct selected-genre reserve candidates cannot exceed the existing no-direct cap.`
+  - `Fallback mode also fills final result slots with reserve candidates when fewer than 3 direct candidates exist.`
 - non_goals:
-  - `No DB write or schema migration unless an existing migration is required by selected code.`
-  - `No model-provider installation or API-key setup.`
-  - `No PR merge, branch force-push, GitHub comment, or PR close action unless explicitly requested.`
-  - `No deployed-domain, external crawl, public-runtime smoke, or browser check unless explicitly requested.`
+  - `No schema migration or collector refactor unless the existing ingest path is blocked.`
+  - `No browser-triggered crawl request.`
+  - `No unbounded all-data crawl or long blocking browser request.`
+  - `No CGV signed API work in this task.`
+  - `No frontend redesign or survey contract change unless the existing response contract requires it.`
+  - `No deploy-domain setup, commit, push, or cleanup of unrelated dirty files.`
 - hard_checks:
-  - `Update STATE before any implementation edits.`
-  - `Inspect origin/lsh...origin/kmh and selected files before importing.`
-  - `Preserve current frontend/src/assets/R2/posters, current frontend/src/pages route structure, and recommendation backend changes unless directly justified.`
-  - `Do not copy PR STATE.md, ERROR_LOG.md, MULTI_AGENT_LOG.md, recommendation files, or unrelated docs/assets into current worktree.`
-  - `Manually merge application.yml and configuration so current GPT settings are not dropped.`
-  - `Run focused Java/JS/Python checks and git diff --check where feasible.`
+  - `Update STATE before backend/frontend implementation edits.`
+  - `Do not expose TiDB secrets or process stderr details to browser responses.`
+  - `Run focused RecommendationServiceCandidateFilterTests, LocalModelRecommendationClientTests, and RecommendationScorerTests if score caps are touched.`
+  - `Run bootJar if backend code changes compile.`
+  - `Run git diff --check for touched files.`
 - llm_review_rubric:
-  - `Nearby refresh should be asynchronous/bounded and should not make live/nearby depend on long collector calls.`
-  - `Provider-targeted discovery should stay provider-specific without collapsing raw-provider details.`
-  - `Cleanup retention should be explicit and not erase data beyond the configured window.`
-  - `Imported frontend search/map code should point to existing regions/routes and avoid breaking current navigation.`
+  - `Do not let Codex/GPT score no-direct reserve candidates as perfect taste fits.`
+  - `Do not return fewer than 3 final items merely because direct taste matches are sparse when scored reserves exist.`
 - evidence_required:
-  - `GitHub PR #2 metadata and changed-file evidence`
-  - `Diff evidence for selected import`
-  - `Focused Java/JS/Python/static verification results`
+  - `Taste-aware reserve-fill source evidence`
+  - `Codex/GPT score schema and parsing evidence`
+  - `Focused service/client test evidence`
+  - `Runtime smoke evidence if restarted`
 
 ## Writer Slot
 
 - writer_slot: `main`
-- write_sets: `STATE.md, ERROR_LOG.md if material errors occur, selected backend live/sync/config/repository files, selected collector helpers, selected frontend region-search/map files, Spring static mirrors for index/style/script/map/region constants; no backend recommendation files except existing dirty work preservation`
+- write_sets: `STATE.md; ERROR_LOG.md if material failures occur; backend/src/main/java/kr/daboyeo/backend/domain/recommendation/RecommendationModels.java; backend/src/main/java/kr/daboyeo/backend/config/RecommendationProperties.java; backend/src/main/java/kr/daboyeo/backend/service/recommendation/RecommendationService.java; backend/src/main/java/kr/daboyeo/backend/service/recommendation/LocalModelRecommendationClient.java; backend/src/main/resources/application.yml; backend/src/test/java/kr/daboyeo/backend/service/recommendation/RecommendationServiceCandidateFilterTests.java; backend/src/test/java/kr/daboyeo/backend/service/recommendation/LocalModelRecommendationClientTests.java; backend/src/test/java/kr/daboyeo/backend/service/recommendation/RecommendationScorerTests.java if scorer caps change`
 
 ## Contract Freeze
 
-- status: `frozen for selective PR #2 integration`
-- source_basis: `User pasted PR #2 summary and asked to bring only the changed parts; GitHub check found PR #2 [작업 수정 내용] from kmh to lsh with no comments but mergeable=false and a broad branch diff.`
-- output_code: `Do not merge origin/kmh wholesale. Selectively integrate only region-condition search, frontend map fixes, live/nearby background showtime refresh, Lotte/Megabox targeted discovery support, startup sync disablement, and bounded cleanup changes that fit current lsh. Preserve current recommendation/GPT/poster work.`
-- output_tests: `focused Gradle tests for changed backend paths when feasible, node --check for changed JS, Python compile/static checks for changed collectors/scripts, and git diff --check.`
-- output_docs: `none`
-- write_sets: `STATE.md; backend/src/main/java/kr/daboyeo/backend/domain/LiveMovieSearchCriteria.java; backend/src/main/java/kr/daboyeo/backend/service/LiveMovieService.java; backend/src/main/java/kr/daboyeo/backend/repository/LiveMovieRepository.java; backend/src/main/java/kr/daboyeo/backend/config/CollectorSyncProperties.java; backend/src/main/java/kr/daboyeo/backend/sync/**; backend/src/main/resources/application.yml via manual merge; selected collectors/** or scripts/** needed by targeted discovery; frontend/index.html; frontend/src/css/style.css; frontend/src/css/kakaoMap.css; frontend/src/css/movies.css; frontend/src/js/api/kakaoMap.js; frontend/src/js/constants/**; frontend/src/js/liveMovies.js; frontend/src/js/pages/script.js; backend/src/main/resources/static/index.html; backend/src/main/resources/static/src/css/style.css; backend/src/main/resources/static/src/css/kakaoMap.css; backend/src/main/resources/static/src/js/api/kakaoMap.js; backend/src/main/resources/static/src/js/constants/**; backend/src/main/resources/static/src/js/pages/script.js; do not touch backend recommendation files for PR import`
+- status: `frozen for Codex-scored reserve fill`
+- source_basis: `User accepted that strict taste gating makes too few results and asked to make Codex handle scoring from the candidate stage while still showing nearest reserve candidates.`
+- output_code: `RecommendationService should build a distinct taste-aware candidate pool ordered direct preferredGenre matches, poster/liked genre matches, then scored reserves. LocalModelRecommendationClient should ask Codex/GPT for numeric score s plus analysis fields. RecommendationService should use validated model scores for picked items and clamp no-direct-taste reserves. Search-filter relaxation and fallback scoring remain intact.`
+- output_tests: `Focused RecommendationServiceCandidateFilterTests and LocalModelRecommendationClientTests, RecommendationScorerTests if caps change, bootJar if feasible, runtime local/Codex smoke, git diff --check.`
+- output_docs: `STATE verification note; ERROR_LOG.md if material verification/runtime failures occur.`
+- write_sets: `STATE.md; ERROR_LOG.md if needed; RecommendationModels.java; RecommendationProperties.java; RecommendationService.java; LocalModelRecommendationClient.java; application.yml; RecommendationServiceCandidateFilterTests.java; LocalModelRecommendationClientTests.java; RecommendationScorerTests.java if needed`
 
 ## Reviewer
 
-- review_required: `self-review only; no subagent because user did not request delegation`
-- reviewer_focus: `unsafe branch churn, config overwrite, startup collector side effects, cleanup retention risk, provider discovery boundaries, preservation of current recommendation/GPT/poster work`
+- review_required: `self-review`
+- reviewer_focus: `Taste-first reserve fill does not reintroduce perfect-score weak fillers, Codex/GPT score field is parsed and bounded, local-model compatibility remains intact, existing child/avoid/time/seat behavior stays intact`
 
 ## Last Update
+
+- timestamp: `2026-05-04 17:32:50 +09:00`
+- note: `Verified Codex-scored reserve recommendation pool. Selfdex read-only planner ran but suggested an unrelated collector refactor, so the user-fixed /goal overrode it. RecommendationService now builds a taste-aware distinct pool that keeps direct selected-genre matches first and fills shortfalls with scored reserve candidates. GPT/Codex prompts and schema now require numeric score s, AiPick stores the model score, and RecommendationService uses the validated model score while capping no-direct taste reserves at 74. Codex defaults were widened to 12 fast / 20 precise candidates with larger token budgets. Focused RecommendationServiceCandidateFilterTests, LocalModelRecommendationClientTests, and RecommendationScorerTests passed outside sandbox after the known native-platform.dll issue and one duplicate-helper compile repair; bootJar passed. Runtime is Spring PID 15568 and bridge PID 14580 on localhost:5500 with Codex ready; action/SF local fallback returned 3 items Project Hail Mary 100, Prada 74, Mario 74, and Codex returned 3 items Project Hail Mary 94, Prada 72, Kiki 68.`
+
+- timestamp: `2026-05-04 17:40:00 +09:00`
+- note: `Queued next task only: add a separate, richer anime poster pool for the genre-guided recommendation flow. No implementation was started for that task before commit/push.`
+
+- timestamp: `2026-05-04 15:14:00 +09:00`
+- note: `Verified GPT/Codex analysis taste-match fix. LocalModelRecommendationClient now keeps tasteMatch candidate-specific and tells GPT/Codex not to claim poster-taste match when tasteMatch is empty. Focused LocalModelRecommendationClientTests passed outside sandbox after the known native-platform.dll failure; bootJar passed; Spring restarted on localhost:5500 as PID 8388 with startup sync disabled only for local restart, and provider health reports Codex ready with Python bridge PID 22172.`
+
+- timestamp: `2026-05-04 15:22:09 +09:00`
+- note: `Reclassified into genre-guided recommendation flow work. score_total 8; full evaluation; single-session/no-spawn. Frozen contract: add genre selection before posters, filter/prioritize poster seeds by selected genres, allow three liked posters minimum with five max, send preferredGenres to backend profile scoring, and improve GPT/Codex analysis prompt while keeping candidate tasteMatch honest.`
+
+- timestamp: `2026-05-04 15:33:00 +09:00`
+- note: `Runtime smoke with preferredGenres action/SF returned status ok/model codex/count 3 but surfaced a live music title first, showing selected genre weights were working only when candidate tags existed. Scope expanded within the same task to strengthen current-release title-derived genre tags and add RecommendationScorerTests before final verification.`
+
+- timestamp: `2026-05-04 15:37:53 +09:00`
+- note: `Verified genre-guided recommendation flow. AI page now has a genre step before posters, filtered/prioritized poster choices, and a three-poster minimum. Backend survey/profile now accepts preferredGenres, GPT/Codex prompt asks for richer concrete analysis, current-release title inference tags Project Hail Mary and Demon Slayer-style titles, and runtime codex smoke returned Project Hail Mary first for action/SF preferredGenres. Spring is running on localhost:5500 as PID 14008 and AI bridge as PID 11528.`
+
+- timestamp: `2026-05-04 15:48:36 +09:00`
+- note: `Reclassified into a scoring calibration repair. score_total 7; single-session/no-spawn. Root issue: generic audience, mood, seat, price, and short-runtime bonuses can saturate a no-direct-liked-genre candidate to 100, making Devil Wears Prada-style candidates look like perfect matches for unrelated selected/poster genre profiles.`
+
+- timestamp: `2026-05-04 15:51:58 +09:00`
+- note: `Runtime smoke reproduced Prada at 100 after the first cap because explicit preferredGenres and poster-derived likedGenres share one scoring bucket. Reclassified to score_total 8 and expanded write set to separate explicit preferredGenres from secondary poster-derived genres before applying score caps.`
+
+- timestamp: `2026-05-04 15:56:30 +09:00`
+- note: `Runtime smoke after preferredGenre separation reduced Prada from 100 to 84, but 84 still reads like a strong recommendation. Scope expanded inside the frozen score calibration repair to lower the no-anchor cap and make GPT/Codex tasteMatch plus fallback analysis use preferredGenres as the direct taste anchor when present.`
+
+- timestamp: `2026-05-04 16:03:23 +09:00`
+- note: `Verified genre-anchor scoring repair. No-direct selected-genre match candidates are capped at 74, GPT/Codex tasteMatch now uses preferredGenres when present, focused profile/scorer/prompt tests and bootJar passed outside sandbox after the known native-platform.dll failure, Spring is running on localhost:5500 as PID 14920, bridge as PID 1056, local provider remains offline, Codex provider is ready, local and Codex smokes both kept Prada below 100 with Codex explicitly describing it as a secondary non-direct-match option.`
+
+- timestamp: `2026-05-04 16:10:45 +09:00`
+- note: `Reclassified into candidate-pool repair. score_total 8; full evaluation; single-session/no-spawn. Root issue: scored weak fillers still enter AI/fallback pools when direct selected-genre candidates exist, so Prada can remain visible even though it is not the nearest taste match.`
+
+- timestamp: `2026-05-04 16:16:49 +09:00`
+- note: `Verified candidate-pool repair. RecommendationService now gates AI/fallback pools to direct preferredGenre matches when any exist, then poster-derived liked genre matches, then broad candidates only when no taste match exists. Distinct movie selection no longer backfills duplicate showtimes. Focused service/scorer tests and bootJar passed outside sandbox after known native-platform.dll failure; Spring localhost:5500 is running as PID 23484 and bridge as PID 10872. Action/SF local fallback and Codex smokes both returned only Project Hail Mary, no Prada, no duplicate titles.`
+
+- timestamp: `2026-05-04 15:08:00 +09:00`
+- note: `Reclassified into a new analysis-quality bugfix. score_total 5; single-session/no-spawn. Root cause: LocalModelRecommendationClient.tasteMatchHints copied user-level liked poster genres into candidate tasteMatch when a candidate had no direct liked-genre overlap, allowing GPT/Codex to overclaim that unrelated movies matched action/SF/adventure/history poster taste.`
+
+- timestamp: `2026-05-04 14:56:00 +09:00`
+- note: `Verified the five recommendation-smoke goal. RecommendationService now tries exact filters first, then relaxed filters and broad TiDB candidates before returning no_filtered_candidates. Focused recommendation tests and bootJar passed; Spring is running on localhost:5500 as PID 22240 and AI bridge as PID 9200. Five local-provider recommendation smokes all returned count 3, and one Codex sanity smoke returned status ok/model codex/count 3. Local model provider remains offline until 127.0.0.1:1234/v1 is running, so local-provider API responses use fallback scoring.`
+
+- timestamp: `2026-05-04 14:40:00 +09:00`
+- note: `Reclassified current /goal from hourly crawling to recommendation reliability. score_total 7; full evaluation; Selfdex selected; single-session/no-spawn. Frozen contract: exact search filters must be tried first, relaxed only when empty, and five localhost:5500 recommendation smokes must all return non-empty recommendations if any usable TiDB candidates exist.`
+
+- timestamp: `2026-05-04 14:27:00 +09:00`
+- note: `Verified hourly server-side Lotte/Megabox sync direction. Browser entry/recommend flows no longer call /api/showtimes/refresh; scheduler defaults are hourly/startup with includeCgv=false; Lotte date-time release strings are normalized; recommendation run-history persistence is best-effort. Focused JS checks, backend tests, bootJar, served static checks, provider health, and recommendation smoke passed. Spring is running on localhost:5500 as PID 16960 with AI bridge python PID 17416. Local runtime was restarted with DABOYEO_SHOWTIME_STARTUP_ENABLED=false only to avoid duplicate startup crawl after the verified startup sync attempt; application default remains true.`
+
+- timestamp: `2026-05-04 14:10:00 +09:00`
+- note: `Reclassified current /goal from button-triggered crawling to deployed-server periodic crawling. score_total 8; full evaluation; single-session/no-spawn. Frozen contract: backend showtime sync should default to hourly/startup Lotte/Megabox TiDB collection with CGV excluded, while AI recommendation/direct-compare frontend flows stop calling the refresh endpoint and use stored TiDB data.`
+
+- timestamp: `2026-05-04 14:16:00 +09:00`
+- note: `Runtime startup sync exposed a Lotte ingest date parsing failure for strings shaped like yyyy-MM-dd 오전/오후 hh:mm:ss. Reclassified within the same task to score_total 9 with data_fidelity_risk and added CollectorBundleIngestCommand plus ingest tests to the write set before repairing normalization.`
+
+- timestamp: `2026-05-04 14:24:00 +09:00`
+- note: `Runtime recommendation smoke during startup sync exposed a transient TiDB communications timeout while saving recommendation_runs. Added RecommendationService and focused tests to the write set so run-history persistence can fail soft without blocking recommendation results.`
+
+- timestamp: `2026-05-04 13:36:00 +09:00`
+- note: `Verified button-triggered Lotte/Megabox TiDB refresh path. Added /api/showtimes/refresh, main-page AI/direct-compare entry refresh calls, AI recommendation preflight refresh, CGV-deferred response contract, bounded entry discovery defaults, and schedule trimming. Spring is running on localhost:5500 as PID 2700 with bridge worker PID 13688; refresh smoke completed as recent with 4 bundles and 80 showtimes, and recommendation API returned fallback/model gemma-4-e2b-it/count 3 from TiDB candidates while local model remains offline and Codex provider health remains ready.`
+
+- timestamp: `2026-05-04 13:06:23 +09:00`
+- note: `Reclassified to the user-fixed /goal. score_total 9; full evaluation; Selfdex selected. Selfdex read-only planner timed out after 180s, so main continues with Selfdex contract discipline and two read-only explorer slices while keeping all implementation writes in main. Goal is button-triggered bounded Lotte/Megabox crawl into TiDB, CGV deferred, backend recommendation/direct-comparison data backed by TiDB.`
+
+- timestamp: `2026-05-04 12:59:47 +09:00`
+- note: `Started bounded TiDB data refresh. score_total 8; full evaluation; single-session/no-spawn. Scope is current DB inspection, provider-date dry-run, bounded Lotte/Megabox crawl write, and post-write recommendation candidate verification while preserving the localhost:5500 Codex bridge runtime.`
+
+- timestamp: `2026-05-04 12:56:17 +09:00`
+- note: `Verified Codex recommendation analysis runtime on localhost:5500. ACL was updated only for C:\Users\pc07-00\.codex\sessions and C:\Users\pc07-00\.codex\tmp after user approval; an ignored backend/build/tools/codex.exe runtime copy made codex exec available to the bridge worker; Spring is running on PID 19928, bridge worker on PID 13796, provider health reports Codex ready, and POST /api/recommendations with aiProvider=codex returned status ok/model codex/count 3. Local provider remains offline until the OpenAI-compatible local model server is running on 127.0.0.1:1234/v1.`
+
+- timestamp: `2026-05-04 12:51:01 +09:00`
+- note: `User explicitly approved the ACL change needed for Codex exec. Continuing with a scoped permission update for C:\Users\pc07-00\.codex\sessions and C:\Users\pc07-00\.codex\tmp only, followed by Codex exec smoke, bridge worker restart, and recommendation POST verification.`
+
+- timestamp: `2026-05-04 12:46:47 +09:00`
+- note: `Blocked at Codex exec permission gate. Patched scripts/ai_bridge_agent.py for Windows executable resolution, UTF-8 subprocess decoding, and repo-local manual temp directories; py_compile and git diff --check passed. Spring 5500 and bridge worker can report Codex provider ready, but actual Codex recommendation POST still falls back because codex exec cannot create .codex session files without an ACL change. Local model remains offline because 127.0.0.1:1234/v1/models is not running.`
+
+- timestamp: `2026-05-04 12:40:00 +09:00`
+- note: `Runtime smoke found a bridge worker defect: provider health became Codex ready after tokenized Spring/worker restart, but a Codex recommendation POST fell back because Python subprocess execution of codex hit WinError 5. Scope expanded to patch scripts/ai_bridge_agent.py executable resolution and output decoding.`
+
+- timestamp: `2026-05-04 12:35:46 +09:00`
+- note: `Started Selfdex-guided runtime finalization. score_total 7; full evaluation; single-session/no-spawn; Selfdex planner command timed out after 180s, so the contract is frozen from local source, STATE evidence, provider health, Codex CLI readiness, and local model endpoint checks.`
+
+- timestamp: `2026-05-04 12:27:00 +09:00`
+- note: `Verified frontend GPT wording restore. The AI page source and Spring static mirror now show GPT/GPT-5.5 copy again, while internal provider value remains codex for the bridge route; Spring was rebuilt and restarted on localhost:5500 as PID 18360.`
+
+- timestamp: `2026-05-04 11:45:00 +09:00`
+- note: `Started frontend GPT wording restore. score_total 3; single-session/no-spawn; visible provider copy will return from Codex Worker to GPT while keeping the internal codex bridge route intact.`
+
+- timestamp: `2026-05-04 11:38:00 +09:00`
+- note: `Verified local Spring port migration to 5500. Default backend port, frontend API fallback origin, bridge worker server, env example, and local docs now point to 5500; Spring is running on localhost:5500 as PID 5228 and the browser search for 서현 renders Kakao map output plus 10 nearby theaters.`
+
+- timestamp: `2026-05-04 11:35:00 +09:00`
+- note: `Started local Spring port migration to 5500. score_total 6; single-session/no-spawn; scope is default port/origin alignment plus 5500 runtime/browser verification while preserving nearby map and AI bridge changes.`
+
+- timestamp: `2026-05-04 11:28:00 +09:00`
+- note: `Verified nearby theater Kakao SDK fallback repair. score_total 7; single-session/no-spawn; Spring static mirror rebuilt and restarted on 8080 as PID 6572; localhost browser search for 서현 now returns 10 nearby theaters with 목록 모드 fallback instead of SDK not ready / 0 results.`
+
+- timestamp: `2026-05-04 10:30:00 +09:00`
+- note: `Verified Codex/local-model AI bridge task. score_total 8; single-session/no-spawn; bridge endpoints, worker script, frontend Codex provider, .env example, focused tests, bootJar, runtime restart, token auth, and persistent provider heartbeat checks are complete.`
 
 - timestamp: `2026-04-30 15:46:00 +09:00`
 - timestamp: `2026-04-30 16:18:00 +09:00`
@@ -92,6 +200,156 @@
 - note: `Verified PR #2 Spring static mirror correction. score_total remains 9; single-session; backend static index/style/script/map/region constants now mirror selected frontend files, bootJar was rebuilt, Spring restarted as PID 2368, and 8080/index.html contains kmh region/nearby markers.`
 
 ## Verification Results
+
+- taste_focused_candidate_pool_20260504:
+  - `timestamp`: `2026-05-04 16:16:49 +09:00`
+  - `classification`: `score_total 8; full evaluation; single-session/no-spawn because DB candidate selection, AI handoff, fallback rendering, and distinct movie behavior are one coupled recommendation surface.`
+  - `implementation`: `RecommendationService now derives a taste-focused scored pool before AI/fallback selection: direct preferredGenres first, poster-derived likedGenres second, broad candidates only if no taste matches exist. selectDistinctMovieItems no longer fills result slots with duplicate showtimes of the same movie.`
+  - `focused_tests`: `gradle test --tests kr.daboyeo.backend.service.recommendation.RecommendationServiceCandidateFilterTests --tests kr.daboyeo.backend.service.recommendation.RecommendationScorerTests passed outside sandbox after native-platform.dll failure.`
+  - `build`: `gradle bootJar passed outside sandbox.`
+  - `runtime`: `Spring localhost:5500 PID 23484; AI bridge python PID 10872; provider health local offline, codex ready.`
+  - `smoke`: `local fallback action/SF request returned count 1, Project Hail Mary 100, hasPrada=false, duplicateTitleCount=0; Codex request returned status ok/model codex/count 1, Project Hail Mary 100, hasPrada=false, duplicateTitleCount=0.`
+  - `diff_check`: `git diff --check passed with existing CRLF warnings only.`
+
+- task: `Taste-focused recommendation candidate pool`
+- score_total: `8`
+- evaluation_fit: `full fit; this directly affects user trust and needed service tests plus real local/Codex runtime evidence.`
+- orchestration_fit: `single-session fit; one service selection path plus focused tests was cheaper and safer than delegation.`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the score cap solved false confidence but not weak candidate visibility, so the task was reclassified to candidate-pool gating; runtime then exposed duplicate showtime backfill, which was also removed.`
+- reviewer_findings: `Prada-style candidates are no longer shown while any direct selected-genre current-showing movie exists; duplicate showtimes no longer fill movie result cards.`
+- verification_outcome: `focused tests, bootJar, provider health, local fallback smoke, Codex smoke, and git diff --check passed.`
+- next_gate_adjustment: `future recommendation changes should verify both score correctness and candidate-pool membership, not only final score values.`
+
+- genre_anchor_scoring_repair_20260504:
+  - `timestamp`: `2026-05-04 16:03:23 +09:00`
+  - `classification`: `score_total 8; full evaluation; single-session/no-spawn because scoring anchor, prompt hints, fallback analysis, and runtime smoke are one tightly coupled recommendation surface.`
+  - `implementation`: `Separated explicit preferredGenres from poster-derived likedGenres, used preferredGenres as the direct taste anchor when present, capped no-direct-anchor candidates at 74, and aligned GPT/Codex tasteMatch plus fallback analysis with that anchor.`
+  - `focused_tests`: `gradle test --tests kr.daboyeo.backend.service.recommendation.PreferenceProfileBuilderTests --tests kr.daboyeo.backend.service.recommendation.RecommendationScorerTests --tests kr.daboyeo.backend.service.recommendation.LocalModelRecommendationClientTests passed outside sandbox after native-platform.dll failure.`
+  - `build`: `gradle bootJar passed outside sandbox.`
+  - `runtime`: `Spring localhost:5500 PID 14920; AI bridge python PID 1056; provider health local offline, codex ready.`
+  - `smoke`: `local fallback action/SF request returned Project Hail Mary 100, Devil Wears Prada 2 74, Super Mario 74, hasPradaAt100=false; Codex request returned status ok/model codex/count 3, hasPradaAt100=false and described Prada as a secondary option without direct selected-genre match.`
+  - `diff_check`: `git diff --check passed with existing CRLF warnings only.`
+
+- task: `Genre-anchor scoring repair`
+- score_total: `8`
+- evaluation_fit: `full fit; user-facing recommendation trust depended on source-level tests plus runtime local/Codex evidence.`
+- orchestration_fit: `single-session fit; the changes touched one coupled recommendation scoring/prompt path and delegation would have raised handoff risk.`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `first cap fixed the perfect score but left a too-high 84 and prompt helpers still needed the same preferredGenre anchor.`
+- reviewer_findings: `Prada-style secondary genre matches no longer reach 100 or direct tasteMatch when action/SF is selected; they remain only as low-confidence filler when DB coverage lacks enough direct genre candidates.`
+- verification_outcome: `focused tests, bootJar, provider health, local fallback smoke, Codex smoke, and git diff --check passed.`
+- next_gate_adjustment: `future recommendation scoring changes should test explicit selected genres separately from poster-derived secondary genres before runtime smoke.`
+
+- genre_guided_recommendation_flow_20260504:
+  - `timestamp`: `2026-05-04 15:37:53 +09:00`
+  - `classification`: `score_total 9; full evaluation; single-session/no-spawn because frontend flow, backend survey/profile contract, candidate title inference, and GPT/Codex prompt are one coupled recommendation surface.`
+  - `implementation`: `Added a genre step before posters, selected-genre poster filtering with fallback priority when fewer than three matching seeds exist, preferredGenres payload, three-poster minimum with five max, backend preferred genre weighting, richer GPT/Codex prompt instructions, larger GPT explanation limits, and current-release title-derived genre tags for Project Hail Mary / Demon Slayer-style / action franchise titles.`
+  - `tests`: `node --check passed for frontend/src/js/pages/daboyeoAi.js and backend static mirror. Focused Gradle tests passed outside sandbox after the known native-platform.dll issue: PreferenceProfileBuilderTests, LocalModelRecommendationClientTests, RecommendationScorerTests. bootJar passed outside sandbox.`
+  - `runtime`: `Spring restarted on localhost:5500 as PID 14008 with startup sync disabled only for local restart; Python AI bridge restarted as PID 11528. /api/health returned ok and provider health reports codex ready, local offline.`
+  - `smoke`: `POST /api/recommendations with aiProvider=codex, preferredGenres action/SF, and three liked posters returned status ok/model codex/count 3; after title-tag repair the first recommendation was Project Hail Mary and the first explanation no longer led with direct-evidence-missing phrasing.`
+  - `verification`: `git diff --check completed with CRLF warnings only; WORKSPACE_CONTEXT.toml required sections were checked.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification one scope expansion after runtime smoke exposed weak current-release genre tags; reviewer_findings selected genre signal now affects poster selection, scoring, and prompt context while tasteMatch stays candidate-specific; verification_outcome clean; next_gate_adjustment recommendation-analysis fixes should check both prompt wording and upstream candidate tags before trusting runtime behavior.`
+
+- gpt_taste_match_prompt_fix_20260504:
+  - `timestamp`: `2026-05-04 15:14:00 +09:00`
+  - `classification`: `score_total 5; full evaluation; single-session/no-spawn because the bug is isolated to LocalModelRecommendationClient prompt construction and focused tests.`
+  - `root_cause`: `LocalModelRecommendationClient.tasteMatchHints fell back to analysisHints(profile) when a candidate had no liked-genre overlap, so user-level liked poster genres such as action/SF/adventure/history were copied into every candidate tasteMatch and GPT/Codex could overclaim that unrelated titles matched those genres.`
+  - `implementation`: `Removed the fallback from candidate tasteMatch and clarified the GPT/Codex prompt: liked_poster_hints are user-level context only, and the model must not claim poster-taste match when a candidate's tasteMatch is empty.`
+  - `tests`: `Added LocalModelRecommendationClientTests coverage for unmatched candidates producing "tasteMatch":[] and directly matching candidates retaining tasteMatch overlap. Focused test passed outside sandbox after native-platform.dll sandbox failure.`
+  - `runtime`: `gradle bootJar passed; Spring restarted on localhost:5500 as PID 8388 with DABOYEO_SHOWTIME_STARTUP_ENABLED=false only for local restart; Python AI bridge restarted as PID 22172; /api/health returned ok and provider health reports Codex ready, local offline.`
+  - `verification`: `git diff --check for touched files completed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification none after root-cause confirmation; reviewer_findings user-level poster hints remain present but are scoped away from candidate-specific evidence; verification_outcome clean; next_gate_adjustment GPT-visible candidate fields should be named and populated as evidence, not as fallback narrative hints.`
+
+- recommendation_five_smoke_20260504:
+  - `timestamp`: `2026-05-04 14:56:00 +09:00`
+  - `classification`: `score_total 7; full evaluation; Selfdex selected; single-session/no-spawn because candidate lookup, focused tests, rebuild, and runtime smoke are one coupled recommendation surface.`
+  - `implementation`: `RecommendationService now wraps candidate lookup in findCandidatesWithFallback: exact filters are queried first, active filters are progressively relaxed, and finally broad upcoming TiDB candidates are used before an honest no_filtered_candidates response is returned. The scorer receives the effective filters that found candidates.`
+  - `tests`: `gradle test --tests kr.daboyeo.backend.service.recommendation.RecommendationServiceCandidateFilterTests passed outside sandbox after the known native-platform.dll sandbox failure; added tests for relaxed region/time recovery and broad candidate fallback.`
+  - `build_runtime`: `gradle bootJar passed; Spring restarted on localhost:5500 as PID 22240 with local startup showtime sync disabled only for this runtime restart; Python AI bridge restarted as PID 9200 with a runtime-only token. /api/health returned ok and provider health reports codex ready, local offline.`
+  - `five_smoke`: `Five POST /api/recommendations calls with strict region/date/time/person filters all returned non-empty results: 01-seohyeon-expired-morning count 3, 02-gangnam-brunch count 3, 03-jeju-night count 3, 04-nowhere-large-party count 3, 05-busan-future-brunch count 3. All five local-provider calls returned fallback status because the local model server is offline, but the UI receives result cards.`
+  - `codex_sanity`: `One extra POST /api/recommendations with aiProvider=codex returned status ok, model codex, count 3.`
+  - `verification`: `git status --short, WORKSPACE_CONTEXT.toml read, WORKSPACE_CONTEXT section check, and git diff --check for the touched files completed; diff check reported CRLF warnings only.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification runtime restart exposed a PowerShell variable/API mismatch that was fixed and logged; reviewer_findings no fabricated recommendations, exact filters still run first, no-data remains honest if all searches are empty, and Codex token stays runtime-only; verification_outcome clean; next_gate_adjustment recommendation UX should distinguish exact-match recommendations from relaxed-condition recommendations.`
+
+- hourly_showtime_sync_20260504:
+  - `timestamp`: `2026-05-04 14:27:00 +09:00`
+  - `classification`: `score_total 9; full evaluation; Selfdex selected; single-session/no-spawn because scheduler defaults, frontend trigger removal, ingest normalization, and recommendation resilience are coupled in one runtime contract.`
+  - `implementation`: `Changed showtime scheduler defaults to hourly cron 0 0 * * * * and startup-enabled true, added DABOYEO_SHOWTIME_INCLUDE_CGV default false, made scheduled sync read includeCgv from config, removed browser entry/recommend refresh calls, cache-busted served JS, normalized Lotte date strings with attached Korean AM/PM time text, and made RecommendationService saveRun best-effort.`
+  - `frontend_contract`: `Served index.html references 20260504-hourly-sync, and served main/AI page JS contains no showtimes/refresh, refreshShowtimesForEntry, requestEntryRefresh, or refreshShowtimes call from entry/recommend flows. The manual refresh API/client helper remains available but unused by those flows.`
+  - `startup_sync_evidence`: `A real startup sync attempt logged trigger=scheduled, offsets=[0, 1, 2], includeCgv=false, cgvTargets=0, Lotte and Megabox auto-discovery, and successful TiDB writes for Lotte/Megabox bundles after the Lotte date parser repair.`
+  - `runtime`: `Latest Spring jar is running on localhost:5500 as PID 16960; AI bridge python process is PID 17416; /api/health returns ok; /api/recommendation/providers/health reports codex ready and local offline. Local restart used DABOYEO_SHOWTIME_STARTUP_ENABLED=false only to prevent duplicate startup crawling after the verified startup sync attempt; application config default remains true.`
+  - `recommendation_smoke`: `POST /api/recommendations with local provider returned status fallback, model gemma-4-e2b-it, count 3, first provider MEGABOX from TiDB-backed candidates. A first smoke during active sync exposed recommendation_runs save timeout; after fail-soft patch, focused tests passed and latest runtime returned recommendations.`
+  - `verification`: `node --check passed for frontend/static script.js and daboyeoAi.js; rg served/source checks confirm entry/recommend pages no longer call refresh; gradle test passed outside sandbox for ShowtimeSyncServiceTests, CollectorBundleIngestCommandTests, and RecommendationServiceCandidateFilterTests after sandbox native-platform.dll failure; gradle bootJar passed; git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification runtime startup sync exposed Lotte source-date normalization and recommendation run-history persistence as necessary resilience fixes; reviewer_findings CGV stays excluded, browser no longer triggers crawl, secrets stay server-side, and nonessential run-history write failure no longer blocks recommendation results; verification_outcome clean; next_gate_adjustment periodic data collection should be verified under concurrent recommendation load, not only by unit tests.`
+
+- entry_showtime_refresh_20260504:
+  - `timestamp`: `2026-05-04 13:36:00 +09:00`
+  - `classification`: `score_total 9; full evaluation; Selfdex selected; main-owned writes with two read-only explorer slices for frontend hook mapping and backend sync architecture.`
+  - `selfdex`: `Read-only Selfdex planner timed out after 180s, so the task proceeded with the frozen local contract from STATE.md, source inspection, and read-only explorer evidence.`
+  - `implementation`: `Added POST /api/showtimes/refresh, EntryShowtimeRefreshService, entry-only ShowtimeSyncService path excluding CGV, bounded entry refresh config, max schedules per bundle trimming, frontend client helper, main-page AI/direct-compare pre-navigation refresh calls, and AI recommendation preflight refresh.`
+  - `runtime`: `Rebuilt bootJar and restarted Spring on localhost:5500 as PID 2700; restarted Codex bridge worker as PID 13688 with runtime-only token and ignored backend/build/tools/codex.exe command.`
+  - `refresh_smoke`: `/api/showtimes/refresh reason=ai-entry returned running in about 8s, then reason=recommend-start returned recent after the background job completed with providers LOTTE_CINEMA/MEGABOX, cgvDeferred true, dateCount 1, bundleRequests 4, movies 112, theaters 232, screens 24, showtimes 80.`
+  - `recommendation_smoke`: `POST /api/recommendations with local provider returned status fallback, model gemma-4-e2b-it, count 3, first provider MEGABOX; local model remains offline but TiDB-backed candidates are available.`
+  - `provider_health`: `/api/recommendation/providers/health reports local offline and codex ready.`
+  - `verification`: `node --check passed for changed frontend/static JS; gradle test --tests kr.daboyeo.backend.sync.showtime.ShowtimeSyncServiceTests passed outside sandbox after sandbox native-platform.dll failure; gradle bootJar passed; git diff --check passed with CRLF warnings only.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit main integration plus read-only explorers fit; predicted_topology main integration with read-only explorer support; actual_topology same; spawn_count 2 read-only; rework_or_reclassification initial entry refresh was too broad and was tightened by date/discovery/schedule caps after thread evidence; reviewer_findings CGV is excluded from entry path and secrets are not returned to browser; verification_outcome clean; next_gate_adjustment button-triggered collection must cap schedules before TiDB persistence, not only discovery targets.`
+
+- local_codex_recommendation_runtime_20260504:
+  - `timestamp`: `2026-05-04 12:56:17 +09:00`
+  - `classification`: `score_total 7; full evaluation; single-session; no spawn because runtime token, Spring process, bridge worker, and Codex exec verification are one coupled surface.`
+  - `selfdex`: `The read-only Selfdex planner timed out after 180s, so the task proceeded from local source, STATE evidence, and live runtime checks.`
+  - `implementation`: `Patched scripts/ai_bridge_agent.py to resolve the Codex executable, decode subprocess output as UTF-8 with replacement, and create repo-local manual temporary directories instead of Python tempfile directories that hit Windows permission errors.`
+  - `runtime`: `After user-approved ACL update for C:\Users\pc07-00\.codex\sessions and C:\Users\pc07-00\.codex\tmp, copied the local Codex binary to ignored backend/build/tools/codex.exe because the WindowsApps packaged executable is denied from the sandbox-outside worker context.`
+  - `server`: `Spring is running on localhost:5500 as PID 19928; AI bridge worker is running as Python PID 13796 with a runtime-only bridge token.`
+  - `verification`: `Copied codex.exe --version passed outside the sandbox; codex exec schema smoke returned {"ok":true}; /api/health returned ok; /api/recommendation/providers/health reports codex ready and local offline; POST /api/recommendations with aiProvider=codex returned status ok, model codex, and 3 recommendations.`
+  - `local_provider_gap`: `Local model provider remains offline because 127.0.0.1:1234/v1/models is not reachable.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification runtime smoke exposed Windows-specific Codex executable and .codex ACL constraints; reviewer_findings bridge token stayed runtime-only and auth files were not copied; verification_outcome Codex analysis path live, local provider awaiting model server; next_gate_adjustment for local Codex bridge work, verify codex exec under the exact worker context before claiming ready.`
+
+- frontend_gpt_wording_restore_20260504:
+  - `timestamp`: `2026-05-04 12:27:00 +09:00`
+  - `classification`: `score_total 3; light evaluation; single-session; no spawn because this was a small frontend/static mirror copy correction.`
+  - `implementation`: `Restored the user-facing provider label/title/copy from Codex Worker/Codex analysis back to GPT/GPT-5.5/GPT analysis in frontend/src/js/pages/daboyeoAi.js and backend/src/main/resources/static/src/js/pages/daboyeoAi.js.`
+  - `route_preservation`: `The internal provider value remains codex so the current backend Codex bridge route is preserved while the frontend reads as GPT.`
+  - `runtime`: `gradle bootJar passed; Spring was restarted on localhost:5500 as PID 18360; GET /api/health on 127.0.0.1:5500 returned ok.`
+  - `verification`: `node --check passed for frontend and Spring-static daboyeoAi.js; git diff --check passed with CRLF warnings only; served JS contains label GPT and title GPT-5.5 and no Codex Worker/Codex analysis visible strings.`
+  - `retrospective`: `evaluation_fit light fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification none; reviewer_findings visible copy restored without breaking internal route; verification_outcome clean; next_gate_adjustment distinguish product-facing provider naming from wire provider naming.`
+
+- local_spring_port_5500_20260504:
+  - `timestamp`: `2026-05-04 11:38:00 +09:00`
+  - `classification`: `score_total 6; light evaluation; single-session; no spawn because the port/default-origin changes are one tightly coupled runtime path.`
+  - `implementation`: `Changed Spring default port to DABOYEO_BACKEND_PORT:5500, updated local frontend API defaults to 127.0.0.1:5500 with same-origin behavior for Spring-served pages, updated bridge worker/env defaults to 127.0.0.1:5500, added 5500 to fallback CORS defaults, mirrored changed frontend JS into Spring static resources, and updated local verification docs.`
+  - `runtime`: `Stopped old 8080 Spring PID 6572, rebuilt bootJar, and restarted the jar on localhost:5500 as PID 5228; netstat shows 5500 listening and no 8080 listener.`
+  - `browser_verification`: `In the in-app browser on http://localhost:5500/?v=20260504-port5500, entering 서현 produced feedback "경기 성남시 분당구 서현동 기준으로 주변 극장을 표시했습니다.", nearby-count 10, address "현재 위치: 경기도 성남시 분당구 중앙공원로39번길 35", list results including 메가박스 분당 and CGV 서현, and map text "현재 위치 100m".`
+  - `verification`: `node --check passed for frontend and Spring-static client.js/liveMovies.js/daboyeoAi.js; python -m py_compile passed for scripts/ai_bridge_agent.py; git diff --check passed with CRLF warnings only; gradle bootJar passed outside the sandbox; GET /api/health on 127.0.0.1:5500 returned ok.`
+  - `retrospective`: `evaluation_fit light fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification none; reviewer_findings default runtime and browser-visible origin are now aligned with Kakao localhost:5500 behavior; verification_outcome clean; next_gate_adjustment use 5500 as the default Spring local origin unless the user explicitly overrides DABOYEO_BACKEND_PORT.`
+
+- nearby_kakao_sdk_fallback_20260504:
+  - `timestamp`: `2026-05-04 11:28:00 +09:00`
+  - `classification`: `score_total 7; full evaluation; single-session; no spawn because SDK readiness, geolocation UI, manual search, Spring static mirror, and browser verification all touch the same main-page surface.`
+  - `root_cause`: `The Spring-served page could reach a state where Kakao Maps never exposed window.kakao.maps.load, while the frontend kept map/list rendering coupled to SDK readiness; manual search also depended on Kakao geocoding and stale browser cache could keep the old module active.`
+  - `implementation`: `Added autoload=false to the Kakao SDK script, added a cache-busted kakaoMap module URL, made Kakao readiness explicit, decoupled nearby list rendering from map rendering, added local theater-database fallback search, and mirrored frontend fixes into backend Spring static resources.`
+  - `runtime`: `gradle bootJar passed outside the sandbox; Spring restarted on 127.0.0.1:8080 as PID 6572; GET /api/health returned ok.`
+  - `browser_verification`: `In the in-app browser on http://localhost:8080/?v=20260504-nearby-final, entering 서현 and pressing Enter produced feedback "CGV 서현 기준으로 주변 극장을 표시했습니다.", nearby-count 10, first results including CGV 서현, 메가박스 분당, CGV 판교, and map fallback text instead of SDK not ready.`
+  - `verification`: `node --check passed for frontend/src/js/api/kakaoMap.js and backend/src/main/resources/static/src/js/api/kakaoMap.js; git diff --check passed with CRLF warnings only; bootJar passed.`
+  - `privacy_note`: `Real browser geolocation coordinates were not read during verification; the geolocation success handler now uses the same updateMapWithServerData fallback path verified through manual location search.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification browser evidence shifted the fix from SDK race only to SDK-unavailable fallback; reviewer_findings Spring static mirrors and cache busting are required for 8080; verification_outcome clean with graceful SDK fallback; next_gate_adjustment for external SDK UI, keep data/list rendering independent from map rendering.`
+
+- codex_local_ai_bridge_20260504:
+  - `timestamp`: `2026-05-04 10:30:00 +09:00`
+  - `classification`: `score_total 8; full evaluation; single-session; no spawn because the user invoked selfdex but did not explicitly request subagents and the provider/bridge/UI contract was tightly coupled.`
+  - `implementation`: `Added a token-protected Spring AI bridge job queue, internal heartbeat/job/result endpoints, Codex provider routing, local-model bridge fallback, Codex/local provider health, and a stdlib Python bridge worker for local OpenAI-compatible models or codex exec.`
+  - `frontend`: `Replaced the user-facing GPT provider option with Codex worker copy in frontend/src/js/pages/daboyeoAi.js and the Spring static mirror.`
+  - `security`: `Bridge endpoints require X-DABOYEO-BRIDGE-TOKEN; the browser never receives the bridge token, local model URL, or Codex auth state; codex exec runs with read-only sandbox and ask-for-approval never.`
+  - `runtime`: `gradle bootJar passed outside the sandbox; Spring restarted on 127.0.0.1:8080 as PID 4364; GET /api/health returned ok.`
+  - `bridge_smoke`: `Unauthenticated bridge job polling returns HTTP 401; scripts/ai_bridge_agent.py --once with the repo-local token sends a Codex heartbeat; the persistent bridge agent is running as PID 6236; provider health reports codex ready and local offline until the local OpenAI-compatible model server is reachable.`
+  - `verification`: `node --check passed for frontend and Spring-static daboyeoAi.js; python -m py_compile passed for scripts/ai_bridge_agent.py; codex --ask-for-approval never exec --help confirmed the CLI option ordering used by the bridge worker; focused Gradle tests passed for ApiExceptionHandlerTests, AiBridgeJobServiceTests, and LocalModelRecommendationClientTests; git diff --check passed with CRLF warnings only.`
+  - `tool_gap`: `Selfdex external planning command timed out after 120s and was logged; the implementation proceeded from local source files and the frozen STATE contract.`
+  - `retrospective`: `evaluation_fit full fit; orchestration_fit single-session fit; predicted_topology single-session; actual_topology single-session; spawn_count 0; rework_or_reclassification runtime smoke exposed ResponseStatusException being wrapped as 500, so ApiExceptionHandler was narrowed to preserve 401/503/404 statuses; reviewer_findings bridge auth and fallback are now explicit; verification_outcome clean; next_gate_adjustment when adding internal endpoints, smoke unauthenticated and authorized paths before runtime signoff.`
 
 - spring_5500_kakao_key_fix_20260430:
   - `timestamp`: `2026-04-30 17:48:00 +09:00`
@@ -1269,3 +1527,15 @@
 - reviewer_findings: `the shareable contract now covers migrations 001-005, 20 canonical table names, post-midnight showtime normalization, observed seat-status mapping, layout-vs-snapshot separation, and raw-payload safety`
 - verification_outcome: `migration dry-run, py_compile, status-normalizer assertions, migration split check, static contract search, secret placeholder scan, and git diff --check passed; Gradle test could not start due local native-platform.dll loading`
 - next_gate_adjustment: `when fresh crawl classification exposes status-code counts, compare them against existing normalizers before freezing the DB contract`
+
+- task: `Codex-scored reserve recommendation pool`
+- score_total: `8`
+- evaluation_fit: `full fit; the work changed AI schema, score validation, result filling policy, and runtime provider behavior`
+- orchestration_fit: `single-session fit; Selfdex was used read-only, but implementation stayed coupled across one recommendation contract`
+- predicted_topology: `single-session`
+- actual_topology: `single-session`
+- spawn_count: `0`
+- rework_or_reclassification: `the prior strict taste gate was intentionally relaxed into taste-first reserve filling after the user asked to avoid 1-2 item outputs`
+- reviewer_findings: `direct taste candidates remain first, reserve candidates can fill empty slots, Codex/GPT now return model score s, and server validation caps no-direct taste reserves at 74`
+- verification_outcome: `focused recommendation service/client/scorer tests passed outside sandbox; bootJar passed; runtime local fallback and Codex smokes returned 3 action/SF recommendations with reserve scores below the direct match`
+- next_gate_adjustment: `for sparse live DB pools, prefer tiered reserve fill plus visible lower scores over strict exclusion that makes the UI look empty`

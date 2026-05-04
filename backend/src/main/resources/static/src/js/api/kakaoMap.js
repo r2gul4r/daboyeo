@@ -3,6 +3,8 @@ import { getApiBaseUrl } from './client.js';
 let map;
 let clusterer;
 let markers = [];
+let kakaoReadyPromise;
+let theaterDatabasePromise;
 
 const mapContainer = document.getElementById('map');
 const nearbySection = document.getElementById('nearby-section');
@@ -56,8 +58,70 @@ function openNearbySection() {
 }
 
 function openNearbyTheaters() {
+  if (addressInfo) {
+    addressInfo.innerText = '현재 위치 확인 중...';
+  }
   openNearbySection();
   void handleGeo();
+}
+
+function waitForKakaoMaps(timeoutMs = 8000) {
+  if (window.kakao?.maps?.services && window.kakao.maps.MarkerClusterer) {
+    return Promise.resolve(window.kakao.maps);
+  }
+
+  if (kakaoReadyPromise) {
+    return kakaoReadyPromise;
+  }
+
+  kakaoReadyPromise = new Promise((resolve, reject) => {
+    const startedAt = Date.now();
+
+    const check = () => {
+      if (window.kakao?.maps?.load) {
+        window.kakao.maps.load(() => {
+          if (window.kakao?.maps?.services && window.kakao.maps.MarkerClusterer) {
+            resolve(window.kakao.maps);
+            return;
+          }
+          reject(new Error('Kakao services SDK not ready.'));
+        });
+        return;
+      }
+
+      if (Date.now() - startedAt >= timeoutMs) {
+        reject(new Error('Kakao Maps SDK not ready.'));
+        return;
+      }
+
+      window.setTimeout(check, 50);
+    };
+
+    check();
+  }).catch((error) => {
+    kakaoReadyPromise = null;
+    throw error;
+  });
+
+  return kakaoReadyPromise;
+}
+
+function loadTheaterDatabase() {
+  if (!theaterDatabasePromise) {
+    theaterDatabasePromise = fetch('./src/map/theaters.json')
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Theater database response error');
+        }
+        return response.json();
+      })
+      .catch((error) => {
+        theaterDatabasePromise = null;
+        throw error;
+      });
+  }
+
+  return theaterDatabasePromise;
 }
 
 function createMarkerImage(color) {
@@ -70,43 +134,50 @@ function createMarkerImage(color) {
   );
 }
 
-function initializeDaboyeoMap() {
-  if (!mapContainer || !window.kakao || !kakao.maps) return;
+async function initializeDaboyeoMap(timeoutMs = 8000) {
+  if (!mapContainer) return null;
+  if (map) return map;
 
-  kakao.maps.load(() => {
-    map = new kakao.maps.Map(mapContainer, {
-      center: new kakao.maps.LatLng(37.5015, 127.0263),
-      level: 8,
-    });
+  try {
+    await waitForKakaoMaps(timeoutMs);
+  } catch (error) {
+    if (mapRegionSearchFeedback) {
+      mapRegionSearchFeedback.innerText = '카카오 지도 SDK를 아직 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+      mapRegionSearchFeedback.style.color = 'var(--red50)';
+    }
+    throw error;
+  }
 
-    clusterer = new kakao.maps.MarkerClusterer({
-      map,
-      averageCenter: true,
-      minLevel: 6,
-      styles: [{
-        width: '53px',
-        height: '52px',
-        background: 'rgba(114, 100, 233, 0.9)',
-        borderRadius: '50%',
-        color: '#fff',
-        textAlign: 'center',
-        fontWeight: 'bold',
-        lineHeight: '54px',
-        border: '2px solid #fff',
-        boxShadow: '0 0 10px rgba(114, 100, 233, 0.5)',
-      }],
-    });
-
-    void loadAllTheatersToCluster();
+  map = new kakao.maps.Map(mapContainer, {
+    center: new kakao.maps.LatLng(37.5015, 127.0263),
+    level: 8,
   });
+
+  clusterer = new kakao.maps.MarkerClusterer({
+    map,
+    averageCenter: true,
+    minLevel: 6,
+    styles: [{
+      width: '53px',
+      height: '52px',
+      background: 'rgba(114, 100, 233, 0.9)',
+      borderRadius: '50%',
+      color: '#fff',
+      textAlign: 'center',
+      fontWeight: 'bold',
+      lineHeight: '54px',
+      border: '2px solid #fff',
+      boxShadow: '0 0 10px rgba(114, 100, 233, 0.5)',
+    }],
+  });
+
+  void loadAllTheatersToCluster();
+  return map;
 }
 
 async function loadAllTheatersToCluster() {
   try {
-    const response = await fetch('./src/map/theaters.json');
-    if (!response.ok) return;
-
-    const theaters = await response.json();
+    const theaters = await loadTheaterDatabase();
     const hoverOverlay = new kakao.maps.CustomOverlay({ yAnchor: 2.5, zIndex: 3 });
     const theaterMarkers = theaters.map((theater) => {
       const markerColor = MARKER_COLORS[theater.provider] || MARKER_COLORS.ETC;
@@ -163,6 +234,9 @@ async function loadAllTheatersToCluster() {
 async function fetchLiveNearby(lat, lng) {
   openNearbySection();
 
+  let localTheaters = [];
+  let results = [];
+
   try {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(`${apiBaseUrl}/api/live/nearby?lat=${lat}&lng=${lng}`);
@@ -171,54 +245,54 @@ async function fetchLiveNearby(lat, lng) {
     }
 
     const data = await response.json();
-    const localTheaters = Array.isArray(data.theaters) && data.theaters.length > 0
+    localTheaters = Array.isArray(data.theaters) && data.theaters.length > 0
       ? data.theaters
       : await findNearbyLocal(lat, lng);
-    updateMapWithServerData(localTheaters, data.results || [], lat, lng);
+    results = data.results || [];
   } catch (error) {
     console.error('Failed to fetch live data from server:', error);
-    updateMapWithServerData([], [], lat, lng);
-    if (nearbyList) {
-      nearbyList.innerHTML = '<div style="padding: 15px; border-radius: 8px; border: 1px solid var(--gray50); color: var(--red50);">현재 실시간 정보를 가져올 수 없습니다.</div>';
-    }
+    localTheaters = await findNearbyLocal(lat, lng);
+  }
+
+  await updateMapWithServerData(localTheaters, results, lat, lng);
+  if (nearbyList && localTheaters.length === 0) {
+    nearbyList.innerHTML = '<div style="padding: 15px; border-radius: 8px; border: 1px solid var(--gray50); color: var(--red50);">현재 실시간 정보를 가져올 수 없습니다.</div>';
   }
 }
 
-function updateMapWithServerData(theaters, results, userLat, userLng) {
-  if (!window.kakao || !kakao.maps || !map) return;
-
-  map.relayout();
-  const userPos = new kakao.maps.LatLng(userLat, userLng);
-  map.setCenter(userPos);
-  map.setLevel(4);
-
-  if (markers.length > 0) {
-    markers.forEach((marker) => marker.setMap(null));
+function renderSdkFallback(userLat, userLng) {
+  if (addressInfo && Number.isFinite(userLat) && Number.isFinite(userLng)) {
+    addressInfo.innerText = `기준 위치: ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
   }
-  markers = [];
 
-  const userMarker = new kakao.maps.CustomOverlay({
-    position: userPos,
-    content: `
-      <div class="user-location-marker">
-        <div class="user-pulse"></div>
-        <div class="user-dot"></div>
-        <div class="user-label">현재 위치</div>
+  if (mapRegionSearchFeedback) {
+    mapRegionSearchFeedback.innerText = '카카오 지도 SDK를 불러오지 못해 목록 모드로 표시합니다.';
+    mapRegionSearchFeedback.style.color = 'var(--gray100)';
+  }
+
+  if (mapContainer && !map) {
+    mapContainer.innerHTML = `
+      <div style="
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 24px;
+        text-align: center;
+        color: var(--gray100);
+        background: rgba(2, 28, 48, 0.88);
+      ">
+        <strong style="color: #fff;">지도 SDK를 불러오지 못했습니다.</strong>
+        <span>근처 극장은 오른쪽 목록으로 표시합니다.</span>
       </div>
-    `,
-    yAnchor: 1,
-  });
-  userMarker.setMap(map);
-  markers.push(userMarker);
+    `;
+  }
+}
 
-  const geocoder = new kakao.maps.services.Geocoder();
-  geocoder.coord2Address(userLng, userLat, (result, status) => {
-    if (status === kakao.maps.services.Status.OK && addressInfo) {
-      const address = result[0].road_address ? result[0].road_address.address_name : result[0].address.address_name;
-      addressInfo.innerText = `현재 위치: ${address}`;
-    }
-  });
-
+function renderNearbyList(theaters, results) {
   const showtimeCountByTheater = {};
   results.forEach((item) => {
     const key = `${item.provider}_${item.theater_name}`;
@@ -262,6 +336,7 @@ function updateMapWithServerData(theaters, results, userLat, userLng) {
     `;
 
     card.onclick = () => {
+      if (!map || !window.kakao?.maps) return;
       map.panTo(new kakao.maps.LatLng(theater.lat, theater.lng));
       map.setLevel(3);
     };
@@ -272,6 +347,70 @@ function updateMapWithServerData(theaters, results, userLat, userLng) {
   if (nearbyCount) {
     nearbyCount.innerText = String(sortedTheaters.length);
   }
+
+  return sortedTheaters;
+}
+
+async function updateMapWithServerData(theaters, results, userLat, userLng) {
+  const sortedTheaters = renderNearbyList(theaters, results);
+
+  try {
+    await initializeDaboyeoMap(2500);
+  } catch {
+    renderSdkFallback(userLat, userLng);
+    return;
+  }
+  if (!window.kakao || !kakao.maps || !map) {
+    renderSdkFallback(userLat, userLng);
+    return;
+  }
+
+  map.relayout();
+  const userPos = new kakao.maps.LatLng(userLat, userLng);
+  map.setCenter(userPos);
+  map.setLevel(4);
+
+  if (markers.length > 0) {
+    markers.forEach((marker) => marker.setMap(null));
+  }
+  markers = [];
+
+  const userMarker = new kakao.maps.CustomOverlay({
+    position: userPos,
+    content: `
+      <div class="user-location-marker">
+        <div class="user-pulse"></div>
+        <div class="user-dot"></div>
+        <div class="user-label">현재 위치</div>
+      </div>
+    `,
+    yAnchor: 1,
+  });
+  userMarker.setMap(map);
+  markers.push(userMarker);
+
+  const geocoder = new kakao.maps.services.Geocoder();
+  if (addressInfo) {
+    addressInfo.innerText = `기준 위치: ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
+  }
+  geocoder.coord2Address(userLng, userLat, (result, status) => {
+    if (status === kakao.maps.services.Status.OK && addressInfo) {
+      const address = result[0].road_address ? result[0].road_address.address_name : result[0].address.address_name;
+      addressInfo.innerText = `현재 위치: ${address}`;
+    }
+  });
+
+  sortedTheaters.forEach((theater) => {
+    const markerColor = MARKER_COLORS[theater.provider] || MARKER_COLORS.ETC;
+    const marker = new kakao.maps.Marker({
+      position: new kakao.maps.LatLng(theater.lat, theater.lng),
+      image: createMarkerImage(markerColor),
+      title: theater.name,
+      map,
+    });
+
+    markers.push(marker);
+  });
 }
 
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -287,10 +426,7 @@ function getDistance(lat1, lon1, lat2, lon2) {
 
 async function findNearbyLocal(lat, lng) {
   try {
-    const response = await fetch('./src/map/theaters.json');
-    if (!response.ok) return [];
-
-    const theaters = await response.json();
+    const theaters = await loadTheaterDatabase();
     return theaters
       .map((theater) => ({
         ...theater,
@@ -319,7 +455,7 @@ async function handleGeo() {
       const userLat = position.coords.latitude;
       const userLng = position.coords.longitude;
       const nearby = await findNearbyLocal(userLat, userLng);
-      updateMapWithServerData(nearby, [], userLat, userLng);
+      await updateMapWithServerData(nearby, [], userLat, userLng);
       setTriggerBusy(false);
     },
     async () => {
@@ -335,9 +471,40 @@ async function handleGeo() {
   );
 }
 
+async function findLocalLocationByQuery(query) {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return null;
+
+  try {
+    const theaters = await loadTheaterDatabase();
+    const match = theaters.find((theater) => {
+      const searchable = [
+        theater.name,
+        theater.address,
+        theater.provider,
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      return searchable.includes(normalizedQuery);
+    });
+
+    if (!match) return null;
+
+    return {
+      lat: match.lat,
+      lng: match.lng,
+      label: match.name,
+    };
+  } catch (error) {
+    console.error('Local location search failed:', error);
+    return null;
+  }
+}
+
 async function searchLocationByQuery(query) {
-  if (!window.kakao || !kakao.maps.services) {
-    throw new Error('SDK not ready');
+  if (!window.kakao?.maps?.services) {
+    const localLocation = await findLocalLocationByQuery(query);
+    if (localLocation) return localLocation;
+    await waitForKakaoMaps(3000);
   }
 
   const geocoder = new kakao.maps.services.Geocoder();
@@ -372,6 +539,9 @@ async function searchLocationByQuery(query) {
   });
   if (keywordResult) return keywordResult;
 
+  const localLocation = await findLocalLocationByQuery(query);
+  if (localLocation) return localLocation;
+
   throw new Error('위치를 찾을 수 없습니다.');
 }
 
@@ -395,13 +565,17 @@ async function handleRegionSearch() {
       regionInput.value = found.label;
     }
 
-    if (nearbySection) {
-      nearbySection.classList.remove('active');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    await fetchLiveNearby(found.lat, found.lng);
+
+    if (mapRegionSearchFeedback) {
+      mapRegionSearchFeedback.innerText = `"${found.label}" 기준으로 주변 극장을 표시했습니다.`;
+      mapRegionSearchFeedback.style.color = 'var(--gray100)';
     }
   } catch (error) {
     if (mapRegionSearchFeedback) {
-      mapRegionSearchFeedback.innerText = error.message;
+      mapRegionSearchFeedback.innerText = error.message.includes('Kakao')
+        ? '카카오 지도 SDK를 불러오지 못했습니다. 극장명이나 주소로 다시 검색해 주세요.'
+        : error.message;
       mapRegionSearchFeedback.style.color = 'var(--red50)';
     }
   }
@@ -441,7 +615,15 @@ if (goToMyLocationBtn) {
   });
 }
 
-window.addEventListener('load', () => {
-  initializeDaboyeoMap();
+function bootNearbyMap() {
+  void initializeDaboyeoMap(4000).catch(() => {
+    renderSdkFallback();
+  });
   window.openNearbyTheaters = openNearbyTheaters;
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootNearbyMap, { once: true });
+} else {
+  bootNearbyMap();
+}

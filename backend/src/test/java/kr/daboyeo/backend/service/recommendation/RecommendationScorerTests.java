@@ -105,6 +105,57 @@ class RecommendationScorerTests {
         assertThat(horror.orElseThrow().matchedTags()).contains("audience:friends", "mood:tense", "genre:thriller");
     }
 
+    @Test
+    void currentReleaseTitleAliasesExposeSelectedGenreTags() {
+        TagProfile sfProfile = new TagProfile();
+        sfProfile.addWeight("genre:sf", 6);
+        sfProfile.addWeight("genre:adventure", 4);
+
+        var project = scorer.scoreOne(sfProfile, candidate("프로젝트 헤일메리", "12", 120, Set.of()));
+
+        assertThat(project).isPresent();
+        assertThat(project.orElseThrow().matchedTags()).contains("genre:sf", "genre:adventure");
+
+        TagProfile actionProfile = new TagProfile();
+        actionProfile.addWeight("genre:action", 6);
+        actionProfile.addWeight("genre:animation", 3);
+
+        var demonSlayer = scorer.scoreOne(actionProfile, candidate("극장판 귀멸의 칼날: 무한성편", "15", 110, Set.of()));
+
+        assertThat(demonSlayer).isPresent();
+        assertThat(demonSlayer.orElseThrow().matchedTags()).contains("genre:action", "genre:animation");
+        assertThat(demonSlayer.orElseThrow().candidate().allTags()).contains("content:violence", "genre:thriller");
+    }
+
+    @Test
+    void genericMoodFitWithoutLikedGenreOverlapCannotReachPerfectScore() {
+        TagProfile profile = new TagProfile();
+        profile.setAudience("friends");
+        profile.setMood("light");
+        profile.addWeight("audience:friends", 4);
+        profile.addWeight("mood:light", 4);
+        profile.addWeight("mood:funny", 3);
+        profile.addWeight("genre:action", 6);
+        profile.addWeight("genre:sf", 6);
+        profile.addWeight("genre:drama", 5);
+        profile.addWeight("genre:comedy", 5);
+        profile.addPreferredGenre("action");
+        profile.addPreferredGenre("sf");
+        profile.addLikedGenre("drama");
+        profile.addLikedGenre("comedy");
+
+        var genericFit = scorer.scoreOne(profile, candidate("악마는 프라다를 입는다 2", "12", 105, Set.of())).orElseThrow();
+        var directFit = scorer.scoreOne(profile, candidate("프로젝트 헤일메리", "12", 120, Set.of())).orElseThrow();
+
+        assertThat(genericFit.matchedTags()).contains("audience:friends", "mood:light", "mood:funny", "genre:drama", "genre:comedy");
+        assertThat(genericFit.matchedTags()).doesNotContain("genre:action", "genre:sf");
+        assertThat(genericFit.penalties()).contains("taste_mismatch");
+        assertThat(genericFit.score()).isLessThan(100);
+        assertThat(genericFit.score()).isLessThanOrEqualTo(74);
+        assertThat(directFit.matchedTags()).contains("genre:sf");
+        assertThat(directFit.score()).isGreaterThan(genericFit.score());
+    }
+
     private ShowtimeCandidate candidate(String ageRating, Integer runtimeMinutes, Set<String> tags) {
         return candidate("테스트 영화", ageRating, runtimeMinutes, tags);
     }

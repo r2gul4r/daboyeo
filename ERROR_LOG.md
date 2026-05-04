@@ -404,6 +404,12 @@ Do not rewrite existing entries; append only.
   details: `Spring jar는 foreground 실행에서 정상 기동됐지만 샌드박스 내부 background 실행 프로세스는 명령 종료 뒤 유지되지 않아 127.0.0.1:8080 연결이 끊겼다. 샌드박스 밖에서 같은 jar를 PID 19872로 실행해 /api/health 200을 확인했다. 또한 기본 sandbox Python에서는 PyMySQL import가 실패했지만 사용자 Python site-packages에는 PyMySQL 1.1.2가 이미 있어 escalated 환경에서 read-only DB coverage probe를 수행했다.`
   status: `resolved`
 
+- time: `2026-05-04 10:10:10 +09:00`
+  location: `selfdex planning for daboyeo AI bridge`
+  summary: `Selfdex read-only planning command timed out`
+  details: `User invoked selfdex for the Codex/local-model recommendation bridge task. The read-only command python C:\Users\pc07-00\selfdex\scripts\plan_external_project.py --root C:\Users\pc07-00\selfdex --project-root C:\lsh\git\daboyeo --project-name daboyeo --format markdown timed out after 120 seconds, so implementation proceeds from the workspace source files and frozen STATE.md contract.`
+  status: `deferred`
+
 - time: `2026-04-30 13:31:23 +09:00`
   location: `AI recommendation jar restart`
   summary: `새 boot jar 첫 재시작이 기존 8080 서버와 충돌`
@@ -445,3 +451,123 @@ Do not rewrite existing entries; append only.
   summary: `backend 폴더 안에 Gradle wrapper가 없어 첫 bootJar 재시작 명령 실패`
   details: `Spring을 localhost:5500에서 재기동하려고 backend 폴더에서 .\gradlew.bat bootJar를 실행했지만 이 repo에는 backend/build.gradle만 있고 wrapper가 없어 CommandNotFoundException이 발생했다. 시스템 gradle bootJar 경로로 재시도한다.`
   status: `resolved - 시스템 gradle bootJar로 재빌드하고 Spring을 localhost:5500에서 재기동했다.`
+
+- time: `2026-05-04 10:30:00 +09:00`
+  location: `selfdex planning for daboyeo AI bridge`
+  summary: `Selfdex planning timeout was handled by local source-driven implementation`
+  details: `The selfdex planning command remained unavailable within the 120 second bound, so the AI bridge task was completed from the local repository contract in STATE.md and verified with focused Java/Python/JS checks plus runtime bridge smoke tests.`
+  status: `resolved`
+
+- time: `2026-05-04 10:30:00 +09:00`
+  location: `AI bridge internal auth smoke`
+  summary: `ResponseStatusException was wrapped as HTTP 500 by the global API handler`
+  details: `Unauthenticated GET /api/internal/ai-bridge/jobs initially returned INTERNAL_ERROR 500 because ApiExceptionHandler did not preserve ResponseStatusException statuses. Added a dedicated ResponseStatusException handler and ApiExceptionHandlerTests; the same request now returns HTTP 401 with code UNAUTHORIZED.`
+  status: `resolved`
+
+- time: `2026-05-04 11:17:00 +09:00`
+  location: `nearby Kakao map Spring rebuild`
+  summary: `샌드박스 Gradle native-platform.dll 로딩 실패`
+  details: `Nearby map SDK fix 검증을 위해 bootJar를 실행했지만 sandbox 안의 gradle이 native-platform.dll을 로드하지 못해 시작 실패했다. 같은 gradle bootJar 명령을 승인된 정상 Windows 권한으로 재실행해 빌드 성공 후 Spring static 리소스를 반영했다.`
+  status: `resolved`
+
+- time: `2026-05-04 11:18:00 +09:00`
+  location: `nearby Kakao map Spring restart`
+  summary: `첫 재시작에서 오래된 jar 파일명을 사용해 서버가 바로 종료됨`
+  details: `Start-Process java -jar build\\libs\\daboyeo-backend-0.0.1-SNAPSHOT.jar 로 실행해 실제 생성된 daboyeo-backend-0.1.0-SNAPSHOT.jar와 파일명이 맞지 않았다. build/libs를 확인한 뒤 올바른 jar 경로로 재시작했고, 이후 샌드박스 밖 Start-Process로 8080 서버를 유지했다.`
+  status: `resolved`
+
+- time: `2026-05-04 12:35:46 +09:00`
+  location: `selfdex planning for local/Codex recommendation runtime`
+  summary: `Selfdex read-only planner timed out again`
+  details: `The command python C:\Users\pc07-00\selfdex\scripts\plan_external_project.py --root C:\Users\pc07-00\selfdex --project-root C:\lsh\git\daboyeo --project-name daboyeo --format markdown timed out after 180 seconds. The task continues from the local source, existing STATE.md AI bridge contract, provider health output, Codex CLI check, and local model endpoint check.`
+  status: `deferred`
+
+- time: `2026-05-04 12:46:47 +09:00`
+  location: `Codex bridge worker runtime`
+  summary: `Codex exec is blocked by .codex session ACL`
+  details: `Provider health reached codex ready after tokenized Spring/bridge worker startup, but an actual codex recommendation POST still fell back. Direct codex exec smoke reports that Codex cannot access session files under C:\Users\pc07-00\.codex\sessions because the sandbox group has read-only access. A proposed ACL change for only .codex\sessions and .codex\tmp was rejected by the safety reviewer until the user explicitly approves the security-setting change.`
+  status: `blocked`
+
+- time: `2026-05-04 12:56:17 +09:00`
+  location: `Codex bridge worker runtime`
+  summary: `Codex recommendation bridge runtime was verified after scoped ACL approval`
+  details: `After explicit user approval, C:\Users\pc07-00\.codex\sessions and C:\Users\pc07-00\.codex\tmp were granted Modify for DESKTOP-EC0A64I\CodexSandboxUsers. WindowsApps codex.exe still could not run from the sandbox-outside worker context, so a local runtime copy was placed under gitignored backend/build/tools/codex.exe. codex exec schema smoke returned {"ok":true}, provider health reports codex ready, and POST /api/recommendations with aiProvider=codex returned status ok/model codex/count 3.`
+  status: `resolved`
+
+- time: `2026-05-04 13:33:00 +09:00`
+  location: `entry showtime refresh smoke`
+  summary: `Initial button-triggered refresh stayed running because TiDB persistence was too broad`
+  details: `The new /api/showtimes/refresh endpoint returned quickly, but the background entry-refresh thread remained in CollectorBundlePersistenceService.findScreenId while writing many provider schedules to TiDB. Thread.print showed a MySQL SSL socket read inside showtime persistence. The entry path was tightened to one date, smaller discovery limits, and max 40 schedules per provider bundle; after restart, the refresh completed with 4 Lotte/Megabox bundles and 80 showtimes.`
+  status: `resolved`
+
+- time: `2026-05-04 14:13:54 +09:00`
+  location: `hourly showtime sync verification`
+  summary: `샌드박스 Gradle native-platform.dll 로딩 실패`
+  details: `Hourly scheduled Lotte/Megabox sync 변경 후 focused Gradle test를 샌드박스에서 실행했지만 native-platform.dll 로딩 실패로 Gradle이 시작되지 않았다. 같은 gradle test 명령을 정상 Windows 권한으로 재실행해 ShowtimeSyncServiceTests가 통과했고, bootJar도 정상 Windows 권한으로 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-04 14:15:00 +09:00`
+  location: `hourly showtime sync runtime restart`
+  summary: `PowerShell token generation API mismatch`
+  details: `Spring/AI bridge 재시작 스크립트가 [System.Security.Cryptography.RandomNumberGenerator]::Fill을 호출했지만 현재 PowerShell/.NET 런타임에는 해당 정적 메서드가 없어 중단됐다. RNGCryptoServiceProvider.GetBytes 방식으로 바꿔 재시작을 완료했다.`
+  status: `resolved`
+
+- time: `2026-05-04 14:18:00 +09:00`
+  location: `startup showtime sync Lotte ingest`
+  summary: `롯데 release_date 원본 문자열 파싱 실패`
+  details: `Startup sync에서 Lotte 수집 번들의 release_date가 yyyy-MM-dd 오전/오후 hh:mm:ss 형태로 들어와 LocalDate.parse가 실패했다. CollectorBundleIngestCommand.parseDate가 날짜 앞부분과 구분자 변형을 안전하게 처리하도록 보정했고 focused ingest/sync tests 및 bootJar가 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-04 14:24:00 +09:00`
+  location: `recommendation smoke during TiDB sync`
+  summary: `추천 이력 저장 중 TiDB read timeout`
+  details: `Startup sync가 TiDB에 showtimes를 쓰는 동안 추천 스모크 한 번이 recommendation_runs 저장 단계에서 Communications link failure로 503을 반환했다. RecommendationService.saveRun 경로를 best-effort로 낮춰 추천 결과 반환을 막지 않도록 수정했고 focused recommendation tests 및 bootJar가 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-04 14:53:00 +09:00`
+  location: `five recommendation smoke runtime restart`
+  summary: `Spring/Codex bridge 재시작 스크립트의 PowerShell 변수/API 오류`
+  details: `추천 5회 smoke 전 런타임 토큰으로 Spring과 bridge를 재시작하는 첫 스크립트에서 $PID 예약 변수명 충돌과 RandomNumberGenerator.Fill 미지원으로 기존 no-token Spring이 유지되어 provider health가 codex not_configured를 반환했다. 변수명을 $targetPid로 바꾸고 RandomNumberGenerator.Create().GetBytes()로 토큰을 생성해 Spring PID 22240, bridge PID 9200으로 재시작했으며 provider health가 codex ready로 회복됐다.`
+  status: `resolved`
+
+- time: `2026-05-04 15:10:00 +09:00`
+  location: `GPT recommendation analysis prompt test`
+  summary: `샌드박스 Gradle native-platform.dll 로딩 실패`
+  details: `GPT/Codex 분석 프롬프트 수정 후 focused Gradle test를 샌드박스에서 실행했지만 native-platform.dll 로딩 실패로 Gradle이 시작되지 않았다. 같은 gradle test --tests kr.daboyeo.backend.service.recommendation.LocalModelRecommendationClientTests 명령을 정상 Windows 권한으로 재실행해 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-04 15:30:06 +09:00`
+  location: `genre-guided recommendation focused tests`
+  summary: `샌드박스 Gradle native-platform.dll 로딩 실패`
+  details: `장르 선택/분석 로직 개편 후 focused Gradle test를 샌드박스에서 실행했지만 native-platform.dll 로딩 실패로 Gradle이 시작되지 않았다. 같은 gradle test --tests kr.daboyeo.backend.service.recommendation.PreferenceProfileBuilderTests --tests kr.daboyeo.backend.service.recommendation.LocalModelRecommendationClientTests 명령을 정상 Windows 권한으로 재실행해 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-04 15:30:42 +09:00`
+  location: `genre-guided recommendation bootJar`
+  summary: `샌드박스 Gradle native-platform.dll 로딩 실패`
+  details: `장르 선택/분석 로직 개편 후 bootJar를 샌드박스에서 실행했지만 native-platform.dll 로딩 실패로 Gradle이 시작되지 않았다. 같은 gradle bootJar 명령을 정상 Windows 권한으로 재실행해 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-04 15:57:00 +09:00`
+  location: `genre-anchor scoring focused tests`
+  summary: `샌드박스 Gradle native-platform.dll 로딩 실패`
+  details: `선택 장르 앵커/점수 캡 수정 후 focused Gradle test를 샌드박스에서 실행했지만 native-platform.dll 로딩 실패로 Gradle이 시작되지 않았다. 같은 gradle test --tests kr.daboyeo.backend.service.recommendation.PreferenceProfileBuilderTests --tests kr.daboyeo.backend.service.recommendation.RecommendationScorerTests --tests kr.daboyeo.backend.service.recommendation.LocalModelRecommendationClientTests 명령을 정상 Windows 권한으로 재실행해 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-04 16:12:47 +09:00`
+  location: `taste-focused candidate pool tests`
+  summary: `샌드박스 Gradle native-platform.dll 로딩 실패`
+  details: `추천 후보 풀 선별 수정 후 focused Gradle test를 샌드박스에서 실행했지만 native-platform.dll 로딩 실패로 Gradle이 시작되지 않았다. 같은 gradle test --tests kr.daboyeo.backend.service.recommendation.RecommendationServiceCandidateFilterTests --tests kr.daboyeo.backend.service.recommendation.RecommendationScorerTests 명령을 정상 Windows 권한으로 재실행해 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-04 17:32:25 +09:00`
+  location: `Codex-scored reserve recommendation verification`
+  summary: `샌드박스 Gradle native-platform.dll 로딩 실패 및 중복 헬퍼 컴파일 오류`
+  details: `Codex 점수/예비후보 추천 수정 후 focused Gradle test와 bootJar를 샌드박스에서 실행했지만 native-platform.dll 로딩 실패로 Gradle이 시작되지 않았다. 정상 Windows 권한으로 focused test를 재실행하자 RecommendationService.tasteAnchorGenres 중복 정의 컴파일 오류가 드러났고, 기존 헬퍼 하나로 합친 뒤 같은 focused test와 bootJar가 통과했다. 런타임 smoke 중 새 Spring 프로세스에 bridge token이 없으면 Codex provider가 not_configured로 내려가서, 값을 출력하지 않는 임시 프로세스 토큰으로 Spring/bridge를 같이 재시작해 provider health를 ready로 회복했다.`
+  status: `resolved`
+
+- time: `2026-05-04 17:49:59 +09:00`
+  location: `git staging before push`
+  summary: `기본 sandbox에서 git index.lock 생성 권한 실패`
+  details: `커밋 준비 중 git add -A가 C:/lsh/git/daboyeo/.git/index.lock Permission denied로 실패했다. 같은 git add -A를 정상 Windows 권한으로 재실행해 스테이징을 완료했다.`
+  status: `resolved`

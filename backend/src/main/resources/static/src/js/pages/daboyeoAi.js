@@ -5,16 +5,18 @@ import {
   getPosterSeed,
   requestRecommendations,
   sendRecommendationFeedback,
-} from "../api/client.js";
+} from "../api/client.js?v=20260504-hourly-sync";
 
 const STORAGE_KEY = "daboyeoAnonymousId";
 const AI_PROVIDER_STORAGE_KEY = "daboyeoAiProvider";
 const SEARCH_CONTEXT_KEY = "daboyeoSearchContext";
 const MAIN_PAGE_URL = "../../index.html";
 const SEAT_RECOMMEND_URL = "./seatRecommendMbti.html?flow=ai-result";
-const POSTER_LIMIT = 12;
+const POSTER_LIMIT = 40;
 const POSTER_BATCH_SIZE = 6;
+const MIN_LIKED_POSTERS = 3;
 const LIKE_LIMIT = 5;
+const GENRE_LIMIT = 5;
 const AUTO_ADVANCE_MS = 320;
 const DEFAULT_AI_PROVIDER = "local";
 
@@ -45,6 +47,23 @@ const avoidOptions = [
   { value: "none", label: "해당 없음" },
 ];
 
+const genreOptions = [
+  { value: "action", label: "액션" },
+  { value: "animation", label: "애니" },
+  { value: "horror", label: "공포" },
+  { value: "thriller", label: "스릴러" },
+  { value: "sf", label: "SF" },
+  { value: "adventure", label: "어드벤처" },
+  { value: "comedy", label: "코미디" },
+  { value: "romance", label: "로맨스" },
+  { value: "drama", label: "드라마" },
+  { value: "fantasy", label: "판타지" },
+  { value: "crime", label: "범죄" },
+  { value: "history", label: "역사" },
+  { value: "music", label: "음악" },
+  { value: "family", label: "가족" },
+];
+
 const modeOptions = [
   {
     value: "fast",
@@ -71,7 +90,7 @@ const providerOptions = [
     description: "학원/작업 컴퓨터의 로컬 OpenAI 호환 서버로 추천을 돌립니다.",
   },
   {
-    value: "gpt",
+    value: "codex",
     label: "GPT",
     title: "GPT-5.5",
     description: "GPT-5.5 모델은 고정하고 빠른/정밀 카드별 추론 레벨만 다르게 보냅니다.",
@@ -91,7 +110,7 @@ const providerModeProfiles = {
       tags: ["Gemma E4B Q4", "로컬", "정밀 분석", "후보 비교"],
     },
   },
-  gpt: {
+  codex: {
     fast: {
       model: "GPT-5.5 · reasoning low",
       description: "GPT-5.5는 고정하고 낮은 추론 레벨로\n상영 후보를 빠르게 추려 추천해 드립니다.",
@@ -106,11 +125,12 @@ const providerModeProfiles = {
 };
 
 const progressText = {
-  audience: "1 / 5 상황",
-  mood: "2 / 5 컨디션",
-  avoid: "3 / 5 상황",
-  posters: "4 / 5 포스터",
-  mode: "5 / 5 방식",
+  audience: "1 / 6 상황",
+  mood: "2 / 6 컨디션",
+  avoid: "3 / 6 상황",
+  genres: "4 / 6 장르",
+  posters: "5 / 6 포스터",
+  mode: "6 / 6 방식",
   loading: "분석 중",
   results: "추천 완료",
   empty: "후보 없음",
@@ -121,7 +141,8 @@ const progressText = {
 const stepBackMap = {
   mood: "audience",
   avoid: "mood",
-  posters: "avoid",
+  genres: "avoid",
+  posters: "genres",
   mode: "posters",
 };
 
@@ -146,6 +167,7 @@ const state = {
     audience: null,
     mood: null,
     avoid: [],
+    preferredGenres: [],
   },
   searchContext: null,
   posters: {
@@ -415,6 +437,13 @@ function optionLabel(options, value) {
   return options.find((option) => option.value === value)?.label || "아직 선택 안 함";
 }
 
+function optionLabels(options, values) {
+  return (Array.isArray(values) ? values : [])
+    .map((value) => optionLabel(options, value))
+    .filter(Boolean)
+    .join(", ");
+}
+
 function showToast(message) {
   toast.textContent = message;
   toast.classList.add("is-visible");
@@ -439,7 +468,7 @@ function scheduleStep(nextStep, delay = AUTO_ADVANCE_MS) {
 }
 
 function clearStateFromStep(stepToClear) {
-  const steps = ["audience", "mood", "avoid", "posters", "mode"];
+  const steps = ["audience", "mood", "avoid", "genres", "posters", "mode"];
   const startIndex = steps.indexOf(stepToClear);
   if (startIndex === -1) return;
 
@@ -454,8 +483,12 @@ function clearStateFromStep(stepToClear) {
       case "avoid":
         state.survey.avoid = [];
         break;
+      case "genres":
+        state.survey.preferredGenres = [];
+        break;
       case "posters":
         state.posterChoices.likedSeedMovieIds = [];
+        state.posters.activeBatchIndex = 0;
         break;
     }
   }
@@ -494,7 +527,7 @@ function setStep(nextStep) {
 
 function resetInputs(keepSession = true) {
   state.step = "audience";
-  state.survey = { audience: null, mood: null, avoid: [] };
+  state.survey = { audience: null, mood: null, avoid: [], preferredGenres: [] };
   state.posterChoices = { likedSeedMovieIds: [], dislikedSeedMovieIds: [] };
   state.posters.activeBatchIndex = 0;
   state.run = { status: "idle", mode: null, aiProvider: null, response: null, error: null };
@@ -635,8 +668,11 @@ function renderSummary() {
     const avoidLabel = state.survey.avoid.map((value) => optionLabel(avoidOptions, value)).join(", ");
     rows.push(["보고 싶지 않은 요소", avoidLabel]);
   }
+  if (state.survey.preferredGenres.length > 0) {
+    rows.push(["선호 장르", optionLabels(genreOptions, state.survey.preferredGenres)]);
+  }
   if (state.posterChoices.likedSeedMovieIds.length) {
-    rows.push(["포스터 취향", `${state.posterChoices.likedSeedMovieIds.length} / ${LIKE_LIMIT}`]);
+    rows.push(["포스터 취향", `${state.posterChoices.likedSeedMovieIds.length} / ${MIN_LIKED_POSTERS}+`]);
   }
 
   if (rows.length === 0) return null;
@@ -721,15 +757,81 @@ function toggleAvoid(value) {
   render();
 }
 
+function selectedGenres() {
+  return Array.isArray(state.survey.preferredGenres) ? state.survey.preferredGenres : [];
+}
+
+function normalizeGenreValue(value) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function movieGenreValues(movie) {
+  return Array.isArray(movie?.genres)
+    ? movie.genres.map(normalizeGenreValue).filter(Boolean)
+    : [];
+}
+
+function movieMatchesSelectedGenre(movie) {
+  const selected = new Set(selectedGenres());
+  if (selected.size === 0) {
+    return true;
+  }
+  return movieGenreValues(movie).some((genre) => selected.has(genre));
+}
+
+function genreMatchedPosterItems() {
+  if (selectedGenres().length === 0) {
+    return state.posters.items;
+  }
+  return state.posters.items.filter(movieMatchesSelectedGenre);
+}
+
+function posterDisplayItems() {
+  const matched = genreMatchedPosterItems();
+  if (selectedGenres().length === 0 || matched.length >= MIN_LIKED_POSTERS) {
+    return matched;
+  }
+
+  const matchedIds = new Set(matched.map((movie) => String(movie.id)));
+  const fallback = state.posters.items.filter((movie) => !matchedIds.has(String(movie.id)));
+  return [...matched, ...fallback];
+}
+
+function posterGenreFallbackActive() {
+  return selectedGenres().length > 0 && genreMatchedPosterItems().length < MIN_LIKED_POSTERS;
+}
+
+function toggleGenre(value) {
+  const normalized = normalizeGenreValue(value);
+  if (!genreOptions.some((option) => option.value === normalized)) {
+    return;
+  }
+
+  const selected = selectedGenres();
+  const exists = selected.includes(normalized);
+  if (exists) {
+    state.survey.preferredGenres = selected.filter((item) => item !== normalized);
+  } else if (selected.length >= GENRE_LIMIT) {
+    showToast(`장르는 ${GENRE_LIMIT}개까지만 고를 수 있어.`);
+    return;
+  } else {
+    state.survey.preferredGenres = [...selected, normalized];
+  }
+
+  state.posterChoices.likedSeedMovieIds = [];
+  state.posters.activeBatchIndex = 0;
+  render();
+}
+
 function posterBatchCount() {
-  return Math.max(1, Math.ceil(state.posters.items.length / POSTER_BATCH_SIZE));
+  return Math.max(1, Math.ceil(posterDisplayItems().length / POSTER_BATCH_SIZE));
 }
 
 function currentPosterBatch() {
   const batchIndex = Math.min(state.posters.activeBatchIndex, posterBatchCount() - 1);
   const start = batchIndex * POSTER_BATCH_SIZE;
 
-  return state.posters.items.slice(start, start + POSTER_BATCH_SIZE);
+  return posterDisplayItems().slice(start, start + POSTER_BATCH_SIZE);
 }
 
 function posterChoiceStatus(seedId) {
@@ -747,7 +849,7 @@ function isPosterBatchComplete(batch = currentPosterBatch()) {
 }
 
 function canContinuePosterDiagnosis() {
-  return state.posterChoices.likedSeedMovieIds.length === LIKE_LIMIT;
+  return state.posterChoices.likedSeedMovieIds.length >= MIN_LIKED_POSTERS;
 }
 
 function showPosterBatch(batchIndex) {
@@ -774,7 +876,7 @@ function renderAvoidStep() {
       if (option.value === "none") {
         state.survey.avoid = ["none"];
         render();
-        setStep("posters");
+        setStep("genres");
       } else {
         state.survey.avoid = state.survey.avoid.filter(v => v !== "none");
         toggleAvoid(option.value);
@@ -789,7 +891,7 @@ function renderAvoidStep() {
   const completeBtn = createElement("button", "ai-primary-cta", "선택 완료");
   completeBtn.type = "button";
   completeBtn.addEventListener("click", () => {
-    setStep("posters");
+    setStep("genres");
   });
   ctaRow.appendChild(completeBtn);
 
@@ -804,6 +906,50 @@ function renderAvoidStep() {
       { text: "보고 싶지 않은\n요소가 있으신가요?" }
     ],
     description: "선택하신 요소는 추천에 최대한 반영해 걸러드립니다.\n아이와 함께라면 더 안전한 기준으로 추천해 드릴게요.",
+    content: panel,
+  });
+}
+
+function renderGenreStep() {
+  const panel = createElement("div", "ai-avoid-panel");
+  panel.style.width = "100%";
+
+  const grid = createElement("div", "ai-avoid-grid");
+  genreOptions.forEach((option) => {
+    const isSelected = selectedGenres().includes(option.value);
+    const btn = createElement("button", ["ai-avoid-btn", isSelected ? "is-selected" : null], option.label);
+    btn.type = "button";
+    btn.setAttribute("aria-pressed", String(isSelected));
+    btn.addEventListener("click", () => toggleGenre(option.value));
+    grid.appendChild(btn);
+  });
+  panel.appendChild(grid);
+
+  const ctaRow = createElement("div", "ai-cta-row");
+  const isSatisfied = selectedGenres().length > 0;
+  const completeBtn = createElement("button", ["ai-primary-cta", isSatisfied ? "is-active" : null], "포스터 고르기");
+  completeBtn.type = "button";
+  completeBtn.disabled = !isSatisfied;
+  completeBtn.setAttribute("aria-disabled", String(!isSatisfied));
+  completeBtn.addEventListener("click", () => {
+    if (!isSatisfied) {
+      showToast("먼저 장르를 하나 이상 골라줘.");
+      return;
+    }
+    setStep("posters");
+  });
+  ctaRow.appendChild(completeBtn);
+
+  const hint = createElement("p", "ai-avoid-cta-hint", `1개 이상, 최대 ${GENRE_LIMIT}개까지 선택할 수 있어. 선택한 장르 기준으로 포스터를 먼저 보여줄게.`);
+  ctaRow.appendChild(hint);
+  panel.appendChild(ctaRow);
+
+  return renderSplitLayout({
+    kicker: "AI GUIDE 04",
+    titleParts: [
+      { text: "먼저 보고 싶은\n장르를 골라주세요." },
+    ],
+    description: "포스터만 보고 고르기 전에 방향을 먼저 잡을게요. 장르 신호가 추천 점수와 GPT 분석에 같이 반영됩니다.",
     content: panel,
   });
 }
@@ -843,10 +989,11 @@ function renderPosterCount(className, label, value, target) {
 function renderPosterRounds() {
   const roundRow = createElement("div", "ai-poster-rounds");
   const totalBatches = posterBatchCount();
+  const items = posterDisplayItems();
 
   for (let index = 0; index < totalBatches; index += 1) {
     const start = index * POSTER_BATCH_SIZE;
-    const batch = state.posters.items.slice(start, start + POSTER_BATCH_SIZE);
+    const batch = items.slice(start, start + POSTER_BATCH_SIZE);
     const button = createElement("button", [
       "ai-round-button",
       index === state.posters.activeBatchIndex ? "is-active" : null,
@@ -908,6 +1055,12 @@ function renderPosterStep() {
       [{ label: "다시 시도", onClick: () => ensurePostersLoaded(true) }]);
   }
 
+  const displayItems = posterDisplayItems();
+  if (displayItems.length === 0) {
+    return renderErrorPanel("보여줄 포스터가 없어", "선택한 장르에 맞는 포스터를 찾지 못했어. 장르를 다시 골라줘.",
+      [{ label: "장르 다시 선택", onClick: () => setStep("genres") }, { label: "처음부터", onClick: () => setStep("audience"), secondary: true }]);
+  }
+
   const activeBatch = currentPosterBatch();
   const grid = createElement("div", "ai-poster-grid");
   activeBatch.forEach((movie) => {
@@ -946,16 +1099,25 @@ function renderPosterStep() {
     if (isSatisfied) {
       setStep("mode");
     } else {
-      showToast(`포스터 ${LIKE_LIMIT}개를 모두 선택해주세요.`);
+      showToast(`포스터는 최소 ${MIN_LIKED_POSTERS}개만 고르면 다음으로 갈 수 있어.`);
     }
   });
   ctaRow.appendChild(completeBtn);
+
+  const matchedCount = genreMatchedPosterItems().length;
+  const selectedGenreText = optionLabels(genreOptions, selectedGenres());
+  const hintText = posterGenreFallbackActive()
+    ? `선택 장르 포스터가 ${matchedCount}개라서, 비슷한 후보도 뒤에 섞었어.`
+    : selectedGenreText
+      ? `${selectedGenreText} 장르 포스터를 기준으로 보여주는 중이야.`
+      : "전체 장르 포스터를 보여주는 중이야.";
+  ctaRow.appendChild(createElement("p", "ai-avoid-cta-hint", `최소 ${MIN_LIKED_POSTERS}개, 최대 ${LIKE_LIMIT}개 선택. ${hintText}`));
 
   const content = createElement("div", "ai-poster-pane");
   content.style.position = "relative";
   content.style.width = "100%";
 
-  const fakeKicker = createElement("p", "ai-kicker", "AI GUIDE 04");
+  const fakeKicker = createElement("p", "ai-kicker", "AI GUIDE 05");
   fakeKicker.style.visibility = "hidden";
   fakeKicker.setAttribute("aria-hidden", "true");
 
@@ -966,12 +1128,16 @@ function renderPosterStep() {
   const extraLeft = createElement("div", "ai-poster-count-left");
   const span = createElement("span", null, "선택");
   extraLeft.appendChild(span);
-  extraLeft.appendChild(document.createTextNode(` ${state.posterChoices.likedSeedMovieIds.length} / ${LIKE_LIMIT}`));
+  extraLeft.appendChild(document.createTextNode(` ${state.posterChoices.likedSeedMovieIds.length} / ${MIN_LIKED_POSTERS}+`));
+  if (selectedGenreText) {
+    extraLeft.appendChild(document.createElement("br"));
+    extraLeft.appendChild(createElement("small", null, `${selectedGenreText} 기준`));
+  }
 
   return renderSplitLayout({
-    kicker: "AI GUIDE 04",
-    titleParts: [{ text: "영화 포스터만 보고,\n끌리는 작품을 선택해 주세요.", style: "font-size: 30px;" }],
-    description: null,
+    kicker: "AI GUIDE 05",
+    titleParts: [{ text: "선택한 장르 안에서,\n끌리는 포스터를 골라주세요.", style: "font-size: 30px;" }],
+    description: "여기서 고른 포스터는 장르 선택보다 더 세밀한 취향 신호로 쓰입니다.",
     extraLeft,
     content,
   });
@@ -1060,7 +1226,7 @@ function renderModeStep() {
   content.appendChild(grid);
 
   return renderSplitLayout({
-    kicker: "AI GUIDE 05",
+    kicker: "AI GUIDE 06",
     titleParts: [{ text: "어떤 방식으로\n추천해 드릴까요?" }],
     description: "로컬과 GPT 중 하나를 고르면, 빠른/정밀 추천 카드의 모델 라우팅도 함께 바뀝니다.",
     content,
@@ -1089,6 +1255,7 @@ async function runRecommendation(mode) {
       audience: state.survey.audience,
       mood: state.survey.mood,
       avoid: state.survey.avoid,
+      preferredGenres: selectedGenres(),
     },
     posterChoices: {
       likedSeedMovieIds: state.posterChoices.likedSeedMovieIds,
@@ -1178,7 +1345,7 @@ function renderRecommendationErrorStep() {
 function renderSessionErrorStep() {
   return renderErrorPanel(
     "익명 세션을 만들지 못했어",
-    state.run.error?.message || "Spring API가 localhost:8080에서 실행 중인지 확인해줘.",
+    state.run.error?.message || "Spring API가 localhost:5500에서 실행 중인지 확인해줘.",
     [
       { label: "다시 연결", onClick: ensureSession },
       { label: "홈으로", onClick: goToMainPage, secondary: true },
@@ -1282,7 +1449,7 @@ function renderShowtimeItem(label, value) {
 function renderResultCard(item, index, context = {}) {
   const card = createElement("article", "ai-result-card");
   const isAiBacked = context.isAiBacked !== false;
-  const isGptResult = isAiBacked && context.providerValue === "gpt";
+  const isGptResult = isAiBacked && context.providerValue === "codex";
   const isFallbackResult = !isAiBacked;
   const isPreciseResult = context.mode === "precise";
   card.classList.toggle("is-gpt-result", isGptResult);
@@ -1404,14 +1571,17 @@ function renderResultsStep() {
     const avoidLabel = state.survey.avoid.map((value) => optionLabel(avoidOptions, value)).join(", ");
     addSummaryRow("보고 싶지 않은 요소", avoidLabel);
   }
+  if (state.survey.preferredGenres.length > 0) {
+    addSummaryRow("선호 장르", optionLabels(genreOptions, state.survey.preferredGenres));
+  }
   if (state.posterChoices.likedSeedMovieIds.length) {
-    addSummaryRow("포스터 취향", `${state.posterChoices.likedSeedMovieIds.length} / ${LIKE_LIMIT}`);
+    addSummaryRow("포스터 취향", `${state.posterChoices.likedSeedMovieIds.length} / ${MIN_LIKED_POSTERS}+`);
   }
   addSummaryRow("추천 방식", modeLabel);
   addSummaryRow("요청 엔진", `${provider.title} · ${model}`);
   addSummaryRow("실제 처리", resultSource);
   addSummaryRow("분석 깊이", isAiBacked
-    ? providerValue === "gpt"
+    ? providerValue === "codex"
       ? (response.mode || state.run.mode) === "precise" ? "GPT 정밀 분석" : "GPT 빠른 분석"
       : (response.mode || state.run.mode) === "precise" ? "로컬 정밀 추천" : "로컬 빠른 추천"
     : "fallback 추천");
@@ -1501,10 +1671,10 @@ function render() {
 
   const progressLine = document.getElementById("aiProgressLine");
   if (progressLine) {
-    const stepOrder = ["audience", "mood", "avoid", "posters", "mode"];
+    const stepOrder = ["audience", "mood", "avoid", "genres", "posters", "mode"];
     let idx = stepOrder.indexOf(state.step);
     if (idx !== -1) {
-      progressLine.style.width = `${((idx + 1) / 5) * 100}%`;
+      progressLine.style.width = `${((idx + 1) / stepOrder.length) * 100}%`;
     } else {
       progressLine.style.width = "100%";
     }
@@ -1519,6 +1689,9 @@ function render() {
       break;
     case "avoid":
       screen.appendChild(renderAvoidStep());
+      break;
+    case "genres":
+      screen.appendChild(renderGenreStep());
       break;
     case "posters":
       screen.appendChild(renderPosterStep());

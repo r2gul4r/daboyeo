@@ -43,7 +43,8 @@ public final class RecommendationModels {
 
     public enum AiProvider {
         LOCAL,
-        GPT;
+        GPT,
+        CODEX;
 
         public static AiProvider from(String value) {
             if (value == null || value.isBlank()) {
@@ -55,6 +56,9 @@ public final class RecommendationModels {
             }
             if ("GPT".equals(normalized) || "REMOTE_GATEWAY".equals(normalized) || "CODEX_OAUTH_GATEWAY".equals(normalized)) {
                 return GPT;
+            }
+            if ("CODEX".equals(normalized) || "CODEX_BRIDGE".equals(normalized) || "CODEX_WORKER".equals(normalized)) {
+                return CODEX;
             }
             throw new IllegalArgumentException("지원하지 않는 AI provider야.");
         }
@@ -99,11 +103,16 @@ public final class RecommendationModels {
     public record SessionResponse(String anonymousId) {
     }
 
-    public record RecommendationSurvey(String audience, String mood, List<String> avoid) {
+    public record RecommendationSurvey(String audience, String mood, List<String> avoid, List<String> preferredGenres) {
+        public RecommendationSurvey(String audience, String mood, List<String> avoid) {
+            this(audience, mood, avoid, List.of());
+        }
+
         public RecommendationSurvey {
             audience = normalize(audience);
             mood = normalize(mood);
             avoid = safeNormalizedList(avoid);
+            preferredGenres = safeNormalizedList(preferredGenres);
         }
     }
 
@@ -319,11 +328,25 @@ public final class RecommendationModels {
             }
 
             if (containsAny(text, "악마는 프라다")) {
+                all.add("genre:comedy");
+                all.add("genre:drama");
                 all.add("mood:light");
                 all.add("mood:warm");
                 all.add("mood:funny");
                 all.add("audience:date");
                 all.add("audience:friends");
+            }
+
+            if (containsAny(text, "귀멸", "무한성", "kimetsu", "demon slayer")) {
+                all.add("genre:animation");
+                all.add("genre:action");
+                all.add("genre:fantasy");
+                all.add("genre:thriller");
+                all.add("mood:tense");
+                all.add("mood:exciting");
+                all.add("mood:visual");
+                all.add("audience:friends");
+                all.add("content:violence");
             }
 
             if (containsAny(text, "살목지", "미이라", "호러", "공포", "스릴러")) {
@@ -336,9 +359,19 @@ public final class RecommendationModels {
             }
 
             if (containsAny(text, "헤일메리", "sf", "사이언스", "우주")) {
+                all.add("genre:sf");
+                all.add("genre:adventure");
                 all.add("genre:drama");
                 all.add("mood:immersive");
                 all.add("mood:calm");
+            }
+
+            if (containsAny(text, "미션 임파서블", "mission impossible", "쥬라기", "jurassic", "어벤져스", "avengers", "아바타", "avatar", "탑건", "범죄도시")) {
+                all.add("genre:action");
+                all.add("genre:adventure");
+                all.add("mood:exciting");
+                all.add("mood:visual");
+                all.add("audience:friends");
             }
 
             if (containsAny(text, "라이브", "밴드", "콘서트", "공연", "비발디", "사카모토")) {
@@ -425,9 +458,17 @@ public final class RecommendationModels {
         }
     }
 
-    public record AiPick(Long showtimeId, String reason, String caution, String valuePoint, String analysisPoint) {
+    public record AiPick(Long showtimeId, Integer score, String reason, String caution, String valuePoint, String analysisPoint) {
+        public AiPick(Long showtimeId, String reason, String caution, String valuePoint, String analysisPoint) {
+            this(showtimeId, null, reason, caution, valuePoint, analysisPoint);
+        }
+
         public AiPick(Long showtimeId, String reason, String caution, String valuePoint) {
             this(showtimeId, reason, caution, valuePoint, "");
+        }
+
+        public AiPick {
+            score = score == null ? null : Math.max(0, Math.min(100, score));
         }
     }
 
@@ -450,6 +491,7 @@ public final class RecommendationModels {
         private final Map<String, Integer> weights = new LinkedHashMap<>();
         private final Set<String> avoid = new LinkedHashSet<>();
         private final Set<String> likedGenres = new LinkedHashSet<>();
+        private final Set<String> preferredGenres = new LinkedHashSet<>();
         private String audience = "";
         private String mood = "";
 
@@ -513,6 +555,19 @@ public final class RecommendationModels {
 
         public Set<String> likedGenres() {
             return Collections.unmodifiableSet(likedGenres);
+        }
+
+        public void addPreferredGenre(String value) {
+            String normalized = normalizeTagKey(value);
+            if (!normalized.isBlank()) {
+                String tag = "genre:" + normalized.replaceFirst("^genre:", "");
+                preferredGenres.add(tag);
+                likedGenres.add(tag);
+            }
+        }
+
+        public Set<String> preferredGenres() {
+            return Collections.unmodifiableSet(preferredGenres);
         }
     }
 

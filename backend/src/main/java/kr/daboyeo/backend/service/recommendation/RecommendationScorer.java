@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class RecommendationScorer {
 
     private static final int BASE_SCORE = 50;
+    private static final int NO_DIRECT_TASTE_MATCH_CAP = 74;
 
     public List<ScoredCandidate> score(TagProfile profile, List<ShowtimeCandidate> candidates) {
         return score(profile, candidates, null);
@@ -43,6 +44,8 @@ public class RecommendationScorer {
         int score = BASE_SCORE;
         List<String> matchedTags = new ArrayList<>();
         List<String> penalties = new ArrayList<>();
+        boolean hasTasteAnchor = profile != null && !tasteAnchorGenres(profile).isEmpty();
+        boolean hasDirectTasteMatch = hasDirectTasteAnchorMatch(profile, candidate);
 
         for (String tag : candidate.allTags()) {
             int weight = profile.weight(tag);
@@ -61,8 +64,40 @@ public class RecommendationScorer {
             score += 3;
         }
 
+        if (hasTasteAnchor) {
+            if (hasDirectTasteMatch) {
+                score += 5;
+            } else {
+                score -= 12;
+                penalties.add("taste_mismatch");
+            }
+        }
+
         int bounded = Math.max(0, Math.min(100, score));
+        if (hasTasteAnchor && !hasDirectTasteMatch) {
+            bounded = Math.min(bounded, NO_DIRECT_TASTE_MATCH_CAP);
+        }
         return Optional.of(new ScoredCandidate(candidate, bounded, matchedTags, penalties));
+    }
+
+    private boolean hasDirectTasteAnchorMatch(TagProfile profile, ShowtimeCandidate candidate) {
+        var tasteAnchors = tasteAnchorGenres(profile);
+        if (tasteAnchors.isEmpty()) {
+            return false;
+        }
+        return candidate.allTags().stream()
+            .map(this::normalizeTag)
+            .anyMatch(tag -> tag.startsWith("genre:") && tasteAnchors.contains(tag));
+    }
+
+    private java.util.Set<String> tasteAnchorGenres(TagProfile profile) {
+        if (profile == null) {
+            return java.util.Set.of();
+        }
+        if (!profile.preferredGenres().isEmpty()) {
+            return profile.preferredGenres();
+        }
+        return profile.likedGenres();
     }
 
     private boolean isBlockedForChild(TagProfile profile, ShowtimeCandidate candidate) {
@@ -239,5 +274,9 @@ public class RecommendationScorer {
 
     private String normalize(String value) {
         return value == null ? "" : value.toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeTag(String value) {
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
     }
 }

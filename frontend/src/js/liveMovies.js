@@ -3,11 +3,15 @@
  */
 
 const movieGrid = document.getElementById('movie-grid');
-const DEFAULT_API_BASE_ORIGIN = 'http://localhost:8080';
+const DEFAULT_API_BASE_ORIGIN = 'http://localhost:5500';
+const FRONTEND_DEV_PORTS = new Set(['4173', '5173']);
 const API_BASE_URL = resolveApiBaseUrl();
 
 function resolveApiBaseUrl() {
   const override = typeof window !== 'undefined' ? window.DABOYEO_API_BASE_URL : '';
+  if (!override && window.location.protocol.startsWith('http') && !FRONTEND_DEV_PORTS.has(window.location.port)) {
+    return `${window.location.origin}/api`;
+  }
   const baseOrigin = normalizeApiOrigin(override || DEFAULT_API_BASE_ORIGIN);
   return `${baseOrigin}/api`;
 }

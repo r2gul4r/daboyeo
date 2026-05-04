@@ -15,6 +15,8 @@ class CollectorBundleIngestCommandTests {
     @Test
     void parsesCompactDateAndTimeValues() {
         assertThat(CollectorBundleIngestCommand.parseDate("20260423")).isEqualTo(LocalDate.of(2026, 4, 23));
+        assertThat(CollectorBundleIngestCommand.parseDate("2026-02-04 오전 12:00:00")).isEqualTo(LocalDate.of(2026, 2, 4));
+        assertThat(CollectorBundleIngestCommand.parseDate("2026/02/04 00:00:00")).isEqualTo(LocalDate.of(2026, 2, 4));
         assertThat(CollectorBundleIngestCommand.parseTime("0915")).isEqualTo(LocalTime.of(9, 15));
         assertThat(CollectorBundleIngestCommand.parseTime("09:15")).isEqualTo(LocalTime.of(9, 15));
         assertThat(CollectorBundleIngestCommand.parseTime("2400")).isEqualTo(LocalTime.of(0, 0));

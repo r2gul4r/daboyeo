@@ -116,7 +116,15 @@ public class CollectorBundleIngestCommand {
         if (value == null || value.isBlank()) {
             return null;
         }
-        return value.contains("-") ? LocalDate.parse(value) : LocalDate.parse(value, COMPACT_DATE);
+        String text = value.trim().replace('.', '-').replace('/', '-');
+        if (text.length() >= 10 && text.charAt(4) == '-' && text.charAt(7) == '-') {
+            return LocalDate.parse(text.substring(0, 10));
+        }
+        String digits = text.replaceAll("\\D", "");
+        if (digits.length() >= 8) {
+            return LocalDate.parse(digits.substring(0, 8), COMPACT_DATE);
+        }
+        return LocalDate.parse(text, COMPACT_DATE);
     }
 
     static LocalTime parseTime(String value) {

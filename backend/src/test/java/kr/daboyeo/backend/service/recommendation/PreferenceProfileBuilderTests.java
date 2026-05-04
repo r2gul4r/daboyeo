@@ -54,6 +54,23 @@ class PreferenceProfileBuilderTests {
     }
 
     @Test
+    void selectedGenresBecomeExplicitPreferenceSignals() {
+        var profile = builder.build(
+            new RecommendationSurvey("friends", "light", List.of(), List.of("sf", "horror")),
+            new PosterChoices(
+                List.of("20129370", "20182530", "20150976"),
+                List.of()
+            ),
+            Map.of()
+        );
+
+        assertThat(profile.weight("genre:sf")).isEqualTo(6);
+        assertThat(profile.weight("genre:horror")).isEqualTo(6);
+        assertThat(profile.likedGenres()).contains("genre:sf", "genre:horror");
+        assertThat(profile.preferredGenres()).containsExactly("genre:sf", "genre:horror");
+    }
+
+    @Test
     void requiresAtLeastThreeLikedPosters() {
         assertThatThrownBy(() -> builder.build(
             new RecommendationSurvey("friends", "exciting", List.of()),
@@ -74,6 +91,21 @@ class PreferenceProfileBuilderTests {
             Map.of()
         )).isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("끌리는 포스터는 5개까지만");
+    }
+
+    @Test
+    void rejectsMoreThanFiveSelectedGenres() {
+        assertThatThrownBy(() -> builder.build(
+            new RecommendationSurvey(
+                "friends",
+                "exciting",
+                List.of(),
+                List.of("action", "sf", "adventure", "animation", "thriller", "comedy")
+            ),
+            new PosterChoices(List.of("20129370", "20182530", "20150976"), List.of()),
+            Map.of()
+        )).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("선호 장르는 5개까지만");
     }
 
     @Test

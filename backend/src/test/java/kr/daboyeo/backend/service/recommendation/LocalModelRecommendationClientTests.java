@@ -75,7 +75,9 @@ class LocalModelRecommendationClientTests {
             "Candidates:",
             "Decision style: GPT_FAST",
             "single-pass but evidence-based comparison",
+            "avoid generic caution-first wording",
             "\"why\"",
+            "\"s\"",
             "\"a\"",
             "\"v\"",
             "\"c\"",
@@ -86,6 +88,48 @@ class LocalModelRecommendationClientTests {
             "watchRisks"
         );
         assertThat(prompt).doesNotContain("tradeoffHints", "\"score\"", "\"matchedTags\"", "\"penalties\"");
+    }
+
+    @Test
+    void gptPromptDoesNotCopyUserPosterHintsIntoUnmatchedCandidateTasteMatch() {
+        TagProfile profile = new TagProfile();
+        profile.setAudience("friends");
+        profile.setMood("light");
+        profile.addPreferredGenre("action");
+        profile.addPreferredGenre("sf");
+        profile.addLikedGenre("drama");
+        profile.addLikedGenre("comedy");
+        ScoredCandidate candidate = scoredCandidate(
+            Set.of("genre:comedy", "genre:drama", "mood:light"),
+            List.of("genre:comedy", "genre:drama", "mood:light")
+        );
+
+        String prompt = client.buildPrompt(AiProvider.GPT, RecommendationMode.FAST, profile, List.of(candidate));
+
+        assertThat(prompt).contains(
+            "preference_genre_hints=",
+            "preference_genre_hints=[#\uC561\uC158\uCDE8\uD5A5, #SF\uCDE8\uD5A5]",
+            "\"tasteMatch\":[]",
+            "Claim direct genre/poster match only when candidate tasteMatch is non-empty.",
+            "empty-tasteMatch reserve must stay at or below 74",
+            "instead of leading with \"direct evidence is missing\""
+        );
+    }
+
+    @Test
+    void gptPromptKeepsDirectCandidateGenreOverlapInTasteMatch() {
+        TagProfile profile = new TagProfile();
+        profile.setAudience("friends");
+        profile.setMood("light");
+        profile.addLikedGenre("sf");
+        ScoredCandidate candidate = scoredCandidate(
+            Set.of("genre:sf", "mood:light"),
+            List.of("genre:sf", "mood:light")
+        );
+
+        String prompt = client.buildPrompt(AiProvider.GPT, RecommendationMode.FAST, profile, List.of(candidate));
+
+        assertThat(prompt).contains("\"tasteMatch\":[\"#SF");
     }
 
     @Test
@@ -102,9 +146,11 @@ class LocalModelRecommendationClientTests {
             "Decision style: GPT_PRECISE",
             "Evaluate every supplied candidate",
             "why each selected candidate beats a nearby alternative",
+            "selected genre intent",
             "poster taste",
             "avoid-risk handling",
             "tradeoff versus another candidate",
+            "s=integer 0-100 final recommendation score",
             "tasteMatch",
             "scheduleFit",
             "tradeoffHints"
@@ -158,6 +204,18 @@ class LocalModelRecommendationClientTests {
         assertThat(pick.caution()).contains("러닝타임");
     }
 
+    @Test
+    void gptRichResponseScoreIsMappedAndClamped() throws Exception {
+        String json = "{\"r\":[{\"id\":1,\"s\":188,\"why\":\"direct fit\",\"a\":\"poster fit\",\"v\":\"17:00 seats\",\"c\":\"short caution\"}]}";
+
+        AiResult result = client.parseResult(json, "gpt-test").orElseThrow();
+
+        AiPick pick = result.picks().get(0);
+        assertThat(pick.showtimeId()).isEqualTo(1L);
+        assertThat(pick.score()).isEqualTo(100);
+        assertThat(pick.reason()).contains("direct");
+    }
+
     private RecommendationProperties properties() {
         return new RecommendationProperties(
             null,
@@ -174,6 +232,10 @@ class LocalModelRecommendationClientTests {
     }
 
     private ScoredCandidate scoredCandidate() {
+        return scoredCandidate(Set.of("mood:exciting", "content:loud"), List.of("mood:exciting"));
+    }
+
+    private ScoredCandidate scoredCandidate(Set<String> tags, List<String> matchedTags) {
         ShowtimeCandidate candidate = new ShowtimeCandidate(
             10L,
             1L,
@@ -196,8 +258,8 @@ class LocalModelRecommendationClientTests {
             "https://example.test/poster.jpg",
             "12",
             120,
-            Set.of("mood:exciting", "content:loud")
+            tags
         );
-        return new ScoredCandidate(candidate, 96, List.of("mood:exciting"), List.of("content:loud"));
+        return new ScoredCandidate(candidate, 96, matchedTags, List.of("content:loud"));
     }
 }

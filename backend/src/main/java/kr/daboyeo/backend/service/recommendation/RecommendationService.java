@@ -3,9 +3,9 @@ package kr.daboyeo.backend.service.recommendation;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -37,6 +37,8 @@ import kr.daboyeo.backend.domain.recommendation.RecommendationModels.ShowtimeCan
 import kr.daboyeo.backend.domain.recommendation.RecommendationModels.TagProfile;
 import kr.daboyeo.backend.repository.recommendation.RecommendationProfileRepository;
 import kr.daboyeo.backend.repository.recommendation.ShowtimeRecommendationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import static kr.daboyeo.backend.domain.recommendation.RecommendationModels.newAnonymousId;
@@ -46,8 +48,11 @@ import static kr.daboyeo.backend.domain.recommendation.RecommendationModels.norm
 @Service
 public class RecommendationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(RecommendationService.class);
     private static final int CANDIDATE_LIMIT = 240;
     private static final int RESULT_LIMIT = 3;
+    private static final int NO_DIRECT_TASTE_MATCH_CAP = 74;
+    private static final String RELAXED_FILTER_MESSAGE = "선택 조건과 정확히 맞는 상영이 없어 조건을 넓혀 추천했어.";
     private static final Pattern INTERNAL_TEXT_PATTERN = Pattern.compile(
         "(?i)\\bscore\\s*[:=]?\\s*\\d+\\b|\\bmatchedtags\\b|\\bpenalties\\b|\\b(?:audience|mood|genre|content|pace):[a-z0-9_]+\\b"
     );
@@ -107,7 +112,7 @@ public class RecommendationService {
     }
 
     public List<AiProviderStatus> providerHealth() {
-        return List.of(AiProvider.LOCAL, AiProvider.GPT).stream()
+        return List.of(AiProvider.LOCAL, AiProvider.CODEX).stream()
             .map(localModelClient::providerStatus)
             .toList();
     }
@@ -148,23 +153,9 @@ public class RecommendationService {
         String runId = newRunId();
         int startBufferMinutes = properties.minStartBufferMinutes();
         LocalDateTime minStartsAt = LocalDateTime.now().plusMinutes(startBufferMinutes);
-        SearchFilters effectiveSearchFilters = searchFilters;
-        List<ShowtimeCandidate> candidates = findUpcomingCandidates(effectiveSearchFilters, minStartsAt);
-        boolean relaxedExpiredTimeRange = false;
-        if (candidates.isEmpty() && shouldRelaxExpiredTimeRange(searchFilters, minStartsAt)) {
-            SearchFilters relaxedFilters = new SearchFilters(
-                searchFilters.region(),
-                searchFilters.date(),
-                "",
-                searchFilters.personCount()
-            );
-            List<ShowtimeCandidate> relaxedCandidates = findUpcomingCandidates(relaxedFilters, minStartsAt);
-            if (!relaxedCandidates.isEmpty()) {
-                candidates = relaxedCandidates;
-                effectiveSearchFilters = relaxedFilters;
-                relaxedExpiredTimeRange = true;
-            }
-        }
+        CandidateSearchResult candidateSearch = findCandidatesWithFallback(searchFilters, minStartsAt);
+        SearchFilters effectiveSearchFilters = candidateSearch.filters();
+        List<ShowtimeCandidate> candidates = candidateSearch.candidates();
         String modelName = properties.modelFor(aiProvider, mode);
 
         if (candidates.isEmpty()) {
@@ -211,28 +202,32 @@ public class RecommendationService {
             );
         }
 
-        List<ScoredCandidate> aiCandidates = selectDistinctMovieItems(scored, properties.aiCandidateLimitFor(aiProvider, mode));
+        List<ScoredCandidate> tasteAwareScored = rankTasteAwareCandidates(scored, tagProfile);
+        List<ScoredCandidate> aiCandidates = selectDistinctMovieItems(
+            tasteAwareScored,
+            properties.aiCandidateLimitFor(aiProvider, mode)
+        );
         var aiResult = aiProvider == AiProvider.LOCAL
             ? localModelClient.rankAndExplain(mode, tagProfile, aiCandidates)
             : localModelClient.rankAndExplain(aiProvider, mode, tagProfile, aiCandidates);
         List<RecommendationItem> items = aiResult
-            .map(result -> itemsFromAi(scored, result.picks(), tagProfile, mode, aiProvider))
+            .map(result -> itemsFromAi(aiCandidates, result.picks(), tagProfile, mode, aiProvider))
             .filter(list -> !list.isEmpty())
-            .orElseGet(() -> fallbackItems(scored, tagProfile, mode, aiProvider));
+            .orElseGet(() -> fallbackItems(tasteAwareScored, tagProfile, mode, aiProvider));
 
         RecommendationResponse response = new RecommendationResponse(
             runId,
             mode.wireValue(),
             aiResult.map(result -> result.modelName()).orElse(modelName == null || modelName.isBlank() ? "not-configured" : modelName),
             aiResult.isPresent() ? "ok" : "fallback",
-            relaxedExpiredTimeRange
-                ? "선택한 시간대가 이미 지나서 같은 날짜의 남은 상영 기준으로 추천했어."
+            !candidateSearch.message().isBlank()
+                ? candidateSearch.message()
                 : aiResult.isPresent()
                 ? properties.providerLabel(aiProvider) + "가 후보를 재정렬하고 이유를 작성했어."
                 : "AI 응답을 쓰지 못해서 코드 점수 기반으로 추천했어.",
             items
         );
-        profileRepository.saveRun(
+        saveRunBestEffort(
             runId,
             resolvedAnonymousId,
             mode.wireValue(),
@@ -246,26 +241,132 @@ public class RecommendationService {
         return response;
     }
 
+    private CandidateSearchResult findCandidatesWithFallback(SearchFilters filters, LocalDateTime minStartsAt) {
+        List<ShowtimeCandidate> exactCandidates = findUpcomingCandidates(filters, minStartsAt);
+        if (!exactCandidates.isEmpty() || filters == null || !filters.active()) {
+            return new CandidateSearchResult(exactCandidates, filters, "");
+        }
+
+        for (SearchFilters relaxedFilters : relaxedSearchFilters(filters)) {
+            List<ShowtimeCandidate> relaxedCandidates = findUpcomingCandidates(relaxedFilters, minStartsAt);
+            if (!relaxedCandidates.isEmpty()) {
+                return new CandidateSearchResult(relaxedCandidates, relaxedFilters, RELAXED_FILTER_MESSAGE);
+            }
+        }
+
+        List<ShowtimeCandidate> broadCandidates = findUpcomingCandidates(null, minStartsAt);
+        if (!broadCandidates.isEmpty()) {
+            return new CandidateSearchResult(broadCandidates, null, RELAXED_FILTER_MESSAGE);
+        }
+        return new CandidateSearchResult(List.of(), filters, "");
+    }
+
+    private List<SearchFilters> relaxedSearchFilters(SearchFilters filters) {
+        List<SearchFilters> relaxedFilters = new ArrayList<>();
+        Set<SearchFilters> seenFilters = new LinkedHashSet<>();
+
+        if (filters.hasTimeRange()) {
+            addRelaxedFilter(relaxedFilters, seenFilters, filters, new SearchFilters(
+                filters.region(),
+                filters.date(),
+                "",
+                filters.personCount()
+            ));
+        }
+        if (filters.hasRegion()) {
+            addRelaxedFilter(relaxedFilters, seenFilters, filters, new SearchFilters(
+                "",
+                filters.date(),
+                filters.timeRange(),
+                filters.personCount()
+            ));
+        }
+        if (filters.hasRegion() || filters.hasTimeRange()) {
+            addRelaxedFilter(relaxedFilters, seenFilters, filters, new SearchFilters(
+                "",
+                filters.date(),
+                "",
+                filters.personCount()
+            ));
+        }
+        if (filters.hasPersonCount()) {
+            addRelaxedFilter(relaxedFilters, seenFilters, filters, new SearchFilters(
+                filters.region(),
+                filters.date(),
+                filters.timeRange(),
+                null
+            ));
+        }
+        if (filters.hasTimeRange() || filters.hasPersonCount()) {
+            addRelaxedFilter(relaxedFilters, seenFilters, filters, new SearchFilters(
+                filters.region(),
+                filters.date(),
+                "",
+                null
+            ));
+        }
+        if (filters.hasRegion() || filters.hasPersonCount()) {
+            addRelaxedFilter(relaxedFilters, seenFilters, filters, new SearchFilters(
+                "",
+                filters.date(),
+                filters.timeRange(),
+                null
+            ));
+        }
+        if (filters.hasDate()) {
+            addRelaxedFilter(relaxedFilters, seenFilters, filters, new SearchFilters(
+                filters.region(),
+                null,
+                filters.timeRange(),
+                filters.personCount()
+            ));
+        }
+        if (filters.hasDate() || filters.hasTimeRange()) {
+            addRelaxedFilter(relaxedFilters, seenFilters, filters, new SearchFilters(
+                filters.region(),
+                null,
+                "",
+                filters.personCount()
+            ));
+        }
+        if (filters.hasDate() || filters.hasRegion()) {
+            addRelaxedFilter(relaxedFilters, seenFilters, filters, new SearchFilters(
+                "",
+                null,
+                filters.timeRange(),
+                filters.personCount()
+            ));
+        }
+        if (filters.hasRegion() || filters.hasDate() || filters.hasTimeRange()) {
+            addRelaxedFilter(relaxedFilters, seenFilters, filters, new SearchFilters(
+                "",
+                null,
+                "",
+                filters.personCount()
+            ));
+        }
+
+        return relaxedFilters;
+    }
+
+    private void addRelaxedFilter(
+        List<SearchFilters> relaxedFilters,
+        Set<SearchFilters> seenFilters,
+        SearchFilters originalFilters,
+        SearchFilters candidateFilters
+    ) {
+        if (candidateFilters.active()
+            && !candidateFilters.equals(originalFilters)
+            && seenFilters.add(candidateFilters)) {
+            relaxedFilters.add(candidateFilters);
+        }
+    }
+
     private List<ShowtimeCandidate> findUpcomingCandidates(SearchFilters filters, LocalDateTime minStartsAt) {
-        return filters != null && filters.active()
+        List<ShowtimeCandidate> candidates = filters != null && filters.active()
             ? showtimeRepository.findUpcomingCandidates(CANDIDATE_LIMIT, minStartsAt, filters)
             : showtimeRepository.findUpcomingCandidates(CANDIDATE_LIMIT, minStartsAt);
-    }
-
-    private boolean shouldRelaxExpiredTimeRange(SearchFilters filters, LocalDateTime minStartsAt) {
-        return filters != null
-            && filters.hasDate()
-            && filters.hasTimeRange()
-            && !timeRangeUpperBound(filters).isAfter(minStartsAt);
-    }
-
-    private LocalDateTime timeRangeUpperBound(SearchFilters filters) {
-        return switch (filters.timeRange()) {
-            case "morning" -> filters.date().atTime(LocalTime.of(11, 0));
-            case "brunch" -> filters.date().atTime(LocalTime.of(17, 0));
-            case "night" -> filters.date().plusDays(1).atTime(LocalTime.of(2, 0));
-            default -> filters.date().plusDays(1).atStartOfDay();
-        };
+        return candidates == null ? List.of() : candidates;
     }
 
     private RecommendationResponse noCandidateResponse(
@@ -286,7 +387,7 @@ public class RecommendationService {
             message,
             List.of()
         );
-        profileRepository.saveRun(
+        saveRunBestEffort(
             runId,
             anonymousId,
             mode.wireValue(),
@@ -298,6 +399,40 @@ public class RecommendationService {
             elapsedMs(startedAt)
         );
         return response;
+    }
+
+    private void saveRunBestEffort(
+        String runId,
+        String anonymousId,
+        String mode,
+        String modelName,
+        RecommendationRequest request,
+        Object candidateScores,
+        String aiResponseJson,
+        RecommendationResponse response,
+        long elapsedMs
+    ) {
+        try {
+            profileRepository.saveRun(
+                runId,
+                anonymousId,
+                mode,
+                modelName,
+                request,
+                candidateScores,
+                aiResponseJson,
+                response,
+                elapsedMs
+            );
+        } catch (RuntimeException exception) {
+            logger.warn(
+                "Recommendation run persistence failed. runId={} anonymousId={} status={}",
+                runId,
+                anonymousId,
+                response == null ? "" : response.status(),
+                exception
+            );
+        }
     }
 
     public FeedbackResponse feedback(String runId, FeedbackRequest request) {
@@ -352,8 +487,14 @@ public class RecommendationService {
                 (left, right) -> left,
                 LinkedHashMap::new
             ));
+        List<AiPick> sortedPicks = picks.stream()
+            .filter(pick -> byShowtime.containsKey(pick.showtimeId()))
+            .sorted(Comparator.comparingInt((AiPick pick) ->
+                validatedModelScore(pick, byShowtime.get(pick.showtimeId()), profile)
+            ).reversed())
+            .toList();
         List<ScoredCandidate> ordered = new ArrayList<>();
-        for (AiPick pick : picks) {
+        for (AiPick pick : sortedPicks) {
             ScoredCandidate scored = byShowtime.remove(pick.showtimeId());
             if (scored != null) {
                 ordered.add(scored);
@@ -375,7 +516,8 @@ public class RecommendationService {
                     profile,
                     mode,
                     provider,
-                    qualityAnalysisPoint(pick.analysisPoint(), scored, profile, mode, provider)
+                    qualityAnalysisPoint(pick.analysisPoint(), scored, profile, mode, provider),
+                    validatedModelScore(pick, scored, profile)
                 );
             })
             .toList();
@@ -393,9 +535,25 @@ public class RecommendationService {
             .toList();
     }
 
+    private int validatedModelScore(AiPick pick, ScoredCandidate scored, TagProfile profile) {
+        int score = pick == null || pick.score() == null ? scored.score() : clampScore(pick.score());
+        if (hasTasteAnchor(profile) && !hasGenreOverlap(scored, tasteAnchorGenres(profile))) {
+            score = Math.min(score, NO_DIRECT_TASTE_MATCH_CAP);
+        }
+        return score;
+    }
+
+    private int clampScore(int score) {
+        return Math.max(0, Math.min(100, score));
+    }
+
+    private boolean hasTasteAnchor(TagProfile profile) {
+        return !tasteAnchorGenres(profile).isEmpty();
+    }
+
     private String qualityReason(String reason, ScoredCandidate scored, RecommendationMode mode, AiProvider provider) {
         String sanitized = sanitizeUserFacingText(reason);
-        if (provider == AiProvider.GPT && !isWeakNarrativeReason(sanitized, scored.candidate())) {
+        if (isNarrativeProvider(provider) && !isWeakNarrativeReason(sanitized, scored.candidate())) {
             return limitText(sanitized, mode == RecommendationMode.PRECISE ? 220 : 170);
         }
         if (isWeakReason(sanitized, scored.candidate())) {
@@ -403,6 +561,10 @@ public class RecommendationService {
         }
         String tags = normalizeReasonTags(sanitized);
         return tags.isBlank() ? groundedReason(scored) : tags;
+    }
+
+    private boolean isNarrativeProvider(AiProvider provider) {
+        return provider == AiProvider.GPT || provider == AiProvider.CODEX;
     }
 
     private boolean isWeakReason(String reason, ShowtimeCandidate candidate) {
@@ -456,7 +618,7 @@ public class RecommendationService {
 
     private String qualityValuePoint(String valuePoint, ShowtimeCandidate candidate, RecommendationMode mode, AiProvider provider) {
         String sanitized = sanitizeUserFacingText(valuePoint);
-        if (provider == AiProvider.GPT && !isWeakNarrativeValuePoint(sanitized, candidate)) {
+        if (isNarrativeProvider(provider) && !isWeakNarrativeValuePoint(sanitized, candidate)) {
             return limitText(sanitized, mode == RecommendationMode.PRECISE ? 170 : 140);
         }
         if (isWeakValuePoint(sanitized, candidate)) {
@@ -694,9 +856,67 @@ public class RecommendationService {
         return selectDistinctMovieItems(rankedCandidates, RESULT_LIMIT);
     }
 
+    private List<ScoredCandidate> rankTasteAwareCandidates(
+        List<ScoredCandidate> rankedCandidates,
+        TagProfile profile
+    ) {
+        if (rankedCandidates == null || rankedCandidates.isEmpty() || profile == null) {
+            return rankedCandidates == null ? List.of() : rankedCandidates;
+        }
+
+        List<ScoredCandidate> ordered = new ArrayList<>();
+        Set<String> seenMovies = new LinkedHashSet<>();
+
+        if (!profile.preferredGenres().isEmpty()) {
+            List<ScoredCandidate> directPreferred = rankedCandidates.stream()
+                .filter(scored -> hasGenreOverlap(scored, profile.preferredGenres()))
+                .toList();
+            appendDistinctMovieCandidates(ordered, seenMovies, directPreferred);
+        }
+
+        Set<String> posterGenres = new LinkedHashSet<>(profile.likedGenres());
+        posterGenres.removeAll(profile.preferredGenres());
+        if (!posterGenres.isEmpty()) {
+            List<ScoredCandidate> posterMatches = rankedCandidates.stream()
+                .filter(scored -> hasGenreOverlap(scored, posterGenres))
+                .toList();
+            appendDistinctMovieCandidates(ordered, seenMovies, posterMatches);
+        }
+
+        if (profile.preferredGenres().isEmpty() && !profile.likedGenres().isEmpty()) {
+            List<ScoredCandidate> likedMatches = rankedCandidates.stream()
+                .filter(scored -> hasGenreOverlap(scored, profile.likedGenres()))
+                .toList();
+            appendDistinctMovieCandidates(ordered, seenMovies, likedMatches);
+        }
+
+        appendDistinctMovieCandidates(ordered, seenMovies, rankedCandidates);
+        return ordered;
+    }
+
+    private void appendDistinctMovieCandidates(
+        List<ScoredCandidate> ordered,
+        Set<String> seenMovies,
+        List<ScoredCandidate> candidates
+    ) {
+        for (ScoredCandidate scored : candidates) {
+            if (seenMovies.add(movieKey(scored))) {
+                ordered.add(scored);
+            }
+        }
+    }
+
+    private boolean hasGenreOverlap(ScoredCandidate scored, Set<String> genreTags) {
+        if (scored == null || scored.candidate() == null || genreTags == null || genreTags.isEmpty()) {
+            return false;
+        }
+        return scored.candidate().allTags().stream()
+            .map(tag -> tag == null ? "" : tag.trim().toLowerCase(Locale.ROOT))
+            .anyMatch(tag -> tag.startsWith("genre:") && genreTags.contains(tag));
+    }
+
     private List<ScoredCandidate> selectDistinctMovieItems(List<ScoredCandidate> rankedCandidates, int limit) {
         List<ScoredCandidate> selected = new ArrayList<>();
-        List<ScoredCandidate> deferred = new ArrayList<>();
         Set<String> seenMovies = new LinkedHashSet<>();
         for (ScoredCandidate scored : rankedCandidates) {
             if (selected.size() >= limit) {
@@ -704,16 +924,6 @@ public class RecommendationService {
             }
             String movieKey = movieKey(scored);
             if (seenMovies.add(movieKey)) {
-                selected.add(scored);
-            } else {
-                deferred.add(scored);
-            }
-        }
-        if (selected.size() < limit) {
-            for (ScoredCandidate scored : deferred) {
-                if (selected.size() >= limit) {
-                    break;
-                }
                 selected.add(scored);
             }
         }
@@ -727,16 +937,48 @@ public class RecommendationService {
         AiProvider provider
     ) {
         ShowtimeCandidate candidate = scored.candidate();
-        return toItem(
-            scored,
-            groundedReason(scored),
-            "",
-            groundedValuePoint(candidate),
-            profile,
-            mode,
-            provider,
-            qualityAnalysisPoint("", scored, profile, mode, provider)
+        int resolvedScore = scored.score();
+        String reason = groundedReason(scored);
+        String caution = "";
+        String valuePoint = groundedValuePoint(candidate);
+        String analysisPoint = qualityAnalysisPoint("", scored, profile, mode, provider);
+        String resolvedAnalysisPoint = isNarrativeProvider(provider) || mode == RecommendationMode.PRECISE
+            ? blankToDefault(sanitizeUserFacingText(analysisPoint), analysisPoint(scored, profile))
+            : "";
+        return new RecommendationItem(
+            candidate.movieId(),
+            candidate.showtimeId(),
+            displayText(candidate.title()),
+            resolvedScore,
+            blankToDefault(sanitizeUserFacingText(reason), "#조건근접"),
+            resolvedAnalysisPoint,
+            blankToDefault(sanitizeUserFacingText(caution), ""),
+            blankToDefault(sanitizeUserFacingText(valuePoint), valuePoint(candidate)),
+            candidate.providerCode(),
+            displayText(candidate.theaterName()),
+            displayText(candidate.regionName()),
+            displayText(candidate.screenName()),
+            candidate.showDate(),
+            candidate.startsAt(),
+            candidate.minPriceAmount(),
+            candidate.currencyCode(),
+            candidate.bookingUrl(),
+            candidate.posterUrl()
         );
+    }
+
+    private RecommendationItem toItem(
+        ScoredCandidate scored,
+        String reason,
+        String caution,
+        String valuePoint,
+        TagProfile profile,
+        RecommendationMode mode,
+        AiProvider provider,
+        String analysisPoint,
+        int resolvedScore
+    ) {
+        return toItemScored(scored, reason, caution, valuePoint, profile, mode, provider, analysisPoint, resolvedScore);
     }
 
     private RecommendationItem toItem(
@@ -750,14 +992,52 @@ public class RecommendationService {
         String analysisPoint
     ) {
         ShowtimeCandidate candidate = scored.candidate();
-        String resolvedAnalysisPoint = provider == AiProvider.GPT || mode == RecommendationMode.PRECISE
+        int resolvedScore = scored.score();
+        String resolvedAnalysisPoint = isNarrativeProvider(provider) || mode == RecommendationMode.PRECISE
             ? blankToDefault(sanitizeUserFacingText(analysisPoint), analysisPoint(scored, profile))
             : "";
         return new RecommendationItem(
             candidate.movieId(),
             candidate.showtimeId(),
             displayText(candidate.title()),
-            scored.score(),
+            resolvedScore,
+            blankToDefault(sanitizeUserFacingText(reason), "#조건근접"),
+            resolvedAnalysisPoint,
+            blankToDefault(sanitizeUserFacingText(caution), ""),
+            blankToDefault(sanitizeUserFacingText(valuePoint), valuePoint(candidate)),
+            candidate.providerCode(),
+            displayText(candidate.theaterName()),
+            displayText(candidate.regionName()),
+            displayText(candidate.screenName()),
+            candidate.showDate(),
+            candidate.startsAt(),
+            candidate.minPriceAmount(),
+            candidate.currencyCode(),
+            candidate.bookingUrl(),
+            candidate.posterUrl()
+        );
+    }
+
+    private RecommendationItem toItemScored(
+        ScoredCandidate scored,
+        String reason,
+        String caution,
+        String valuePoint,
+        TagProfile profile,
+        RecommendationMode mode,
+        AiProvider provider,
+        String analysisPoint,
+        int resolvedScore
+    ) {
+        ShowtimeCandidate candidate = scored.candidate();
+        String resolvedAnalysisPoint = isNarrativeProvider(provider) || mode == RecommendationMode.PRECISE
+            ? blankToDefault(sanitizeUserFacingText(analysisPoint), analysisPoint(scored, profile))
+            : "";
+        return new RecommendationItem(
+            candidate.movieId(),
+            candidate.showtimeId(),
+            displayText(candidate.title()),
+            resolvedScore,
             blankToDefault(sanitizeUserFacingText(reason), "#조건근접"),
             resolvedAnalysisPoint,
             blankToDefault(sanitizeUserFacingText(caution), ""),
@@ -786,7 +1066,7 @@ public class RecommendationService {
         RecommendationMode mode,
         AiProvider provider
     ) {
-        if (provider == AiProvider.GPT) {
+        if (isNarrativeProvider(provider)) {
             String sanitized = sanitizeUserFacingText(analysisPoint);
             if (!sanitized.isBlank() && !INTERNAL_TEXT_PATTERN.matcher(sanitized).find()) {
                 return limitText(sanitized, mode == RecommendationMode.PRECISE ? 320 : 180);
@@ -822,25 +1102,31 @@ public class RecommendationService {
 
     private String analysisPoint(ScoredCandidate scored, TagProfile profile) {
         ShowtimeCandidate candidate = scored.candidate();
-        Set<String> likedGenres = profile == null ? Set.of() : profile.likedGenres();
+        Set<String> likedGenres = tasteAnchorGenres(profile);
         for (String tag : candidate.allTags()) {
             String normalized = tag == null ? "" : tag.toLowerCase(Locale.ROOT);
             if (normalized.startsWith("genre:") && !isGenericGenreTag(normalized) && likedGenres.contains(normalized)) {
                 return "#" + genreLabel(normalized.substring("genre:".length())) + "취향";
             }
         }
-        Optional<String> preferredGenre = likedGenres.stream()
-            .filter(tag -> !isGenericGenreTag(tag))
-            .findFirst();
-        if (preferredGenre.isPresent()) {
-            String preferredGenreValue = preferredGenre.orElseThrow();
-            return "#" + genreLabel(preferredGenreValue.substring("genre:".length())) + "취향";
+        if (scored.penalties().contains("taste_mismatch")) {
+            return "#조건보조";
         }
         return candidate.allTags().stream()
             .filter(tag -> tag != null && tag.toLowerCase(Locale.ROOT).startsWith("genre:") && !isGenericGenreTag(tag))
             .map(tag -> "#" + genreLabel(tag.substring("genre:".length())) + "계열")
             .findFirst()
             .orElse("#장르근접");
+    }
+
+    private Set<String> tasteAnchorGenres(TagProfile profile) {
+        if (profile == null) {
+            return Set.of();
+        }
+        if (!profile.preferredGenres().isEmpty()) {
+            return profile.preferredGenres();
+        }
+        return profile.likedGenres();
     }
 
     private Map<String, Integer> feedbackDelta(ShowtimeCandidate candidate, FeedbackAction action) {
@@ -946,5 +1232,16 @@ public class RecommendationService {
 
     private long elapsedMs(Instant startedAt) {
         return Duration.between(startedAt, Instant.now()).toMillis();
+    }
+
+    private record CandidateSearchResult(
+        List<ShowtimeCandidate> candidates,
+        SearchFilters filters,
+        String message
+    ) {
+        CandidateSearchResult {
+            candidates = candidates == null ? List.of() : List.copyOf(candidates);
+            message = message == null ? "" : message;
+        }
     }
 }

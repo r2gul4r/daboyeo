@@ -29,6 +29,7 @@ class ShowtimeSyncServiceTests {
         properties.setEnabled(true);
         properties.setTimezone("Asia/Seoul");
         properties.getShowtimes().setEnabled(true);
+        properties.getShowtimes().setIncludeCgv(true);
         properties.getShowtimes().setAutoDiscoveryEnabled(false);
         properties.getShowtimes().setDateOffsetDays(List.of(0, 1));
 
@@ -79,6 +80,45 @@ class ShowtimeSyncServiceTests {
     }
 
     @Test
+    void dailySyncExcludesCgvByDefault() {
+        CollectorSyncProperties properties = new CollectorSyncProperties();
+        properties.setEnabled(true);
+        properties.setTimezone("Asia/Seoul");
+        properties.getShowtimes().setEnabled(true);
+        properties.getShowtimes().setAutoDiscoveryEnabled(false);
+        properties.getShowtimes().setDateOffsetDays(List.of(0));
+
+        CollectorSyncProperties.CgvTarget cgvTarget = new CollectorSyncProperties.CgvTarget();
+        cgvTarget.setSiteNo("0013");
+        cgvTarget.setMovieNo("20042000");
+        properties.getShowtimes().setCgvTargets(List.of(cgvTarget));
+
+        CollectorSyncProperties.LotteTarget lotteTarget = new CollectorSyncProperties.LotteTarget();
+        lotteTarget.setCinemaSelector("1|101|0001");
+        lotteTarget.setRepresentationMovieCode("L100");
+        properties.getShowtimes().setLotteTargets(List.of(lotteTarget));
+
+        PythonCollectorBridge bridge = mock(PythonCollectorBridge.class);
+        when(bridge.collectShowtimeBundle(any())).thenReturn(Map.of());
+
+        CollectorBundlePersistenceService persistenceService = mock(CollectorBundlePersistenceService.class);
+        when(persistenceService.persist(any(), any(), eq(false))).thenReturn(new CollectorBundleIngestCommand.IngestResult(1, 1, 1, 1));
+
+        ShowtimeCleanupService cleanupService = mock(ShowtimeCleanupService.class);
+        when(cleanupService.cleanupForBaseDate(any()))
+            .thenReturn(new ShowtimeCleanupRepository.CleanupCounts(0, 0, 0));
+
+        ShowtimeSyncService service = new ShowtimeSyncService(properties, bridge, persistenceService, cleanupService);
+        service.syncDailyShowtimes();
+
+        ArgumentCaptor<ShowtimeCollectionRequest> requestCaptor = ArgumentCaptor.forClass(ShowtimeCollectionRequest.class);
+        verify(bridge, times(1)).collectShowtimeBundle(requestCaptor.capture());
+        assertThat(requestCaptor.getAllValues()).extracting(ShowtimeCollectionRequest::provider)
+            .containsExactly(CollectorProvider.LOTTE_CINEMA);
+        verify(cleanupService, times(1)).cleanupForBaseDate(any());
+    }
+
+    @Test
     void autoDiscoverySyncsWorkingLotteAndMegaboxTargets() {
         CollectorSyncProperties properties = new CollectorSyncProperties();
         properties.setEnabled(true);
@@ -126,6 +166,57 @@ class ShowtimeSyncServiceTests {
         assertThat(requests).extracting(ShowtimeCollectionRequest::representationMovieCode).contains("24136", "24140");
         assertThat(requests).extracting(ShowtimeCollectionRequest::areaCode).contains("30");
         verify(cleanupService, times(1)).cleanupForBaseDate(any());
+    }
+
+    @Test
+    void entrySyncExcludesCgvAndSkipsCleanup() {
+        CollectorSyncProperties properties = new CollectorSyncProperties();
+        properties.setEnabled(true);
+        properties.setTimezone("Asia/Seoul");
+        properties.getShowtimes().setEnabled(true);
+        properties.getShowtimes().setAutoDiscoveryEnabled(false);
+        properties.getShowtimes().setDateOffsetDays(List.of(0, 1, 2));
+        properties.getShowtimes().setEntryRefreshMaxDates(2);
+
+        CollectorSyncProperties.CgvTarget cgvTarget = new CollectorSyncProperties.CgvTarget();
+        cgvTarget.setSiteNo("0013");
+        cgvTarget.setMovieNo("20042000");
+        properties.getShowtimes().setCgvTargets(List.of(cgvTarget));
+
+        CollectorSyncProperties.LotteTarget lotteTarget = new CollectorSyncProperties.LotteTarget();
+        lotteTarget.setCinemaSelector("1|101|0001");
+        lotteTarget.setRepresentationMovieCode("L100");
+        properties.getShowtimes().setLotteTargets(List.of(lotteTarget));
+
+        CollectorSyncProperties.MegaboxTarget megaboxTarget = new CollectorSyncProperties.MegaboxTarget();
+        megaboxTarget.setMovieNo("240001");
+        megaboxTarget.setAreaCode("11");
+        properties.getShowtimes().setMegaboxTargets(List.of(megaboxTarget));
+
+        PythonCollectorBridge bridge = mock(PythonCollectorBridge.class);
+        when(bridge.collectShowtimeBundle(any())).thenReturn(Map.of());
+
+        CollectorBundlePersistenceService persistenceService = mock(CollectorBundlePersistenceService.class);
+        when(persistenceService.persist(any(), any(), eq(false))).thenReturn(new CollectorBundleIngestCommand.IngestResult(1, 1, 1, 1));
+
+        ShowtimeCleanupService cleanupService = mock(ShowtimeCleanupService.class);
+
+        ShowtimeSyncService service = new ShowtimeSyncService(properties, bridge, persistenceService, cleanupService);
+        ShowtimeSyncService.ShowtimeSyncRunResult result = service.syncEntryShowtimes();
+
+        ArgumentCaptor<ShowtimeCollectionRequest> requestCaptor = ArgumentCaptor.forClass(ShowtimeCollectionRequest.class);
+        verify(bridge, times(4)).collectShowtimeBundle(requestCaptor.capture());
+        verify(cleanupService, times(0)).cleanupForBaseDate(any());
+
+        assertThat(result.status()).isEqualTo("completed");
+        assertThat(result.dateCount()).isEqualTo(2);
+        assertThat(requestCaptor.getAllValues()).extracting(ShowtimeCollectionRequest::provider)
+            .containsExactlyInAnyOrder(
+                CollectorProvider.LOTTE_CINEMA,
+                CollectorProvider.LOTTE_CINEMA,
+                CollectorProvider.MEGABOX,
+                CollectorProvider.MEGABOX
+            );
     }
 
     @Test

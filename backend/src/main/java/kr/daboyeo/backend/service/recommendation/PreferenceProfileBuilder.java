@@ -15,6 +15,24 @@ public class PreferenceProfileBuilder {
     private static final int MAX_LIKED_POSTERS = 5;
     private static final Set<String> AUDIENCES = Set.of("alone", "friends", "date", "family", "child");
     private static final Set<String> MOODS = Set.of("light", "immersive", "exciting", "calm", "tense");
+    private static final Set<String> GENRES = Set.of(
+        "action",
+        "adventure",
+        "animation",
+        "comedy",
+        "crime",
+        "drama",
+        "family",
+        "fantasy",
+        "history",
+        "horror",
+        "music",
+        "musical",
+        "mystery",
+        "romance",
+        "sf",
+        "thriller"
+    );
 
     private final PosterSeedService posterSeedService;
 
@@ -38,6 +56,7 @@ public class PreferenceProfileBuilder {
 
         applyAudience(profile, survey.audience());
         applyMood(profile, survey.mood());
+        survey.preferredGenres().forEach(value -> applyPreferredGenre(profile, value));
         survey.avoid().forEach(value -> profile.addWeight("content:" + value, -3));
 
         choices.likedSeedMovieIds().stream()
@@ -60,6 +79,12 @@ public class PreferenceProfileBuilder {
         }
         if (survey.avoid().size() > 5) {
             throw new IllegalArgumentException("피하고 싶은 요소가 너무 많아.");
+        }
+        if (survey.preferredGenres().size() > 5) {
+            throw new IllegalArgumentException("선호 장르는 5개까지만 골라줘.");
+        }
+        if (!GENRES.containsAll(survey.preferredGenres())) {
+            throw new IllegalArgumentException("지원하지 않는 선호 장르가 있어.");
         }
     }
 
@@ -136,6 +161,11 @@ public class PreferenceProfileBuilder {
             default -> {
             }
         }
+    }
+
+    private void applyPreferredGenre(TagProfile profile, String genre) {
+        profile.addWeight("genre:" + genre, 6);
+        profile.addPreferredGenre(genre);
     }
 
     private void applyLikedSeed(TagProfile profile, PosterSeedMovie seed) {
