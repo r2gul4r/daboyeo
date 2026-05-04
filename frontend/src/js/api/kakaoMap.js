@@ -210,9 +210,30 @@ function updateMapWithServerData(theaters, results, userLat, userLng) {
 
   const geocoder = new kakao.maps.services.Geocoder();
   geocoder.coord2Address(userLng, userLat, (result, status) => {
-    if (status === kakao.maps.services.Status.OK && addressInfo) {
-      const address = result[0].road_address ? result[0].road_address.address_name : result[0].address.address_name;
-      addressInfo.innerText = `현재 위치: ${address}`;
+    if (status === kakao.maps.services.Status.OK) {
+      if (addressInfo) {
+        const address = result[0].road_address ? result[0].road_address.address_name : result[0].address.address_name;
+        addressInfo.innerText = `현재 위치: ${address}`;
+      }
+      
+      // Sync with main search card dropdowns
+      if (result[0].address) {
+        const addr = result[0].address;
+        
+        // Auto-fill the search input with the resolved full address
+        const mapRegionInput = document.getElementById('map-region-search');
+        if (mapRegionInput) {
+          mapRegionInput.value = `${addr.region_1depth_name} ${addr.region_2depth_name} ${addr.region_3depth_name}`.trim();
+        }
+
+        if (window.updateRegionFromMap) {
+          window.updateRegionFromMap(
+            addr.region_1depth_name,
+            addr.region_2depth_name,
+            addr.region_3depth_name
+          );
+        }
+      }
     }
   });
 
@@ -383,19 +404,62 @@ async function handleRegionSearch() {
 
   try {
     const found = await searchLocationByQuery(query);
+    
+    // Update map view to found location
+    if (map) {
+      const moveLatLon = new kakao.maps.LatLng(found.lat, found.lng);
+      map.setCenter(moveLatLon);
+      map.setLevel(4);
+    }
+
+    // Resolve structured address for dropdown synchronization
+    const geocoder = new kakao.maps.services.Geocoder();
+    
+    const geocodePromise = new Promise((resolve) => {
+      geocoder.coord2Address(found.lng, found.lat, (result, status) => {
+        if (status === kakao.maps.services.Status.OK && result[0].address) {
+          const addr = result[0].address;
+          console.log('[RegionSync] Geocoded address:', addr);
+          
+          // Auto-fill the search input with the resolved full address
+          const mapRegionInput = document.getElementById('map-region-search');
+          if (mapRegionInput) {
+            mapRegionInput.value = `${addr.region_1depth_name} ${addr.region_2depth_name} ${addr.region_3depth_name}`.trim();
+          }
+
+          if (window.updateRegionFromMap) {
+            window.updateRegionFromMap(
+              addr.region_1depth_name, 
+              addr.region_2depth_name, 
+              addr.region_3depth_name
+            );
+          }
+          resolve(true);
+        } else {
+          console.warn('[RegionSync] coord2Address failed or no address found', status);
+          if (window.updateRegionFromMap) {
+            window.updateRegionFromMap(found.label);
+          }
+          resolve(false);
+        }
+      });
+    });
+
+    await geocodePromise;
+
     if (mapRegionSearchFeedback) {
-      mapRegionSearchFeedback.innerText = `"${found.label}" 주변 극장을 조회합니다.`;
+      mapRegionSearchFeedback.innerText = `"${found.label}" 지역이 적용되었습니다.`;
+      mapRegionSearchFeedback.style.color = 'var(--purple50)';
     }
 
-    const regionInput = document.getElementById('regionInput');
-    if (regionInput) {
-      regionInput.value = found.label;
-    }
+    // Give a small delay for user to see the feedback before closing
+    setTimeout(() => {
+      if (nearbySection) {
+        nearbySection.classList.remove('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 600);
 
-    if (nearbySection) {
-      nearbySection.classList.remove('active');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
   } catch (error) {
     if (mapRegionSearchFeedback) {
       mapRegionSearchFeedback.innerText = error.message;

@@ -291,6 +291,103 @@ import { REGIONS } from "../constants/regions.js";
       });
     });
 
+    window.updateRegionFromMap = (sidoOrAddress, maybeGugun, maybeDong) => {
+      let sido, gugun, dong;
+      
+      if (maybeGugun && maybeDong) {
+        sido = sidoOrAddress;
+        gugun = maybeGugun;
+        dong = maybeDong;
+      } else if (sidoOrAddress) {
+        const parts = sidoOrAddress.split(" ");
+        sido = parts[0];
+        gugun = parts[1];
+        dong = parts[2];
+      } else {
+        return;
+      }
+
+      console.log(`[RegionSync] Attempting to sync: ${sido} ${gugun} ${dong}`);
+
+      // Robust Sido matching (e.g. "서울" matches "서울특별시")
+      let matchedSidoKey = Object.keys(REGIONS).find(key => key.startsWith(sido) || sido.startsWith(key));
+
+      if (matchedSidoKey) {
+        selectedSido = matchedSidoKey;
+        sidoDisplay.querySelector("span").textContent = matchedSidoKey;
+        sidoOptions.querySelectorAll("li").forEach(li => {
+          li.classList.toggle("selected", li.dataset.value === matchedSidoKey);
+        });
+
+        // Update Gugun
+        const gugunData = REGIONS[matchedSidoKey];
+        const gugunKeys = Object.keys(gugunData);
+        populateOptions(gugunOptions, gugunKeys);
+        gugunContainer.classList.remove("disabled");
+
+        // Robust Gugun matching (e.g. "성남시 분당구" vs "성남시분당구", or "용인시 기흥구" vs "용인시")
+        let matchedGuguns = gugunKeys.filter(key => 
+          key === gugun || 
+          key.startsWith(gugun) || 
+          gugun.startsWith(key) || 
+          key.replace(/\s/g, "") === gugun.replace(/\s/g, "")
+        );
+        
+        // Prefer the most specific (longest) match
+        matchedGuguns.sort((a, b) => b.length - a.length);
+        let matchedGugunKey = matchedGuguns[0];
+
+        if (matchedGugunKey) {
+          selectedGugun = matchedGugunKey;
+          gugunDisplay.querySelector("span").textContent = matchedGugunKey;
+          gugunOptions.querySelectorAll("li").forEach(li => {
+            li.classList.toggle("selected", li.dataset.value === matchedGugunKey);
+          });
+
+          // Update Dong
+          const dongsInDb = gugunData[matchedGugunKey] || [];
+          const dongData = ["전체", ...dongsInDb];
+          populateOptions(dongOptions, dongData);
+          dongContainer.classList.remove("disabled");
+
+          // Robust fuzzy match Dong (e.g., "성수동2가" -> "성수동", "역삼1동" -> "역삼동")
+          const normalizeDong = (name) => name.replace(/[0-9]+(가|동)?$/, '').replace(/제?[0-9]+동$/, '').replace(/동$/, '');
+          const normDong = normalizeDong(dong);
+
+          let matchedDong = dongData.find(d => {
+            if (d === "전체") return false;
+            if (d === dong) return true;
+            if (dong.startsWith(d) || d.startsWith(dong)) return true;
+            
+            const normD = normalizeDong(d);
+            return normD.length > 1 && (normDong.startsWith(normD) || normD.startsWith(normDong));
+          });
+          
+          if (matchedDong) {
+            selectedDong = matchedDong;
+            dongDisplay.querySelector("span").textContent = matchedDong;
+            dongOptions.querySelectorAll("li").forEach(li => {
+              li.classList.toggle("selected", li.dataset.value === matchedDong);
+            });
+            console.log(`[RegionSync] Matched Dong: ${matchedDong}`);
+          } else {
+            selectedDong = "전체";
+            dongDisplay.querySelector("span").textContent = "전체";
+            console.log(`[RegionSync] No specific Dong match for '${dong}', defaulting to '전체'`);
+          }
+        } else {
+          console.warn(`[RegionSync] Gugun not found: ${gugun}`);
+          selectedGugun = "";
+          gugunDisplay.querySelector("span").textContent = "시/군/구 선택";
+          selectedDong = "";
+          dongDisplay.querySelector("span").textContent = "읍/면/동 선택";
+          dongContainer.classList.add("disabled");
+        }
+      } else {
+        console.warn(`[RegionSync] Sido not found: ${sido}`);
+      }
+    };
+
     initializeDateInput();
     restoreSearchContext();
   }

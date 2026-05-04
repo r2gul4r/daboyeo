@@ -8,11 +8,16 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import kr.daboyeo.backend.config.CollectorSyncProperties;
 import kr.daboyeo.backend.domain.LiveMovieSearchCriteria;
 import kr.daboyeo.backend.ingest.CollectorBundleIngestCommand;
@@ -40,6 +45,7 @@ public class NearbyShowtimeRefreshService {
     private final TaskExecutor taskExecutor;
     private final Clock clock;
     private final Set<String> inFlightKeys = ConcurrentHashMap.newKeySet();
+    private final Map<String, CompletableFuture<Void>> requestFutures = new ConcurrentHashMap<>();
 
     @Autowired
     public NearbyShowtimeRefreshService(
@@ -72,13 +78,51 @@ public class NearbyShowtimeRefreshService {
     }
 
     public void requestRefresh(LiveMovieSearchCriteria criteria) {
+        startRefresh(criteria);
+    }
+
+    public RefreshWaitOutcome requestRefreshAndAwait(LiveMovieSearchCriteria criteria, Duration timeout) {
+        RefreshExecution execution = startRefresh(criteria);
+        if (execution.skipped()) {
+            return RefreshWaitOutcome.SKIPPED;
+        }
+
+        long waitMillis = Math.max(0L, timeout == null ? 0L : timeout.toMillis());
+        if (waitMillis == 0L) {
+            return execution.future().isDone() ? RefreshWaitOutcome.COMPLETED : RefreshWaitOutcome.TIMED_OUT;
+        }
+
+        try {
+            execution.future().get(waitMillis, TimeUnit.MILLISECONDS);
+            return RefreshWaitOutcome.COMPLETED;
+        } catch (TimeoutException exception) {
+            return RefreshWaitOutcome.TIMED_OUT;
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            logger.warn("Nearby refresh wait interrupted for date={}", criteria.date(), exception);
+            return RefreshWaitOutcome.FAILED;
+        } catch (ExecutionException exception) {
+            logger.warn("Nearby refresh wait failed for date={}", criteria.date(), exception.getCause());
+            return RefreshWaitOutcome.FAILED;
+        }
+    }
+
+    private RefreshExecution startRefresh(LiveMovieSearchCriteria criteria) {
         if (!properties.isEnabled() || !properties.getShowtimes().isEnabled() || !properties.getShowtimes().isNearbyRefreshEnabled()) {
-            return;
+            return RefreshExecution.skippedExecution();
         }
         NearbyTheaterTargetResolver.Resolution resolution = resolver.resolve(criteria);
         if (resolution.isEmpty()) {
-            return;
+            return RefreshExecution.skippedExecution();
         }
+
+        String requestKey = refreshRequestKey(criteria.date(), resolution);
+        CompletableFuture<Void> created = new CompletableFuture<>();
+        CompletableFuture<Void> existing = requestFutures.putIfAbsent(requestKey, created);
+        if (existing != null) {
+            return RefreshExecution.activeExecution(existing);
+        }
+
         logger.info(
             "Nearby refresh requested date={} lotteCandidates={} megaboxCandidates={} radiusKm={}",
             criteria.date(),
@@ -86,7 +130,19 @@ public class NearbyShowtimeRefreshService {
             resolution.megaboxEntries().size(),
             criteria.radiusKm()
         );
-        taskExecutor.execute(() -> refreshNearby(criteria, resolution));
+
+        taskExecutor.execute(() -> {
+            try {
+                refreshNearby(criteria, resolution);
+                created.complete(null);
+            } catch (Throwable throwable) {
+                created.completeExceptionally(throwable);
+            } finally {
+                requestFutures.remove(requestKey, created);
+            }
+        });
+
+        return RefreshExecution.activeExecution(created);
     }
 
     private void refreshNearby(LiveMovieSearchCriteria criteria, NearbyTheaterTargetResolver.Resolution resolution) {
@@ -201,17 +257,25 @@ public class NearbyShowtimeRefreshService {
                 logger.info("Nearby refresh skipped provider={} theater={} date={} reason=fresh", item.provider(), item.externalTheaterId(), showDate);
                 continue;
             }
-            if (!acquire(inFlightAreaKey(item.provider(), item.areaCode(), showDate))) {
-                logger.info("Nearby refresh skipped provider={} areaCode={} date={} reason=in_flight", item.provider(), item.areaCode(), showDate);
-                continue;
-            }
             staleAreas.computeIfAbsent(item.areaCode(), unused -> new ArrayList<>()).add(item);
         }
         if (staleAreas.isEmpty()) {
             return;
         }
+        Map<String, List<NearbyRefreshRepository.TheaterSyncMetadata>> acquiredAreas = new LinkedHashMap<>();
+        for (Map.Entry<String, List<NearbyRefreshRepository.TheaterSyncMetadata>> areaEntry : staleAreas.entrySet()) {
+            String areaCode = areaEntry.getKey();
+            if (!acquire(inFlightAreaKey(CollectorProvider.MEGABOX, areaCode, showDate))) {
+                logger.info("Nearby refresh skipped provider={} areaCode={} date={} reason=in_flight", CollectorProvider.MEGABOX, areaCode, showDate);
+                continue;
+            }
+            acquiredAreas.put(areaCode, areaEntry.getValue());
+        }
+        if (acquiredAreas.isEmpty()) {
+            return;
+        }
         try {
-            for (Map.Entry<String, List<NearbyRefreshRepository.TheaterSyncMetadata>> areaEntry : staleAreas.entrySet()) {
+            for (Map.Entry<String, List<NearbyRefreshRepository.TheaterSyncMetadata>> areaEntry : acquiredAreas.entrySet()) {
                 String areaCode = areaEntry.getKey();
                 logger.info(
                     "Nearby refresh discovery starting provider={} areaCode={} date={} theaters={}",
@@ -237,17 +301,26 @@ public class NearbyShowtimeRefreshService {
                         null,
                         null,
                         text(target.get("area_code"))
-                    ));
+                    ), areaEntry.getValue().stream()
+                        .map(NearbyRefreshRepository.TheaterSyncMetadata::externalTheaterId)
+                        .toList());
                 }
             }
         } finally {
-            staleAreas.keySet().forEach(areaCode -> release(inFlightAreaKey(CollectorProvider.MEGABOX, areaCode, showDate)));
+            acquiredAreas.keySet().forEach(areaCode -> release(inFlightAreaKey(CollectorProvider.MEGABOX, areaCode, showDate)));
         }
     }
 
     private void persistCollectedBundle(ShowtimeCollectionRequest request) {
+        persistCollectedBundle(request, List.of());
+    }
+
+    private void persistCollectedBundle(ShowtimeCollectionRequest request, Collection<String> allowedExternalTheaterIds) {
         Map<String, Object> bundle = collectorBridge.collectShowtimeBundle(request);
-        CollectorBundleIngestCommand.IngestResult result = persistenceService.persist(request.provider().name(), bundle, false);
+        Map<String, Object> scopedBundle = request.provider() == CollectorProvider.MEGABOX
+            ? filterMegaboxBundleForTheaters(bundle, allowedExternalTheaterIds)
+            : bundle;
+        CollectorBundleIngestCommand.IngestResult result = persistenceService.persist(request.provider().name(), scopedBundle, false);
         logger.info(
             "Nearby refresh stored provider={} date={} theaters={} screens={} showtimes={}",
             request.provider(),
@@ -256,6 +329,50 @@ public class NearbyShowtimeRefreshService {
             result.screens(),
             result.showtimes()
         );
+    }
+
+    private Map<String, Object> filterMegaboxBundleForTheaters(Map<String, Object> bundle, Collection<String> allowedExternalTheaterIds) {
+        Set<String> allowedIds = allowedExternalTheaterIds == null
+            ? Set.of()
+            : allowedExternalTheaterIds.stream()
+                .map(NearbyShowtimeRefreshService::text)
+                .filter(value -> !value.isBlank())
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        if (allowedIds.isEmpty()) {
+            return bundle;
+        }
+
+        List<Map<String, Object>> schedules = listOfMaps(bundle.get("schedules")).stream()
+            .filter(schedule -> allowedIds.contains(text(schedule.get("branch_no"))))
+            .toList();
+        Set<String> retainedMovieIds = schedules.stream()
+            .map(schedule -> text(schedule.get("movie_no")))
+            .filter(value -> !value.isBlank())
+            .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        List<Map<String, Object>> movies = listOfMaps(bundle.get("movies")).stream()
+            .filter(movie -> retainedMovieIds.contains(text(movie.get("movie_no")))
+                || retainedMovieIds.contains(text(movie.get("representative_movie_no"))))
+            .toList();
+        List<Map<String, Object>> areas = listOfMaps(bundle.get("areas")).stream()
+            .filter(area -> allowedIds.contains(text(area.get("branch_no"))))
+            .toList();
+        List<Map<String, Object>> seatRecords = listOfMaps(bundle.get("seat_records")).stream()
+            .filter(seat -> {
+                String branchNo = text(seat.get("branch_no"));
+                return branchNo.isBlank() || allowedIds.contains(branchNo);
+            })
+            .toList();
+
+        Map<String, Object> scopedBundle = new LinkedHashMap<>(bundle);
+        scopedBundle.put("movies", movies);
+        scopedBundle.put("areas", areas);
+        scopedBundle.put("schedules", schedules);
+        scopedBundle.put("seat_records", seatRecords);
+        scopedBundle.put("movie_count", movies.size());
+        scopedBundle.put("area_branch_count", areas.size());
+        scopedBundle.put("schedule_count", schedules.size());
+        scopedBundle.put("seat_count", seatRecords.size());
+        return scopedBundle;
     }
 
     private boolean isStale(LocalDate showDate, LocalDateTime lastCollectedAt) {
@@ -294,7 +411,52 @@ public class NearbyShowtimeRefreshService {
         return provider.name() + ":AREA:" + areaCode + ":" + showDate;
     }
 
+    private static String refreshRequestKey(LocalDate showDate, NearbyTheaterTargetResolver.Resolution resolution) {
+        List<String> lotteIds = resolution.lotteEntries().stream()
+            .map(NearbyTheaterTargetResolver.TheaterMapEntry::externalTheaterId)
+            .distinct()
+            .sorted()
+            .toList();
+        List<String> megaboxIds = resolution.megaboxEntries().stream()
+            .map(NearbyTheaterTargetResolver.TheaterMapEntry::externalTheaterId)
+            .distinct()
+            .sorted()
+            .toList();
+        return showDate + "|LOTTE:" + String.join(",", lotteIds) + "|MEGA:" + String.join(",", megaboxIds);
+    }
+
     private static String text(Object value) {
         return value == null ? "" : String.valueOf(value).trim();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> listOfMaps(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        return list.stream()
+            .filter(Map.class::isInstance)
+            .map(item -> (Map<String, Object>) item)
+            .toList();
+    }
+
+    private record RefreshExecution(
+        CompletableFuture<Void> future,
+        boolean skipped
+    ) {
+        private static RefreshExecution skippedExecution() {
+            return new RefreshExecution(CompletableFuture.completedFuture(null), true);
+        }
+
+        private static RefreshExecution activeExecution(CompletableFuture<Void> future) {
+            return new RefreshExecution(future, false);
+        }
+    }
+
+    public enum RefreshWaitOutcome {
+        SKIPPED,
+        COMPLETED,
+        TIMED_OUT,
+        FAILED
     }
 }

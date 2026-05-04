@@ -88,3 +88,24 @@
 - summary: `LOTTE_CINEMA` startup sync now fans out across more cinema/movie targets instead of staying pinned to two preferred single-movie bundles
 - details: removed the hardcoded preferred-cinema defaults, raised the default Lotte cinema discovery breadth, added a per-cinema movie target limit, updated the discovery script to emit multiple working movie targets per cinema, and passed `ShowtimeSyncServiceTests`. After rebuilding and restarting the backend, startup logs showed multiple `LOTTE_CINEMA` bundle persists for `2026-04-29` with `showtimes=3`, `showtimes=5`, and `showtimes=2`, and TiDB rows now include theaters such as `가산디지털` in addition to the earlier `위례` and `하남미사`.
 - status: resolved
+
+## 2026-04-30T16:57:40+09:00
+- time: 2026-04-30 KST
+- location: backend Gradle verification in Codex sandbox
+- summary: in-sandbox Gradle verification failed for environment reasons even though the backend verification passed outside the sandbox
+- details: `gradlew.bat` first failed trying to create a wrapper lock under `C:\Users\CodexSandboxOffline\.gradle`, and direct execution of the local `backend\.gradle-dist\gradle-8.9\bin\gradle.bat` then failed with `Could not initialize native services` and `Failed to load native library 'native-platform.dll'`. Re-running the repository's existing focused verification outside the sandbox succeeded, so the remaining red squiggles are more likely to be IDE sync/cache issues than Java compile failures in the current backend sources.
+- status: resolved
+
+## 2026-05-04T15:48:00+09:00
+- time: 2026-05-04 KST
+- location: backend restart for Megabox nearby refresh verification
+- summary: PowerShell `Start-Process` could not launch the rebuilt backend JAR because the process environment exposed duplicate `Path`/`PATH` keys
+- details: after stopping the previous backend process, two attempts to start the rebuilt JAR with `Start-Process` failed with `ArgumentException: item has already been added. Key in dictionary: 'Path' Key being added: 'PATH'`. The issue is isolated to the PowerShell launcher environment, so restart verification continued with an alternate process launch path.
+- status: open
+
+## 2026-05-04T15:59:00+09:00
+- time: 2026-05-04 KST
+- location: backend/frontend local restart
+- summary: backend and frontend servers were started successfully after launching them outside the sandboxed process tree
+- details: the backend JAR is listening on port `8080` with PID `3144`, `/api/health` returns `status=ok`, and the frontend static server responds on `http://localhost:5500/movies.html`. This resolves the earlier process-launch blocker for the current verification run.
+- status: resolved

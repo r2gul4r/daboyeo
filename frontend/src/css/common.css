@@ -16,7 +16,13 @@
   --fixed-header-height: 60px;
   --basic-page-top-gap: 32px;
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
   /* background: linear-gradient(135deg, #6c5ce7, #a29bfe, #fd79a8); */
+}
+
+html {
+  overflow-y: scroll; /* Force scrollbar to prevent layout jump */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -28,20 +34,15 @@ body {
   background-position: center top;
   background-attachment: fixed;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  /* Removed flex-center to avoid horizontal shifts */
 }
 
 .main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1200px; /* Restored */
   padding: 80px 20px;
-  margin-top: 40px;
+  margin: 0 auto;
+  min-height: 800px;
 }
 
 h1 img {
@@ -82,7 +83,7 @@ h1 span {
   align-items: center;
   gap: 40px;
   min-height: var(--fixed-header-height);
-  /* max-width: 1200px; */
+  max-width: 1200px;
   padding: 0 30px;
   margin: 0 auto;
 }
@@ -203,7 +204,7 @@ body.basic-page .main-content {
 /* ============================================
        3. footer
        ============================================ */
-#footer {
+.footer {
   position: relative;
   width: 100%;
   background-color: var(--white50);

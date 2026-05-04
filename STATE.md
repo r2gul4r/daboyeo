@@ -1,45 +1,48 @@
 ## Current Task
-- task: clean up temporary backend logs and reorganize the backend sync package so the new nearby/showtime/seat responsibilities are easier to navigate without changing behavior
-- phase: implement
-- reason: the user asked to stop the backend server and tidy the sync folder, and the current package is crowded after adding nearby refresh plus cleanup classes
+- task: limit nearby Megabox refresh persistence to theaters inside the local nearby target set so broad area-code collection does not upsert unrelated theaters
+- phase: verify
+- reason: the user asked to modify Megabox collection so region searches only collect/output nearby movie-chain data instead of persisting broad area-code bundles
 
 ## Orchestration Profile
-- score_total: 8
-- score_breakdown: multi-file package refactor 4, runtime wiring preservation 2, acceptance/verification coupling 1, dirty-worktree caution 1
-- hard_triggers: contract_instability
+- score_total: 6
+- score_breakdown: provider-specific collection scope 2, persistence filtering 2, nearby-refresh radius cap 1, focused test update 1
+- hard_triggers: implementation_depends_on_discovery_result
 - selected_rules: verification_required
 - selected_skills: none
-- selection_reason: the requested cleanup now spans many moved classes and import rewrites across runtime plus tests, but the package structure is tightly coupled enough that a single write lane is safer than splitting ownership
+- selection_reason: Megabox still requires area-code API discovery, but refresh target resolution can be capped at 3km and persistence can be scoped to those resolved nearby theater ids
 - execution_topology: single-session
 - orchestration_value: low
 - evaluation_need: light
 - agent_budget: 0
 - spawn_decision: no-spawn
-- efficiency_basis: package moves and import rewrites touch overlapping runtime surfaces, so delegation would mostly add merge risk and handoff cost
+- efficiency_basis: the change is a tightly coupled filter in one refresh path plus focused tests, so delegation would add handoff without independent write sets
 
 ## Writer Slot
 - writer_slot: main
-- write_sets: STATE.md, backend/src/main/java/kr/daboyeo/backend/**, backend/src/test/java/kr/daboyeo/backend/**, temporary *.log files in workspace root
+- write_sets: STATE.md, backend/src/main/java/kr/daboyeo/backend/config/**, backend/src/main/java/kr/daboyeo/backend/sync/nearby/**, backend/src/main/resources/application.yml, backend/src/test/java/kr/daboyeo/backend/sync/nearby/**
 
 ## Contract Freeze
-- contract_freeze: remove temporary workspace log files, then reorganize backend sync classes into clearer subpackages for nearby, seat, showtime, and shared bridge/provider concerns without changing behavior or configuration semantics
-- non_goals: adding SQL migrations, changing collector behavior beyond package/import moves, or altering public API behavior
+- contract_freeze: nearby refresh target resolution is capped to a configurable 3km radius by default; Megabox may still discover schedules by areaCode, but each collected bundle must be filtered before persistence so only schedules, theaters, and screens for stale nearby Megabox theater ids are stored
+- non_goals: changing database schema, rewriting Python collectors, changing frontend filters, increasing wait time, or changing Lotte collection behavior beyond the shared nearby refresh target radius cap
 - task_acceptance:
-  - temporary backend log files are removed when not locked by a running process
-  - sync package classes are grouped by responsibility and imports still compile
-  - nearby/showtime/seat behavior remains unchanged after the package cleanup
-  - focused tests still pass after the refactor
+  - Megabox nearby refresh filters collected bundle data to the stale nearby theater ids for that area before persisting
+  - nearby refresh target resolution uses a 3km default cap even when the search response radius is larger
+  - unrelated Megabox theaters from broad area-code responses are not upserted during nearby refresh
+  - filtered bundles keep the movie rows needed by the remaining schedules
+  - focused tests cover Megabox filtering and preserve stale/fresh refresh behavior
 - hard_checks:
-  - run focused sync-layer and live-service tests after the package refactor
-  - verify there are no leftover broken imports or orphan classes
+  - run focused NearbyShowtimeRefreshServiceTests
+  - run relevant backend test subset if the focused check exposes shared behavior risk
 
 ## Reviewer
 - reviewer: main
-- llm_review_rubric: verify the package split is coherent, imports are updated consistently, and no behavior-affecting logic moved unintentionally
-- evidence_required: package-structure proof, focused test output, and an explicit note that the cleanup was behavior-preserving
+- llm_review_rubric: verify Megabox filtering is applied only to nearby refresh persistence, does not mutate Lotte, and does not drop movies referenced by retained schedules
+- evidence_required: focused test output showing the Megabox bundle passed to persistence excludes unrelated theater schedules
 
 ## Last Update
-- 2026-04-30 KST: added nearby refresh config, async executor, theater-map target resolver, TTL/in-flight guarded refresh service, LiveMovieService hook, and focused tests passed without schema changes
-- 2026-04-30 KST: runtime verification showed nearby refresh requests fire but LOTTE_CINEMA target matching and MEGABOX global area discovery prevent persistence, so implementation resumed for provider-targeted nearby discovery
-- 2026-04-30 KST: switched nearby refresh to provider-targeted discovery, added MEGABOX region_code fallback for area lookup, focused tests passed, and end-to-end verification confirmed LOTTE_CINEMA plus MEGABOX nearby theaters updated last_collected_at without schema changes
-- 2026-04-30 KST: backend server was stopped for cleanup, and the active task shifted to removing temporary logs plus reorganizing the crowded sync package structure without changing runtime behavior
+- 2026-05-04 KST: verified Megabox output after restart; API returned MEGA rows for Gangnam search and frontend rendered MEGA movie cards plus MEGA-only schedule modal without console errors
+- 2026-05-04 KST: rebuilt/restarted backend on port 8080 and started frontend static server on port 5500; backend health and frontend movies page responded successfully
+- 2026-05-04 KST: implemented 3km default nearby refresh radius cap and Megabox bundle filtering before persistence; focused nearby refresh/resolver tests passed
+- 2026-05-04 KST: reclassified task to Megabox nearby refresh scope filtering with single-session implementation and focused verification
+- 2026-05-04 KST: active task reclassified to nearby live search contract changes so empty first-lookups wait briefly for refresh and stop returning demo fallback
+- 2026-05-04 KST: added bounded nearby refresh waiting plus pending response semantics, focused backend tests passed, and runtime nearby response now returns real data without demo fallback

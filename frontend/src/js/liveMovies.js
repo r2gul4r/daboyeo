@@ -98,6 +98,8 @@ let modalRawSchedules = [];
 let currentSelectedMovie = null;
 let currentSelectedMovieKey = null;
 let currentTab = 'ALL';
+let latestSearchMeta = null;
+let pendingRetryTimeoutId = null;
 
 function initSearchParams() {
   const params = new URLSearchParams(window.location.search);
@@ -256,10 +258,45 @@ async function ensureSearchCoordinates() {
   await regionResolutionPromise;
 }
 
-async function loadLiveMovies() {
-  if (!movieGrid) return;
+function clearPendingRetry() {
+  if (pendingRetryTimeoutId) {
+    window.clearTimeout(pendingRetryTimeoutId);
+    pendingRetryTimeoutId = null;
+  }
+}
 
-  movieGrid.innerHTML = `
+function showPendingMessage(container, message) {
+  container.replaceChildren();
+  const box = createElement('div', 'loading-container');
+
+  const iconWrap = createElement('div', 'loader-visual');
+  iconWrap.innerHTML = `
+    <div class="loader-circle"></div>
+    <div class="loader-pulse"></div>
+    <i class="fas fa-database loader-icon"></i>
+  `;
+
+  const title = createElement('p', 'loading-title', '주변 시네마 데이터를 아직 모으는 중이야.');
+  const subtitle = createElement('p', 'loading-subtitle', message || '잠깐만 기다리면 자동으로 다시 확인할게.');
+  subtitle.style.maxWidth = '34rem';
+  subtitle.style.margin = '0 auto';
+  subtitle.style.textAlign = 'center';
+
+  const retryText = createElement('p', 'loading-subtitle', '3초 뒤 자동으로 다시 불러와.');
+  retryText.style.opacity = '0.75';
+  retryText.style.marginTop = '14px';
+
+  box.append(iconWrap, title, subtitle, retryText);
+  container.appendChild(box);
+}
+
+async function loadLiveMovies(options = {}) {
+  if (!movieGrid) return;
+  const { skipLoader = false } = options;
+  clearPendingRetry();
+
+  if (!skipLoader) {
+    movieGrid.innerHTML = `
     <div class="loading-container">
       <div class="loader-visual">
         <div class="loader-circle"></div>
@@ -280,7 +317,8 @@ async function loadLiveMovies() {
         <i class="fas fa-map-location-dot"></i>
       </div>
     </div>
-  `;
+    `;
+  }
 
   try {
     await ensureSearchCoordinates();
@@ -295,10 +333,21 @@ async function loadLiveMovies() {
     });
     const response = await fetch(`${API_BASE_URL}/live/nearby?${searchParams.toString()}`);
     const data = await response.json();
+    latestSearchMeta = data?.search || null;
 
     if (!data || !Array.isArray(data.results)) {
       showMessage(movieGrid, '데이터 형식이 올바르지 않아.');
       return;
+    }
+
+    if (data.search?.pendingRefresh) {
+      pendingRetryTimeoutId = window.setTimeout(() => {
+        void loadLiveMovies({ skipLoader: true });
+      }, 3000);
+      if (data.results.length === 0) {
+        showPendingMessage(movieGrid, data.search.warning);
+        return;
+      }
     }
 
     allRawSchedules = data.results.map((item) => ({
@@ -398,7 +447,10 @@ function renderMovieCards(movies) {
   if (resultCount) resultCount.innerText = movies.length;
 
   if (movies.length === 0) {
-    showMessage(movieGrid, '조건에 맞는 상영 영화가 없어.', 'padding: 5rem 0; opacity: 0.5;');
+    const emptyMessage = latestSearchMeta?.warning && !latestSearchMeta.pendingRefresh
+      ? latestSearchMeta.warning
+      : '조건에 맞는 상영 데이터가 없어.';
+    showMessage(movieGrid, emptyMessage, 'padding: 5rem 0; opacity: 0.5;');
     return;
   }
 

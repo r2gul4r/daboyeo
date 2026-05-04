@@ -60,6 +60,7 @@ class LiveMovieControllerTests {
                         new BigDecimal("8"),
                         1,
                         true,
+                        false,
                         null
                     ),
                     List.of(
@@ -101,6 +102,7 @@ class LiveMovieControllerTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.search.resultCount").value(1))
             .andExpect(jsonPath("$.search.databaseAvailable").value(true))
+            .andExpect(jsonPath("$.search.pendingRefresh").value(false))
             .andExpect(jsonPath("$.results[0].movie_key").value("CGV:123"))
             .andExpect(jsonPath("$.results[0].provider").value("CGV"))
             .andExpect(jsonPath("$.results[0].seat_state").value("comfortable"))
@@ -155,6 +157,7 @@ class LiveMovieControllerTests {
                         new BigDecimal("8"),
                         2,
                         true,
+                        false,
                         null
                     ),
                     new MovieSummary("CGV:123", "야당", "15"),
