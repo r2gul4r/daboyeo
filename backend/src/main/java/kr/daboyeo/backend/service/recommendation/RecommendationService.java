@@ -111,6 +111,10 @@ public class RecommendationService {
         return posterSeedService.randomSeed(limit <= 0 ? 10 : limit);
     }
 
+    public List<PosterSeedMovie> posterSeed(int limit, List<String> preferredGenres) {
+        return posterSeedService.randomSeed(limit <= 0 ? 10 : limit, preferredGenres);
+    }
+
     public List<AiProviderStatus> providerHealth() {
         return List.of(AiProvider.LOCAL, AiProvider.CODEX).stream()
             .map(localModelClient::providerStatus)

@@ -43,8 +43,11 @@ public class RecommendationController {
     }
 
     @GetMapping("/recommendation/poster-seed")
-    public List<PosterSeedMovie> posterSeed(@RequestParam(name = "limit", defaultValue = "10") int limit) {
-        return recommendationService.posterSeed(limit);
+    public List<PosterSeedMovie> posterSeed(
+        @RequestParam(name = "limit", defaultValue = "10") int limit,
+        @RequestParam(name = "genres", required = false) List<String> genres
+    ) {
+        return recommendationService.posterSeed(limit, genres);
     }
 
     @GetMapping("/recommendation/providers/health")

@@ -60,6 +60,7 @@ class LiveMovieControllerTests {
                         new BigDecimal("8"),
                         1,
                         true,
+                        false,
                         null
                     ),
                     List.of(
@@ -101,6 +102,7 @@ class LiveMovieControllerTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.search.resultCount").value(1))
             .andExpect(jsonPath("$.search.databaseAvailable").value(true))
+            .andExpect(jsonPath("$.search.pendingRefresh").value(false))
             .andExpect(jsonPath("$.results[0].movie_key").value("CGV:123"))
             .andExpect(jsonPath("$.results[0].provider").value("CGV"))
             .andExpect(jsonPath("$.results[0].seat_state").value("comfortable"))
@@ -125,6 +127,20 @@ class LiveMovieControllerTests {
     }
 
     @Test
+    void nearbyRejectsInvalidSeatStateWithCleanMessage() throws Exception {
+        mockMvc.perform(
+                get("/api/live/nearby")
+                    .queryParam("lat", "37.4979")
+                    .queryParam("lng", "127.0276")
+                    .queryParam("seatState", "weird")
+                    .accept(MediaType.APPLICATION_JSON)
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+            .andExpect(jsonPath("$.message").value("요청 파라미터를 확인해."));
+    }
+
+    @Test
     void schedulesReturnsGroupedTheaters() throws Exception {
         LiveMovieSearchCriteria criteria = sampleCriteria();
         given(liveMovieService.buildCriteria(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
@@ -141,6 +157,7 @@ class LiveMovieControllerTests {
                         new BigDecimal("8"),
                         2,
                         true,
+                        false,
                         null
                     ),
                     new MovieSummary("CGV:123", "야당", "15"),

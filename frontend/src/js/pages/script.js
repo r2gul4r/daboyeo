@@ -476,6 +476,90 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  window.updateRegionFromMap = (sidoOrAddress, maybeGugun, maybeDong) => {
+    let sido = "";
+    let gugun = "";
+    let dong = "";
+
+    if (maybeGugun && maybeDong) {
+      sido = sidoOrAddress || "";
+      gugun = maybeGugun;
+      dong = maybeDong;
+    } else if (sidoOrAddress) {
+      const parts = String(sidoOrAddress).split(/\s+/);
+      [sido = "", gugun = "", dong = ""] = parts;
+    } else {
+      return;
+    }
+
+    const regions = regionData();
+    const matchedSidoKey = Object.keys(regions)
+      .find((key) => key.startsWith(sido) || sido.startsWith(key));
+    if (!matchedSidoKey) {
+      return;
+    }
+
+    selectedSido = matchedSidoKey;
+    displayText(sidoDisplay, matchedSidoKey);
+    markSelected(sidoOptions, matchedSidoKey);
+
+    const gugunData = regions[matchedSidoKey] || {};
+    const gugunKeys = Object.keys(gugunData);
+    populateOptions(gugunOptions, gugunKeys);
+    gugunContainer?.classList.remove("disabled");
+
+    const compactGugun = gugun.replace(/\s/g, "");
+    const matchedGugunKey = gugunKeys
+      .filter((key) => {
+        const compactKey = key.replace(/\s/g, "");
+        return key === gugun
+          || key.startsWith(gugun)
+          || gugun.startsWith(key)
+          || compactKey === compactGugun;
+      })
+      .sort((a, b) => b.length - a.length)[0];
+
+    if (!matchedGugunKey) {
+      selectedGugun = "";
+      selectedDong = "";
+      displayText(gugunDisplay, "시/군/구 선택");
+      displayText(dongDisplay, "읍/면/동 선택");
+      dongContainer?.classList.add("disabled");
+      syncHiddenRegionInput();
+      return;
+    }
+
+    selectedGugun = matchedGugunKey;
+    displayText(gugunDisplay, matchedGugunKey);
+    markSelected(gugunOptions, matchedGugunKey);
+
+    const dongData = [DEFAULT_REGION, ...(gugunData[matchedGugunKey] || [])];
+    populateOptions(dongOptions, dongData);
+    dongContainer?.classList.remove("disabled");
+
+    const normalizeDong = (name) => String(name || "")
+      .replace(/[0-9]+(가|동)?$/, "")
+      .replace(/제?[0-9]+동$/, "")
+      .replace(/동$/, "");
+    const normalizedDong = normalizeDong(dong);
+    const matchedDong = dongData.find((candidate) => {
+      if (candidate === DEFAULT_REGION) {
+        return false;
+      }
+      if (candidate === dong || dong.startsWith(candidate) || candidate.startsWith(dong)) {
+        return true;
+      }
+      const normalizedCandidate = normalizeDong(candidate);
+      return normalizedCandidate.length > 1
+        && (normalizedDong.startsWith(normalizedCandidate) || normalizedCandidate.startsWith(normalizedDong));
+    });
+
+    selectedDong = matchedDong || DEFAULT_REGION;
+    displayText(dongDisplay, selectedDong);
+    markSelected(dongOptions, selectedDong);
+    syncHiddenRegionInput();
+  };
+
   initializeDateInput();
   initializeRegionSelects();
   restoreSearchContext();

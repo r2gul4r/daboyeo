@@ -1,5 +1,6 @@
 package kr.daboyeo.backend.config;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -76,6 +77,8 @@ public class CollectorSyncProperties {
         private int entryRefreshMaxSchedulesPerBundle = 40;
         private boolean nearbyRefreshEnabled = true;
         private int nearbyRefreshMaxTheatersPerProvider = 6;
+        private BigDecimal nearbyRefreshRadiusKm = new BigDecimal("3");
+        private long nearbyRefreshWaitMillis = 2500L;
         private int nearbyRefreshTodayTtlMinutes = 60;
         private int nearbyRefreshNextDayTtlMinutes = 360;
         private int nearbyRefreshFutureTtlMinutes = 1440;
@@ -246,6 +249,22 @@ public class CollectorSyncProperties {
 
         public void setNearbyRefreshMaxTheatersPerProvider(int nearbyRefreshMaxTheatersPerProvider) {
             this.nearbyRefreshMaxTheatersPerProvider = nearbyRefreshMaxTheatersPerProvider;
+        }
+
+        public BigDecimal getNearbyRefreshRadiusKm() {
+            return nearbyRefreshRadiusKm;
+        }
+
+        public void setNearbyRefreshRadiusKm(BigDecimal nearbyRefreshRadiusKm) {
+            this.nearbyRefreshRadiusKm = nearbyRefreshRadiusKm == null ? new BigDecimal("3") : nearbyRefreshRadiusKm;
+        }
+
+        public long getNearbyRefreshWaitMillis() {
+            return nearbyRefreshWaitMillis;
+        }
+
+        public void setNearbyRefreshWaitMillis(long nearbyRefreshWaitMillis) {
+            this.nearbyRefreshWaitMillis = nearbyRefreshWaitMillis;
         }
 
         public int getNearbyRefreshTodayTtlMinutes() {

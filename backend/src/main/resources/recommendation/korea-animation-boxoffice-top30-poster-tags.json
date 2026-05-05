@@ -1,0 +1,553 @@
+{
+  "source": {
+    "checkedAt": "2026-05-05T07:17:24.523047+00:00",
+    "genreSource": "KOBIS mobile movie detail genre field",
+    "note": "Tags are conservative local recommendation hints derived from KOBIS genre and age fields; poster ranking remains the KOBIS admissions order."
+  },
+  "movies": {
+    "20197803": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20136803": {
+      "genres": [
+        "animation",
+        "adventure",
+        "comedy",
+        "fantasy",
+        "family",
+        "musical"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20235974": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20252432": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20228930": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20253289": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "friends",
+        "family"
+      ],
+      "avoid": [],
+      "ageRating": "15"
+    },
+    "20226270": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "friends",
+        "family"
+      ],
+      "avoid": [],
+      "ageRating": "12"
+    },
+    "20110511": {
+      "genres": [
+        "animation",
+        "adventure",
+        "action",
+        "comedy",
+        "family"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20151225": {
+      "genres": [
+        "animation",
+        "comedy"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20228555": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "friends",
+        "family"
+      ],
+      "avoid": [],
+      "ageRating": "12"
+    },
+    "20155501": {
+      "genres": [
+        "animation",
+        "adventure",
+        "action"
+      ],
+      "moods": [
+        "visual",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20080653": {
+      "genres": [
+        "animation",
+        "action",
+        "comedy",
+        "family"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20151803": {
+      "genres": [
+        "animation",
+        "adventure",
+        "action"
+      ],
+      "moods": [
+        "visual",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20161872": {
+      "genres": [
+        "animation",
+        "drama",
+        "romance"
+      ],
+      "moods": [
+        "visual"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "friends",
+        "family"
+      ],
+      "avoid": [],
+      "ageRating": "12"
+    },
+    "20240737": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20179985": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20256757": {
+      "genres": [
+        "animation",
+        "adventure",
+        "action"
+      ],
+      "moods": [
+        "visual",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "friends",
+        "family"
+      ],
+      "avoid": [],
+      "ageRating": "15"
+    },
+    "20184047": {
+      "genres": [
+        "animation",
+        "adventure",
+        "comedy"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20173403": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20040566": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20183361": {
+      "genres": [
+        "animation",
+        "adventure",
+        "action",
+        "comedy",
+        "family"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20040756": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20131248": {
+      "genres": [
+        "animation",
+        "adventure",
+        "action"
+      ],
+      "moods": [
+        "visual",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20070116": {
+      "genres": [
+        "animation",
+        "adventure",
+        "comedy",
+        "fantasy",
+        "family"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20149951": {
+      "genres": [
+        "animation",
+        "action",
+        "comedy"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20145361": {
+      "genres": [
+        "animation"
+      ],
+      "moods": [
+        "visual",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20100190": {
+      "genres": [
+        "animation",
+        "adventure",
+        "comedy",
+        "family"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20159058": {
+      "genres": [
+        "animation",
+        "adventure",
+        "comedy"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm",
+        "exciting"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20156082": {
+      "genres": [
+        "animation",
+        "comedy",
+        "family"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    },
+    "20174061": {
+      "genres": [
+        "animation",
+        "comedy",
+        "family"
+      ],
+      "moods": [
+        "visual",
+        "funny",
+        "warm"
+      ],
+      "pace": "medium",
+      "audiences": [
+        "family",
+        "child"
+      ],
+      "avoid": [],
+      "ageRating": "all"
+    }
+  }
+}

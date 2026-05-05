@@ -44,6 +44,7 @@ public class NearbyTheaterTargetResolver {
 
     public Resolution resolve(LiveMovieSearchCriteria criteria) {
         Map<CollectorProvider, List<TheaterMapEntry>> grouped = new LinkedHashMap<>();
+        double refreshRadiusKm = refreshRadiusKm(criteria);
         for (TheaterMapEntry entry : theaterMapEntries) {
             if (!supports(entry.provider())) {
                 continue;
@@ -52,7 +53,7 @@ public class NearbyTheaterTargetResolver {
                 continue;
             }
             double distanceKm = distanceKm(criteria.lat().doubleValue(), criteria.lng().doubleValue(), entry.latitude(), entry.longitude());
-            if (distanceKm > criteria.radiusKm().doubleValue()) {
+            if (distanceKm > refreshRadiusKm) {
                 continue;
             }
             grouped.computeIfAbsent(entry.provider(), ignored -> new ArrayList<>())
@@ -116,6 +117,14 @@ public class NearbyTheaterTargetResolver {
 
     private static boolean supports(CollectorProvider provider) {
         return provider == CollectorProvider.LOTTE_CINEMA || provider == CollectorProvider.MEGABOX;
+    }
+
+    private double refreshRadiusKm(LiveMovieSearchCriteria criteria) {
+        BigDecimal configuredRadius = properties.getShowtimes().getNearbyRefreshRadiusKm();
+        if (configuredRadius == null || configuredRadius.signum() <= 0) {
+            return criteria.radiusKm().doubleValue();
+        }
+        return Math.min(criteria.radiusKm().doubleValue(), configuredRadius.doubleValue());
     }
 
     private static boolean matchesProviderFilter(List<String> requestedProviders, CollectorProvider provider) {

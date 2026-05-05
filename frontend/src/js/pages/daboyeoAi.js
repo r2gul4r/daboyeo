@@ -5,7 +5,7 @@ import {
   getPosterSeed,
   requestRecommendations,
   sendRecommendationFeedback,
-} from "../api/client.js?v=20260504-hourly-sync";
+} from "../api/client.js?v=20260505-anime-posters";
 
 const STORAGE_KEY = "daboyeoAnonymousId";
 const AI_PROVIDER_STORAGE_KEY = "daboyeoAiProvider";
@@ -175,6 +175,7 @@ const state = {
     items: [],
     error: null,
     activeBatchIndex: 0,
+    genresKey: "",
   },
   posterChoices: {
     likedSeedMovieIds: [],
@@ -566,22 +567,32 @@ async function ensureSession() {
   render();
 }
 
+function selectedGenreKey(genres = selectedGenres()) {
+  return (Array.isArray(genres) ? genres : [])
+    .map((genre) => normalizeGenreValue(genre))
+    .filter(Boolean)
+    .join("|");
+}
+
 async function ensurePostersLoaded(force = false) {
-  if (!force && ["loading", "ready"].includes(state.posters.status)) {
+  const genres = selectedGenres();
+  const genresKey = selectedGenreKey(genres);
+  if (!force && ["loading", "ready"].includes(state.posters.status) && state.posters.genresKey === genresKey) {
     return;
   }
 
-  state.posters = { ...state.posters, status: "loading", error: null };
+  state.posters = { ...state.posters, status: "loading", error: null, genresKey };
   render();
 
   try {
-    const posters = await getPosterSeed(POSTER_LIMIT);
+    const posters = await getPosterSeed(POSTER_LIMIT, genres);
     const items = Array.isArray(posters) ? posters : [];
     state.posters = {
       status: items.length > 0 ? "ready" : "empty",
       items,
       error: null,
       activeBatchIndex: 0,
+      genresKey,
     };
   } catch (error) {
     state.posters = {
@@ -589,6 +600,7 @@ async function ensurePostersLoaded(force = false) {
       items: [],
       error,
       activeBatchIndex: 0,
+      genresKey,
     };
     showToast(error.message || "포스터 API 연결에 실패했어.");
   }

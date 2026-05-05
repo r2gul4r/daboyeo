@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -23,7 +24,7 @@ class LiveMovieServiceDemoFallbackTests {
     private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2026-04-23T00:00:00Z"), ZoneId.of("Asia/Seoul"));
 
     @Test
-    void nearbyFallsBackToDemoDataWhenDatabaseLookupFails() {
+    void nearbyReturnsDatabaseFailureInsteadOfDemoDataWhenDatabaseLookupFails() {
         LiveMovieRepository repository = mock(LiveMovieRepository.class);
         LiveMovieSearchCriteria criteria = sampleCriteria(List.of(), List.of(), List.of(), SeatState.ALL, "");
         when(repository.findNearbySchedules(criteria)).thenThrow(new DataAccessResourceFailureException("db down"));
@@ -32,39 +33,46 @@ class LiveMovieServiceDemoFallbackTests {
             new SeatStateCalculator(),
             new LiveMovieDemoDataService(),
             mock(NearbyShowtimeRefreshService.class),
-            true
+            true,
+            Duration.ZERO,
+            FIXED_CLOCK
         );
 
         LiveMovieService.LiveMovieResponse response = service.findNearby(criteria);
 
         assertThat(response.search().databaseAvailable()).isFalse();
-        assertThat(response.search().warning()).contains("demo sample data");
-        assertThat(response.results()).isNotEmpty();
+        assertThat(response.search().warning()).isEqualTo("database lookup failed.");
+        assertThat(response.results()).isEmpty();
     }
 
     @Test
-    void nearbyDemoFallbackStillAppliesSeatStateFilters() {
+    void nearbyReturnsPendingWarningWhenRefreshTimesOutOnEmptyLookup() {
         LiveMovieRepository repository = mock(LiveMovieRepository.class);
+        NearbyShowtimeRefreshService refreshService = mock(NearbyShowtimeRefreshService.class);
         LiveMovieSearchCriteria criteria = sampleCriteria(List.of(), List.of(), List.of(), SeatState.COMFORTABLE, "");
-        when(repository.findNearbySchedules(criteria)).thenThrow(new DataAccessResourceFailureException("db down"));
+        when(repository.findNearbySchedules(criteria)).thenReturn(List.of());
+        when(refreshService.requestRefreshAndAwait(criteria, Duration.ofMillis(2500)))
+            .thenReturn(NearbyShowtimeRefreshService.RefreshWaitOutcome.TIMED_OUT);
+
         LiveMovieService service = new LiveMovieService(
             repository,
             new SeatStateCalculator(),
             new LiveMovieDemoDataService(),
-            mock(NearbyShowtimeRefreshService.class),
-            true
+            refreshService,
+            true,
+            Duration.ofMillis(2500),
+            FIXED_CLOCK
         );
 
         LiveMovieService.LiveMovieResponse response = service.findNearby(criteria);
 
-        assertThat(response.results()).isNotEmpty();
-        assertThat(response.results()).allMatch(item ->
-            "comfortable".equals(item.seat_state()) || "spacious".equals(item.seat_state())
-        );
+        assertThat(response.search().pendingRefresh()).isTrue();
+        assertThat(response.search().warning()).contains("still being collected");
+        assertThat(response.results()).isEmpty();
     }
 
     @Test
-    void schedulesFallbackReturnsGroupedDemoDataForMatchingMovie() {
+    void schedulesReturnUnavailableWarningInsteadOfDemoDataWhenDatabaseLookupFails() {
         LiveMovieRepository repository = mock(LiveMovieRepository.class);
         LiveMovieSearchCriteria criteria = sampleCriteria(List.of(), List.of(), List.of(), SeatState.ALL, "");
         when(repository.findMovieSchedules("CGV:demo_dune", criteria)).thenThrow(new DataAccessResourceFailureException("db down"));
@@ -73,15 +81,17 @@ class LiveMovieServiceDemoFallbackTests {
             new SeatStateCalculator(),
             new LiveMovieDemoDataService(),
             mock(NearbyShowtimeRefreshService.class),
-            true
+            true,
+            Duration.ZERO,
+            FIXED_CLOCK
         );
 
         LiveMovieService.MovieSchedulesResponse response = service.findMovieSchedules("CGV:demo_dune", criteria);
 
         assertThat(response.search().databaseAvailable()).isFalse();
-        assertThat(response.movie().movie_name()).isEqualTo("Dune Part Two");
-        assertThat(response.theaters()).hasSize(1);
-        assertThat(response.theaters().get(0).schedules()).isNotEmpty();
+        assertThat(response.search().warning()).isEqualTo("database lookup failed.");
+        assertThat(response.movie().movie_name()).isNull();
+        assertThat(response.theaters()).isEmpty();
     }
 
     private static LiveMovieSearchCriteria sampleCriteria(

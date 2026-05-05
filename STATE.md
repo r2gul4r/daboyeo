@@ -2,39 +2,39 @@
 
 ## Current Task
 
-- task: `Codex-scored reserve recommendation pool`
+- task: `Wire anime poster pool into recommendation flow`
 - phase: `verified`
-- scope: `Freeze and implement the current conversation goal: keep DB/time/filter selection on the server, pass a wider taste-aware candidate pool to Codex/GPT, let Codex/GPT assign per-candidate recommendation scores, and let the server validate those scores while filling missing result slots with the nearest reserve candidates.`
-- verification_target: `When direct selected-genre current-showing movies are fewer than 3, final recommendations should include the best scored reserve candidates instead of returning only 1-2 items. Codex/GPT prompts and schemas must ask for a bounded score, and the server must clamp no-direct-taste reserve candidates so they cannot look like perfect matches.`
-- previous_task_note: `The previous repair removed weak fillers whenever direct candidates existed, which protected trust but made the UI show too few recommendations when the DB had only 1-2 direct matches.`
-- runtime_dependency_note: `No DB write or crawl is needed; this is recommendation ranking and AI handoff behavior.`
-- spring_runtime_note: `Run focused recommendation service/client tests and bootJar; restart localhost:5500 runtime after implementation verification if changed code compiles.`
+- scope: `Connect the verified anime poster manifest/assets to the recommendation poster-selection flow. When animation is selected as a preferred genre, the poster seed API and frontend should show the R2/posters/anime pool first while preserving the existing general movie pool for other genres.`
+- verification_target: `GET /api/recommendation/poster-seed?genres=animation should return anime poster URLs and namespaced anime ids; GET without genres should keep general movie poster URLs and existing ids; frontend poster loading should pass selected genres; recommendation profile building should resolve selected anime seed ids without colliding with general movieCd values.`
+- previous_task_note: `Poster assets are already split into R2/posters/movie and R2/posters/anime. The current work wires that pool into API/frontend selection logic.`
+- runtime_dependency_note: `Spring is running on localhost:5500 from the updated bootJar with listener PID 27076.`
+- spring_runtime_note: `Keep DABOYEO_SHOWTIME_STARTUP_ENABLED=false for local restart if needed to avoid duplicate startup crawling.`
 - current_blocker: `none`
 
 ## Next Task
 
-- task: `Add separate anime poster pool`
-- status: `queued`
-- scope: `애니 장르 선택 시 보여줄 포스터 후보를 일반 포스터 풀과 별도로 더 보강한다. 추천 설문 장르 필터링과 포스터 seed 데이터 품질을 같이 확인한다.`
-- non_goal: `이번 커밋에서는 구현하지 않고 다음 작업 메모로만 저장한다.`
+- task: `Wire anime poster pool into recommendation flow`
+- status: `active`
+- scope: `애니 장르 선택 시 애니 전용 poster seed를 우선 노출하도록 PosterSeedService/API/frontend selection logic을 연결한다.`
+- non_goal: `No new poster scraping or recommendation scoring rewrite. The anime pool is namespaced at the seed id layer to avoid movieCd collisions with the general movie pool.`
 
 ## Orchestration Profile
 
 - score_total: `8`
-- score_breakdown: `3 user-facing recommendation trust regression, 2 AI scoring/schema handoff, 1 wider current-showing candidate pool, 1 server-side score validation, 1 focused service/client tests`
-- hard_triggers: `user-facing recommendation correctness; AI handoff contract change; result filling policy changes from strict taste gate to taste-first reserve fill`
-- selected_rules: `use Selfdex read-only planning discipline; update STATE before implementation edits; keep search-filter and current/future showtime filtering server-side; pass wider taste-aware distinct candidates to Codex/GPT; let Codex/GPT return a bounded score field; clamp reserve/no-direct-taste scores server-side; verify with focused service/client tests, bootJar, runtime smoke, and diff checks`
-- selected_skills: `selfdex`
+- score_breakdown: `2 backend API contract change, 2 poster seed id collision risk, 1 frontend selection flow change, 1 static mirror sync, 1 focused test coverage, 1 runtime restart and push`
+- hard_triggers: `API behavior changes; recommendation preference input changes; poster seed id collision must be avoided`
+- selected_rules: `freeze explicit poster pool contract before writes; keep general poster seed behavior backward-compatible; namespace anime seed ids to avoid movieCd collisions; pass selected frontend genres to poster-seed API; mirror frontend JS to Spring static resources; verify focused backend tests, JS syntax, runtime API/static checks, commit, and push`
+- selected_skills: `none`
 - execution_topology: `single-session`
-- orchestration_value: `low`
+- orchestration_value: `medium`
 - agent_budget: `0`
-- spawn_decision: `no spawn; Selfdex was used for read-only planning, but implementation is one coupled RecommendationService/LocalModelRecommendationClient contract and disjoint worker ownership is weak`
-- efficiency_basis: `Candidate ordering, AI schema parsing, score validation, and final item mapping must stay coherent in one lane; delegation would add handoff and rework risk.`
-- selection_reason: `User changed the goal from strict exclusion to showing nearest reserves and asked whether Codex should score candidates from the start.`
+- spawn_decision: `no spawn; relocation and manifest rewrite are tightly coupled and easier to verify in one lane`
+- efficiency_basis: `One path contract spans all touched files, so direct main editing avoids handoff overhead.`
+- selection_reason: `User fixed /goal to finish the queued anime recommendation poster-pool wiring and commit/push.`
 
 ## Evaluation Plan
 
-- evaluation_need: `full`
+- evaluation_need: `light`
 - project_invariants:
   - `Do not print, commit, or document real DB passwords, OAuth tokens, cookies, API keys, tunnel tokens, or OAuth auth paths.`
   - `Do not expose secrets, private Kakao admin keys, Codex auth, bridge token, local model URL, or local filesystem paths to browser responses.`
@@ -43,54 +43,84 @@
   - `Preserve same-origin Spring-served frontend behavior on localhost:5500.`
   - `Preserve /api/showtimes/refresh as a manual server API unless removal becomes necessary, but do not call it from browser entry flows.`
 - task_acceptance:
-  - `Explicit preferredGenres remain separate from poster-derived likedGenres in TagProfile.`
-  - `Exact DB/search filters and current/future showtime requirements remain server-owned.`
-  - `AI candidate pools are taste-aware and distinct by movie, but fill with reserve candidates when direct/poster matches are fewer than the provider limit.`
-  - `Codex/GPT response schema includes a bounded numeric score field and prompt tells the model to score from supplied evidence only.`
-  - `Server clamps model scores so no-direct selected-genre reserve candidates cannot exceed the existing no-direct cap.`
-  - `Fallback mode also fills final result slots with reserve candidates when fewer than 3 direct candidates exist.`
+  - `PosterSeedService loads both general movie and anime poster manifests/tag files.`
+  - `Default poster-seed API keeps general movie poster behavior and existing general ids.`
+  - `poster-seed API accepts selected genres and prioritizes the anime pool when animation is selected.`
+  - `Anime seed ids are namespaced so duplicate movieCd values do not collide with the general pool.`
+  - `Frontend poster loading sends selected genres before rendering the poster step, and Spring static JS mirror matches.`
+  - `Commit and push the completed goal after verification.`
 - non_goals:
-  - `No schema migration or collector refactor unless the existing ingest path is blocked.`
-  - `No browser-triggered crawl request.`
-  - `No unbounded all-data crawl or long blocking browser request.`
-  - `No CGV signed API work in this task.`
-  - `No frontend redesign or survey contract change unless the existing response contract requires it.`
-  - `No deploy-domain setup, commit, push, or cleanup of unrelated dirty files.`
+  - `No new poster scraping or external source fetch.`
+  - `No scoring calibration rewrite, DB writes, provider crawling, schema migration, or unrelated cleanup.`
 - hard_checks:
-  - `Update STATE before backend/frontend implementation edits.`
-  - `Do not expose TiDB secrets or process stderr details to browser responses.`
-  - `Run focused RecommendationServiceCandidateFilterTests, LocalModelRecommendationClientTests, and RecommendationScorerTests if score caps are touched.`
-  - `Run bootJar if backend code changes compile.`
-  - `Run git diff --check for touched files.`
+  - `Update STATE before backend/frontend edits.`
+  - `Add focused backend coverage for default vs animation poster seed behavior and anime id lookup.`
+  - `Run focused Gradle recommendation tests when feasible.`
+  - `Run node --check on touched frontend/static JS.`
+  - `Run git diff --check and runtime localhost checks before commit.`
 - llm_review_rubric:
   - `Do not let Codex/GPT score no-direct reserve candidates as perfect taste fits.`
   - `Do not return fewer than 3 final items merely because direct taste matches are sparse when scored reserves exist.`
 - evidence_required:
-  - `Taste-aware reserve-fill source evidence`
-  - `Codex/GPT score schema and parsing evidence`
-  - `Focused service/client test evidence`
-  - `Runtime smoke evidence if restarted`
+  - `default poster API returns movie poster path`
+  - `animation poster API returns anime poster path and namespaced id`
+  - `focused backend test result`
+  - `frontend/static JS syntax check`
+  - `git diff --check, commit hash, push result`
 
 ## Writer Slot
 
 - writer_slot: `main`
-- write_sets: `STATE.md; ERROR_LOG.md if material failures occur; backend/src/main/java/kr/daboyeo/backend/domain/recommendation/RecommendationModels.java; backend/src/main/java/kr/daboyeo/backend/config/RecommendationProperties.java; backend/src/main/java/kr/daboyeo/backend/service/recommendation/RecommendationService.java; backend/src/main/java/kr/daboyeo/backend/service/recommendation/LocalModelRecommendationClient.java; backend/src/main/resources/application.yml; backend/src/test/java/kr/daboyeo/backend/service/recommendation/RecommendationServiceCandidateFilterTests.java; backend/src/test/java/kr/daboyeo/backend/service/recommendation/LocalModelRecommendationClientTests.java; backend/src/test/java/kr/daboyeo/backend/service/recommendation/RecommendationScorerTests.java if scorer caps change`
+- write_sets: `STATE.md; ERROR_LOG.md if material failures occur; docs/TASK_RETROSPECTIVE.md; .gitignore local Gradle runtime ignore; backend/src/main/java/kr/daboyeo/backend/service/recommendation/PosterSeedService.java; backend/src/main/java/kr/daboyeo/backend/service/recommendation/RecommendationService.java; backend/src/main/java/kr/daboyeo/backend/api/recommendation/RecommendationController.java; backend/src/test/java/kr/daboyeo/backend/service/recommendation/*PosterSeed*Tests.java; frontend/src/js/api/client.js; frontend/src/js/pages/daboyeoAi.js; frontend/src/pages/daboyeoAi.html; backend/src/main/resources/static/src/js/api/client.js; backend/src/main/resources/static/src/js/pages/daboyeoAi.js; backend/src/main/resources/static/src/pages/daboyeoAi.html`
 
 ## Contract Freeze
 
-- status: `frozen for Codex-scored reserve fill`
-- source_basis: `User accepted that strict taste gating makes too few results and asked to make Codex handle scoring from the candidate stage while still showing nearest reserve candidates.`
-- output_code: `RecommendationService should build a distinct taste-aware candidate pool ordered direct preferredGenre matches, poster/liked genre matches, then scored reserves. LocalModelRecommendationClient should ask Codex/GPT for numeric score s plus analysis fields. RecommendationService should use validated model scores for picked items and clamp no-direct-taste reserves. Search-filter relaxation and fallback scoring remain intact.`
-- output_tests: `Focused RecommendationServiceCandidateFilterTests and LocalModelRecommendationClientTests, RecommendationScorerTests if caps change, bootJar if feasible, runtime local/Codex smoke, git diff --check.`
-- output_docs: `STATE verification note; ERROR_LOG.md if material verification/runtime failures occur.`
-- write_sets: `STATE.md; ERROR_LOG.md if needed; RecommendationModels.java; RecommendationProperties.java; RecommendationService.java; LocalModelRecommendationClient.java; application.yml; RecommendationServiceCandidateFilterTests.java; LocalModelRecommendationClientTests.java; RecommendationScorerTests.java if needed`
+- status: `frozen for anime poster pool recommendation wiring`
+- source_basis: `Verified poster split provides general movie assets under R2/posters/movie and anime assets under R2/posters/anime. Current API/frontend only request the default general poster seed, so selected animation genres cannot pull the richer anime pool.`
+- output_code: `Load a second anime seed pool, namespace anime seed ids, expose genre-aware poster seed API, pass selected frontend genres into getPosterSeed, and mirror JS changes to Spring static resources.`
+- output_tests: `Focused PosterSeedService/PreferenceProfileBuilder tests, node --check for touched JS, git diff --check, localhost API checks for default and animation poster seed paths, commit, and push.`
+- output_docs: `STATE verification note and retrospective entry; ERROR_LOG.md only if material verification failure occurs.`
+- write_sets: `STATE.md; ERROR_LOG.md if needed; docs/TASK_RETROSPECTIVE.md; .gitignore local Gradle runtime ignore; PosterSeedService/RecommendationService/RecommendationController; focused recommendation tests; frontend and backend static recommendation JS plus daboyeoAi module cache-bust HTML`
 
 ## Reviewer
 
 - review_required: `self-review`
-- reviewer_focus: `Taste-first reserve fill does not reintroduce perfect-score weak fillers, Codex/GPT score field is parsed and bounded, local-model compatibility remains intact, existing child/avoid/time/seat behavior stays intact`
+- reviewer_focus: `Confirm default movie poster seed remains backward-compatible, animation selected genres prioritize anime posters, namespaced anime ids resolve in profile building, and no unrelated dirty changes are reverted.`
 
 ## Last Update
+
+- timestamp: `2026-05-05 20:25:01 +09:00`
+- note: `Verified anime poster pool recommendation wiring. PosterSeedService now loads general movie and anime seed pools, namespaces anime seed ids as anime:<movieCd>, keeps default poster-seed calls on R2/posters/movie, and prioritizes R2/posters/anime when genres includes animation or genre:animation. RecommendationController/Service accept optional genres, frontend getPosterSeed passes selectedGenres, daboyeoAi module cache keys were bumped, and Spring static JS/HTML mirrors match. Focused PosterSeedServiceTests and PreferenceProfileBuilderTests passed, bootJar passed, node --check passed for touched frontend/static JS, git diff --check passed with CRLF warnings only, WORKSPACE_CONTEXT verification commands ran, localhost default poster API returned 8 movie paths with 0 anime ids, localhost animation API returned 8 anime paths with 8 namespaced ids, comma genre:animation,sf also returned anime paths, and localhost:5500 is healthy on PID 27076. Self-review found no blocking issues. Commit and push remain as the final handoff step for this /goal.`
+
+- timestamp: `2026-05-05 20:15:33 +09:00`
+- note: `Reclassified /goal into anime poster pool recommendation wiring. score_total 8; single-session/no-spawn. Frozen contract: keep default poster-seed behavior for general movies, add genre-aware API behavior for animation, namespace anime seed ids to avoid movieCd collision, pass selected frontend genres to poster loading, mirror JS static resources, verify focused tests/runtime checks, then commit and push.`
+
+- timestamp: `2026-05-05 20:08:36 +09:00`
+- note: `Verified poster asset folder split. Existing general movie posters now live under R2/posters/movie and anime posters under R2/posters/anime across frontend source, Spring static mirror, and build runtime resources. Updated top50/anime poster manifests and scripts/recommendation/fetch_anime_top30_posters.py to use the new paths. Bundled Python anime verify-only passed, manifest integrity/hash checks passed for movie=50 and anime=30, no anime-posters or root poster WebP paths remain in source/static references, localhost:5500 was restarted as listener PID 15412 with /api/health 200, /api/recommendation/poster-seed returns movie poster paths under posters/movie, and both movie/anime static asset URLs returned 200.`
+
+- timestamp: `2026-05-05 20:03:44 +09:00`
+- note: `Reclassified into poster asset folder split. score_total 5; single-session/no-spawn. Frozen contract: move general movie posters under R2/posters/movie and anime posters under R2/posters/anime in both frontend and Spring static mirrors, update poster manifests and the anime poster fetch script, sync localhost:5500 runtime resources if needed, and leave recommendation-flow wiring queued.`
+
+- timestamp: `2026-05-05 15:48:00 +09:00`
+- note: `Verified Selfdex-selected ingest duplicate cleanup. collect_all_to_tidb.py now uses provider_ingest_result for shared provider result keys and finalize_provider_ingest for shared movie backfill plus showtime repair counters while leaving Lotte/Megabox provider-specific loops and payloads unchanged. Bundled Python compileall passed for scripts/ingest/collect_all_to_tidb.py, AST key check confirmed the helper preserves all result keys and both ingest functions use the new helpers, git diff --check passed with CRLF warnings only, and scripts/plan_next_task.py was not run because this repo does not contain that Selfdex-suggested command. No DB write, provider crawl, Spring restart, or runtime mutation was performed.`
+
+- timestamp: `2026-05-05 15:27:20 +09:00`
+- note: `Verified anime theatrical poster top30 seed. KOBIS all-time rows were de-duplicated by movieCd, movie detail genre containing animation was used as the filter, 400 official rows were scanned to collect 30 unique animation entries, and local WebP posters were written to frontend and Spring static anime-posters directories. JSON parse, script verify-only, 30/30 frontend and static file counts, mirror/hash/dimension checks, git diff --check, localhost /api/health 200, and served asset checks for rank 1 and rank 30 passed. Spring restarted on PID 21432 with startup sync disabled for the local restart.`
+
+- timestamp: `2026-05-05 15:40:00 +09:00`
+- note: `Post-review fixes completed for anime poster seed. Reviewer flagged future PosterSeedService movieCd collision risk for anime/general pool wiring, all-zero screens metadata, and a 150x215 Kung Fu Panda poster. Current task fixed the metadata/asset issues by reading KOBIS td_totScrnCnt, selecting the best portrait poster candidate from KOBIS business detail pages for the selected 30, and enforcing a 400x600 minimum poster verification floor. Regenerated manifest/assets now have screens_zero=0, minimum poster size 600x861, Kung Fu Panda 600x861, verify-only passed, runtime resources were synced, and /src/assets/R2/anime-posters/12-20080653.webp returned 200. The movieCd collision warning is carried into the future recommendation-flow wiring contract.`
+
+- timestamp: `2026-05-05 14:11:50 +09:00`
+- note: `Reclassified into selective kmh update import. score_total 8; single-session/no-spawn. origin/kmh latest commit 204fab1 is the import source, while full branch merge is blocked by heavy divergence and conflicts across state, backend, frontend, docs, and generated region data. Contract: import compatible real-time nearby search sync/UI improvements only, preserve current lsh recommendation and runtime contracts, and exclude stale kmh STATE/ERROR_LOG content.`
+
+- timestamp: `2026-05-05 14:20:00 +09:00`
+- note: `Expanded write set to include backend static mirror files because localhost:5500 serves backend/src/main/resources/static, not frontend/ directly. The import must update both frontend source and served static copies for browser-visible kmh UI changes.`
+
+- timestamp: `2026-05-05 14:21:30 +09:00`
+- note: `Verified selective kmh import. Imported compatible parts of origin/kmh 204fab1: nearby refresh wait/pending metadata, scoped Megabox bundle persistence, configured refresh radius/wait, frontend pending-refresh auto retry, map-to-region dropdown synchronization, and layout width/stability fixes. Excluded stale kmh STATE/ERROR_LOG branch content and avoided wholesale merge. node --check passed for touched frontend/static JS, focused live/nearby Gradle tests passed outside sandbox after the known loopback failure and one localized error-message test repair, bootJar passed after static mirror copy, served localhost:5500 static markers were present, and Spring restarted on PID 30992 with /api/health 200.`
+
+- timestamp: `2026-05-05 14:46:00 +09:00`
+- note: `Runtime restart complete on localhost:5500. Existing Spring PID 30992 was stopped, sandbox Java startup failed with the known Tomcat loopback limitation, and the server was restarted with normal Windows execution as PID 2004. /api/health returned HTTP 200.`
 
 - timestamp: `2026-05-04 17:32:50 +09:00`
 - note: `Verified Codex-scored reserve recommendation pool. Selfdex read-only planner ran but suggested an unrelated collector refactor, so the user-fixed /goal overrode it. RecommendationService now builds a taste-aware distinct pool that keeps direct selected-genre matches first and fills shortfalls with scored reserve candidates. GPT/Codex prompts and schema now require numeric score s, AiPick stores the model score, and RecommendationService uses the validated model score while capping no-direct taste reserves at 74. Codex defaults were widened to 12 fast / 20 precise candidates with larger token budgets. Focused RecommendationServiceCandidateFilterTests, LocalModelRecommendationClientTests, and RecommendationScorerTests passed outside sandbox after the known native-platform.dll issue and one duplicate-helper compile repair; bootJar passed. Runtime is Spring PID 15568 and bridge PID 14580 on localhost:5500 with Codex ready; action/SF local fallback returned 3 items Project Hail Mary 100, Prada 74, Mario 74, and Codex returned 3 items Project Hail Mary 94, Prada 72, Kiki 68.`

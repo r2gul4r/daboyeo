@@ -7,6 +7,8 @@
 }
 
 .unified-filter-box {
+  width: 100% !important;
+  max-width: 1200px !important;
   background: var(--card-bg) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -368,8 +370,9 @@
 }
 
 .movies-main-container {
-  max-width: 1600px;
-  margin: 0 auto;
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
   padding: 0 40px;
 }
 
@@ -427,9 +430,10 @@
 /* 영화 카드 전용 스타일 (kakaoMap.css에서 이관됨) */
 .movie-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5개 배치로 넓이 최적화 */
+  grid-template-columns: repeat(4, 1fr); /* 4개 배치로 가독성 및 공간 최적화 */
   gap: 30px;
   padding: 10px 0;
+  width: 100% !important;
 }
 
 .movie-card {
@@ -649,6 +653,7 @@
 
 .loading-container {
   grid-column: 1 / -1;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;

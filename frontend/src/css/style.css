@@ -34,7 +34,7 @@ h1 {
   padding: 20px 40px;
   text-align: left;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  margin-bottom: 40px;
+  margin: 0 auto 40px;
 }
 
 .form-row {
@@ -139,13 +139,14 @@ label {
 }
 
 .region-sub-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr 145px;
   gap: 10px;
   width: 100%;
 }
 
 .region-sub-row .custom-select-container {
-  flex: 1;
+  min-width: 0;
 }
 
 .custom-select {
@@ -563,7 +564,7 @@ button:hover {
 
 @media (max-width: 850px) {
   .region-sub-row {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .btn-map {

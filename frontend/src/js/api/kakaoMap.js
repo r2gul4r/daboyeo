@@ -394,9 +394,25 @@ async function updateMapWithServerData(theaters, results, userLat, userLng) {
     addressInfo.innerText = `기준 위치: ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
   }
   geocoder.coord2Address(userLng, userLat, (result, status) => {
-    if (status === kakao.maps.services.Status.OK && addressInfo) {
+    if (status === kakao.maps.services.Status.OK) {
       const address = result[0].road_address ? result[0].road_address.address_name : result[0].address.address_name;
-      addressInfo.innerText = `현재 위치: ${address}`;
+      if (addressInfo) {
+        addressInfo.innerText = `현재 위치: ${address}`;
+      }
+
+      if (result[0].address) {
+        const addr = result[0].address;
+        if (mapRegionInput) {
+          mapRegionInput.value = `${addr.region_1depth_name} ${addr.region_2depth_name} ${addr.region_3depth_name}`.trim();
+        }
+        if (window.updateRegionFromMap) {
+          window.updateRegionFromMap(
+            addr.region_1depth_name,
+            addr.region_2depth_name,
+            addr.region_3depth_name,
+          );
+        }
+      }
     }
   });
 
@@ -556,8 +572,41 @@ async function handleRegionSearch() {
 
   try {
     const found = await searchLocationByQuery(query);
+    if (map) {
+      const moveLatLon = new kakao.maps.LatLng(found.lat, found.lng);
+      map.setCenter(moveLatLon);
+      map.setLevel(4);
+    }
+
+    if (window.kakao?.maps?.services) {
+      const geocoder = new kakao.maps.services.Geocoder();
+      await new Promise((resolve) => {
+        geocoder.coord2Address(found.lng, found.lat, (result, status) => {
+          if (status === kakao.maps.services.Status.OK && result[0]?.address) {
+            const addr = result[0].address;
+            if (mapRegionInput) {
+              mapRegionInput.value = `${addr.region_1depth_name} ${addr.region_2depth_name} ${addr.region_3depth_name}`.trim();
+            }
+            if (window.updateRegionFromMap) {
+              window.updateRegionFromMap(
+                addr.region_1depth_name,
+                addr.region_2depth_name,
+                addr.region_3depth_name,
+              );
+            }
+          } else if (window.updateRegionFromMap) {
+            window.updateRegionFromMap(found.label);
+          }
+          resolve();
+        });
+      });
+    } else if (window.updateRegionFromMap) {
+      window.updateRegionFromMap(found.label);
+    }
+
     if (mapRegionSearchFeedback) {
-      mapRegionSearchFeedback.innerText = `"${found.label}" 주변 극장을 조회합니다.`;
+      mapRegionSearchFeedback.innerText = `"${found.label}" 지역이 적용되었습니다.`;
+      mapRegionSearchFeedback.style.color = 'var(--purple50)';
     }
 
     const regionInput = document.getElementById('regionInput');

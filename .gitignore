@@ -24,6 +24,7 @@ collectors/*/__pycache__/
 build/
 backend/.gradle/
 backend/.gradle-user-home/
+backend/.gradle-runtime/
 backend/build/
 backend/bin/
 

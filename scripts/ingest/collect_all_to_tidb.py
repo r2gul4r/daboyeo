@@ -174,6 +174,25 @@ def status_counts(provider: str, seats: list[dict[str, Any]]) -> dict[str, int]:
     return counts
 
 
+def provider_ingest_result(provider: str, play_dates: list[str]) -> dict[str, Any]:
+    return {
+        "provider": provider,
+        "play_dates": play_dates,
+        "play_date_count": len(play_dates),
+        "movies_upserted": 0,
+        "theaters_upserted": 0,
+        "screens_upserted": 0,
+        "schedule_queries": 0,
+        "showtimes_upserted": 0,
+        "movie_tags_upserted": 0,
+        "movies_backfilled_from_showtimes": 0,
+        "showtime_movie_links_repaired": 0,
+        "showtime_location_links_repaired": 0,
+        "seat_snapshots_inserted": 0,
+        "seat_items_inserted": 0,
+    }
+
+
 def _clean_tag_value(value: Any) -> str:
     text = safe_text(value)
     if not text:
@@ -544,6 +563,26 @@ def backfill_missing_movies_from_showtimes(
     return backfilled, tags_upserted
 
 
+def finalize_provider_ingest(
+    cursor: Any,
+    provider: str,
+    collected_at: str,
+    movie_tag_keys: set[tuple[str, str, str, str]],
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    backfilled, backfill_tags = backfill_missing_movies_from_showtimes(
+        cursor,
+        provider,
+        collected_at,
+        movie_tag_keys,
+    )
+    result["movies_backfilled_from_showtimes"] = backfilled
+    result["movie_tags_upserted"] += backfill_tags
+    result["showtime_movie_links_repaired"] = repair_showtime_movie_links(cursor, provider)
+    result["showtime_location_links_repaired"] = repair_showtime_location_links(cursor, provider)
+    return result
+
+
 def resolve_megabox_movie_id(
     cursor: Any,
     schedule_row: dict[str, Any],
@@ -866,22 +905,7 @@ def ingest_lotte(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
     theaters = limited(collector.build_cinema_records(), args.limit_theaters)
     play_date_rows = collector.build_play_date_records()
     play_dates = choose_lotte_play_dates(play_date_rows, args)
-    result: dict[str, Any] = {
-        "provider": LOTTE,
-        "play_dates": play_dates,
-        "play_date_count": len(play_dates),
-        "movies_upserted": 0,
-        "theaters_upserted": 0,
-        "screens_upserted": 0,
-        "schedule_queries": 0,
-        "showtimes_upserted": 0,
-        "movie_tags_upserted": 0,
-        "movies_backfilled_from_showtimes": 0,
-        "showtime_movie_links_repaired": 0,
-        "showtime_location_links_repaired": 0,
-        "seat_snapshots_inserted": 0,
-        "seat_items_inserted": 0,
-    }
+    result: dict[str, Any] = provider_ingest_result(LOTTE, play_dates)
 
     movie_ids: dict[str, int] = {}
     theater_ids: dict[str, int] = {}
@@ -973,17 +997,7 @@ def ingest_lotte(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
                         )
                         result["seat_snapshots_inserted"] += 1
                         result["seat_items_inserted"] += item_count
-    backfilled, backfill_tags = backfill_missing_movies_from_showtimes(
-        cursor,
-        LOTTE,
-        collected_at,
-        movie_tag_keys,
-    )
-    result["movies_backfilled_from_showtimes"] = backfilled
-    result["movie_tags_upserted"] += backfill_tags
-    result["showtime_movie_links_repaired"] = repair_showtime_movie_links(cursor, LOTTE)
-    result["showtime_location_links_repaired"] = repair_showtime_location_links(cursor, LOTTE)
-    return result
+    return finalize_provider_ingest(cursor, LOTTE, collected_at, movie_tag_keys, result)
 
 
 def area_codes_from_branches(branches: list[dict[str, Any]]) -> list[str]:
@@ -1026,22 +1040,7 @@ def ingest_megabox(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
     collector = MegaboxCollector()
     collected_at = now_db()
     play_dates = choose_megabox_play_dates(args)
-    result: dict[str, Any] = {
-        "provider": MEGABOX,
-        "play_dates": play_dates,
-        "play_date_count": len(play_dates),
-        "movies_upserted": 0,
-        "theaters_upserted": 0,
-        "screens_upserted": 0,
-        "schedule_queries": 0,
-        "showtimes_upserted": 0,
-        "movie_tags_upserted": 0,
-        "movies_backfilled_from_showtimes": 0,
-        "showtime_movie_links_repaired": 0,
-        "showtime_location_links_repaired": 0,
-        "seat_snapshots_inserted": 0,
-        "seat_items_inserted": 0,
-    }
+    result: dict[str, Any] = provider_ingest_result(MEGABOX, play_dates)
 
     movie_ids: dict[str, int] = {}
     theater_ids: dict[str, int] = {}
@@ -1128,17 +1127,7 @@ def ingest_megabox(cursor: Any, args: argparse.Namespace) -> dict[str, Any]:
                         )
                         result["seat_snapshots_inserted"] += 1
                         result["seat_items_inserted"] += item_count
-    backfilled, backfill_tags = backfill_missing_movies_from_showtimes(
-        cursor,
-        MEGABOX,
-        collected_at,
-        movie_tag_keys,
-    )
-    result["movies_backfilled_from_showtimes"] = backfilled
-    result["movie_tags_upserted"] += backfill_tags
-    result["showtime_movie_links_repaired"] = repair_showtime_movie_links(cursor, MEGABOX)
-    result["showtime_location_links_repaired"] = repair_showtime_location_links(cursor, MEGABOX)
-    return result
+    return finalize_provider_ingest(cursor, MEGABOX, collected_at, movie_tag_keys, result)
 
 
 def collect_dry_run(args: argparse.Namespace) -> dict[str, Any]:

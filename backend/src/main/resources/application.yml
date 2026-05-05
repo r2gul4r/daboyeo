@@ -81,6 +81,8 @@ daboyeo:
       entry-refresh-max-schedules-per-bundle: ${DABOYEO_SHOWTIME_ENTRY_REFRESH_MAX_SCHEDULES_PER_BUNDLE:40}
       nearby-refresh-enabled: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_ENABLED:true}
       nearby-refresh-max-theaters-per-provider: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_MAX_THEATERS_PER_PROVIDER:6}
+      nearby-refresh-radius-km: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_RADIUS_KM:3}
+      nearby-refresh-wait-millis: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_WAIT_MILLIS:2500}
       nearby-refresh-today-ttl-minutes: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_TODAY_TTL_MINUTES:60}
       nearby-refresh-next-day-ttl-minutes: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_NEXT_DAY_TTL_MINUTES:360}
       nearby-refresh-future-ttl-minutes: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_FUTURE_TTL_MINUTES:1440}

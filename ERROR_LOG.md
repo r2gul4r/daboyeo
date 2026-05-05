@@ -571,3 +571,57 @@ Do not rewrite existing entries; append only.
   summary: `기본 sandbox에서 git index.lock 생성 권한 실패`
   details: `커밋 준비 중 git add -A가 C:/lsh/git/daboyeo/.git/index.lock Permission denied로 실패했다. 같은 git add -A를 정상 Windows 권한으로 재실행해 스테이징을 완료했다.`
   status: `resolved`
+
+- time: `2026-05-05 14:03:00 +09:00`
+  location: `localhost:5500 Spring runtime restart`
+  summary: `샌드박스 Gradle loopback 오류와 PowerShell Start-Process 환경변수 중복`
+  details: `Spring을 5500으로 재기동하는 과정에서 PowerShell Start-Process가 Path/PATH 중복 환경변수로 실패했고, 샌드박스 안 Gradle bootRun은 Unable to establish loopback connection으로 실패했다. 외부 실행 승인을 받은 뒤 숨김 cmd 프로세스에서 Gradle bootRun을 실행했고, /api/health가 HTTP 200을 반환했다.`
+  status: `resolved`
+
+- time: `2026-05-05 14:18:00 +09:00`
+  location: `selective kmh import verification`
+  summary: `샌드박스 Gradle loopback 오류 및 kmh 테스트 기대문구 불일치`
+  details: `origin/kmh 204fab1 selective import 후 focused Gradle test를 샌드박스에서 실행했지만 Unable to establish loopback connection으로 Gradle이 시작되지 않았다. 정상 Windows 권한으로 재실행하자 LiveMovieControllerTests의 kmh 신규 테스트가 영어 BAD_REQUEST 메시지를 기대했지만 현재 API 계약은 한국어 메시지를 반환해 1개 실패했다. 테스트 기대값을 현재 API 메시지에 맞춘 뒤 같은 focused test와 bootJar가 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-05 14:46:00 +09:00`
+  location: `localhost:5500 Spring runtime restart`
+  summary: `기존 PID 확인 누락과 샌드박스 Tomcat loopback 오류`
+  details: `처음 Get-NetTCPConnection 결과가 비어 기존 5500 리스너가 없는 것으로 판단했지만 netstat 확인 결과 기존 Spring PID 30992가 여전히 LISTENING 중이었다. 기존 PID를 종료한 뒤 샌드박스 안에서 Java jar를 직접 실행하자 Tomcat이 Unable to establish loopback connection으로 실패했다. 정상 Windows 권한의 숨김 cmd 프로세스로 다시 시작해 새 PID 2004가 localhost:5500을 리슨했고 /api/health가 HTTP 200을 반환했다.`
+  status: `resolved`
+
+- time: `2026-05-05 15:27:20 +09:00`
+  location: `anime poster seed generation`
+  summary: `KOBIS 통계 테이블 중복 row와 실행 중 Spring 정적 리소스 미반영`
+  details: `ranking-only dry run에서 KOBIS 역대 박스오피스 HTML의 반복 통계 테이블 때문에 같은 movieCd가 중복 선택됐다. 스크립트를 movieCd 기준 첫 all-time row만 쓰도록 고친 뒤 30개를 재산출했다. asset 생성 후 실행 중인 5500 서버가 새 anime-posters 리소스를 못 봐 500 NoResourceFoundException을 반환했으므로 build resources 동기화 후 Spring을 PID 21432로 재시작했고 /api/health 및 rank 1/rank 30 poster URL이 200을 반환했다.`
+  status: `resolved`
+
+- time: `2026-05-05 15:40:00 +09:00`
+  location: `anime poster seed code review`
+  summary: `스크린 수 0 메타데이터와 저해상도 포스터 후보`
+  details: `코드리뷰에서 anime manifest의 screens가 전부 0이고 쿵푸 팬더 포스터가 150x215 썸네일급으로 선택된 점이 드러났다. 스크립트를 KOBIS td_totScrnCnt 셀을 읽도록 고치고, 선택된 30개 포스터는 KOBIS business 상세 후보까지 검사해 portrait 해상도 우선으로 고르도록 수정했다. 재생성 후 screens_zero=0, 최소 포스터 크기 600x861, 쿵푸 팬더 600x861, verify-only 및 런타임 asset check가 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-05 20:08:00 +09:00`
+  location: `poster folder split verification`
+  summary: `기본 python 명령이 PATH에 없음`
+  details: `포스터 경로 재배치 후 verify-only와 manifest integrity 검증을 기본 python 명령으로 실행했지만 PATH에서 python을 찾지 못해 실패했다. Codex bundled Python 경로를 확인한 뒤 같은 검증을 번들 Python으로 재실행했고 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-05 20:19:00 +09:00`
+  location: `anime poster pool focused Gradle tests`
+  summary: `GRADLE_USER_HOME 상대 경로 오지정 및 샌드박스 native-platform.dll 로딩 실패`
+  details: `focused Gradle test를 backend working directory에서 실행하면서 GRADLE_USER_HOME을 .\\backend\\.gradle-runtime으로 잡아 backend\\backend\\.gradle-runtime Resolve-Path가 실패했다. 이어 샌드박스 Gradle은 기존과 같은 native-platform.dll 로딩 실패로 시작하지 못했다. 올바른 .\\.gradle-runtime 경로와 정상 Windows 실행으로 재시도해 focused tests가 통과했다.`
+  status: `resolved`
+
+- time: `2026-05-05 20:24:00 +09:00`
+  location: `localhost:5500 Spring restart after anime poster pool wiring`
+  summary: `Gradle bootRun 재시작 명령 타임아웃`
+  details: `새 poster-seed API를 반영하려고 기존 5500 리스너를 종료하고 Gradle bootRun으로 재시작했지만 명령이 180초 타임아웃됐고 이후 5500 리스너가 비어 있었다. bootJar 산출물은 이미 생성되어 있으므로 jar 직접 실행 방식으로 서버를 복구했고, localhost:5500 health가 200을 반환했다.`
+  status: `resolved`
+
+- time: `2026-05-05 20:26:00 +09:00`
+  location: `git staging anime poster pool goal`
+  summary: `기본 sandbox에서 git index.lock 생성 권한 실패`
+  details: `검증 완료 후 git add -A를 실행했지만 D:/git/daboyeo/.git/index.lock Permission denied로 staging이 실패했다. 동일한 staging을 정상 Windows 권한으로 재시도해 완료했다.`
+  status: `resolved`
