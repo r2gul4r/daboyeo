@@ -222,9 +222,9 @@ public class CollectorBundlePersistenceService {
               name = VALUES(name),
               region_code = VALUES(region_code),
               region_name = VALUES(region_name),
-              address = VALUES(address),
-              latitude = VALUES(latitude),
-              longitude = VALUES(longitude),
+              address = COALESCE(VALUES(address), address),
+              latitude = COALESCE(VALUES(latitude), latitude),
+              longitude = COALESCE(VALUES(longitude), longitude),
               raw_json = VALUES(raw_json),
               last_collected_at = CURRENT_TIMESTAMP(3)
             """;

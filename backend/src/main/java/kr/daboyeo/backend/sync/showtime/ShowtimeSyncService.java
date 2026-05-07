@@ -82,14 +82,14 @@ public class ShowtimeSyncService {
 
     private void syncCgv(LocalDate playDate) {
         for (CollectorSyncProperties.CgvTarget target : properties.getShowtimes().getCgvTargets()) {
-            if (isBlank(target.getSiteNo()) || isBlank(target.getMovieNo())) {
+            if (isBlank(target.getSiteNo())) {
                 continue;
             }
             ShowtimeCollectionRequest request = new ShowtimeCollectionRequest(
                 CollectorProvider.CGV,
                 playDate,
                 target.getSiteNo(),
-                target.getMovieNo(),
+                isBlank(target.getMovieNo()) ? null : target.getMovieNo(),
                 null,
                 null,
                 null
@@ -268,7 +268,7 @@ public class ShowtimeSyncService {
 
     private long validCgvTargets() {
         return properties.getShowtimes().getCgvTargets().stream()
-            .filter(target -> !isBlank(target.getSiteNo()) && !isBlank(target.getMovieNo()))
+            .filter(target -> !isBlank(target.getSiteNo()))
             .count();
     }
 

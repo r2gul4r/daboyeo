@@ -9,9 +9,9 @@
 - time: 2026-04-30 KST
 - location: LOTTE manual re-sync attempt
 - summary: a one-off startup sync on port `8083` stalled inside the Lotte discovery phase before any new `stored` logs appeared, so the current Lotte rows were backfilled directly from theater-map metadata instead
-- details: rebuilt the backend with the new `TheaterLocationEnricher` patch and launched a temporary instance with `DABOYEO_SHOWTIME_STARTUP_ENABLED=true` and `DABOYEO_SHOWTIME_DATE_OFFSETS=0`. The app reached `Showtime sync starting ... offsets=[0]` and spawned a Python collector process, but after several minutes it produced no `stored`, `cleanup`, or `completed` logs, so the run was treated as stalled. To reflect the Java-side region inference immediately for existing data, a one-off TiDB update matched `LOTTE_CINEMA` theaters against `frontend/src/map/theaters.json`, filled usable theater addresses, set inferred `region_name`, and propagated that value into missing `showtimes.region_name`. The backfill updated `75` theater rows and `170` showtime rows; for today's Lotte showtimes the share with non-empty `region_name` improved from `0/288` to `239/288` (`서울=235`, `경기=4`, `UNKNOWN=49`).
+- details: rebuilt the backend with the new `TheaterLocationEnricher` patch and launched a temporary instance with `DABOYEO_SHOWTIME_STARTUP_ENABLED=true` and `DABOYEO_SHOWTIME_DATE_OFFSETS=0`. The app reached `Showtime sync starting ... offsets=[0]` and spawned a Python collector process, but after several minutes it produced no `stored`, `cleanup`, or `completed` logs, so the run was treated as stalled. To reflect the Java-side region inference immediately for existing data, a one-off TiDB update matched `LOTTE_CINEMA` theaters against `frontend/src/map/theaters.json`, filled usable theater addresses, set inferred `region_name`, and propagated that value into missing `showtimes.region_name`. The backfill updated `75` theater rows and `170` showtime rows; for today's Lotte showtimes the share with non-empty `region_name` improved from `0/288` to `239/288` (`?쒖슱=235`, `寃쎄린=4`, `UNKNOWN=49`).
 - status: open
- 
+
 ## 2026-04-30T10:38:00+09:00
 - time: 2026-04-30 KST
 - location: backend startup sync verification
@@ -36,8 +36,8 @@
 ## 2026-04-28T16:52:00+09:00
 - time: 2026-04-28 KST
 - location: homepage interaction repair
-- summary: the homepage `직접 비교하기` and `내 위치` button flows were repaired for the local runtime
-- details: rewrote `frontend/src/js/pages/script.js` to initialize reliably even when the script runs after `DOMContentLoaded`, exposed `window.openMovieComparison` as a stable fallback target, and added an inline click fallback on the homepage button. Rewrote `frontend/src/js/api/kakaoMap.js` so the location button still opens the modal and shows a clear fallback message even when Kakao Maps/services does not initialize. Browser verification confirmed that `직접 비교하기` now navigates to `movies.html?...` and `내 위치` opens the modal with a diagnostic status message instead of silently doing nothing.
+- summary: the homepage `吏곸젒 鍮꾧탳?섍린` and `???꾩튂` button flows were repaired for the local runtime
+- details: rewrote `frontend/src/js/pages/script.js` to initialize reliably even when the script runs after `DOMContentLoaded`, exposed `window.openMovieComparison` as a stable fallback target, and added an inline click fallback on the homepage button. Rewrote `frontend/src/js/api/kakaoMap.js` so the location button still opens the modal and shows a clear fallback message even when Kakao Maps/services does not initialize. Browser verification confirmed that `吏곸젒 鍮꾧탳?섍린` now navigates to `movies.html?...` and `???꾩튂` opens the modal with a diagnostic status message instead of silently doing nothing.
 - status: resolved
 
 ## 2026-04-28T17:20:00+09:00
@@ -57,7 +57,7 @@
 ## 2026-04-29T16:23:43+09:00
 - time: 2026-04-29 KST
 - location: local live movie compare investigation
-- summary: the `직접 비교하기` flow could not load collected data because the backend API was not actually listening on `localhost:8080`
+- summary: the `吏곸젒 鍮꾧탳?섍린` flow could not load collected data because the backend API was not actually listening on `localhost:8080`
 - details: frontend access logs showed navigation to `movies.html?region=...`, but local requests to `http://localhost:8080/api/live/nearby` failed with connection errors and port `8080` had no listening process. Existing backend boot logs in `backend/build/tmp/backend-bootrun.err.log` and `backend/build/tmp/bootrun-direct.err.log` show Gradle startup failing with `Could not initialize native services` and `Failed to load native library 'native-platform.dll'`. Separate TiDB verification still showed collected data present (`showtimes=1892`), and an additional DB check showed only `715` showtimes currently join to theaters with usable coordinates, which is a secondary data-availability risk after the backend startup issue is fixed.
 - status: open
 
@@ -79,14 +79,14 @@
 - time: 2026-04-29 KST
 - location: multi-provider showtime coverage investigation
 - summary: `CGV` live showtime collection is currently blocked by an upstream `401 Unauthorized`, and `LOTTE_CINEMA` auto-discovery is only sampling two preferred cinemas with one representation movie each
-- details: direct collector execution showed `CgvCollector.build_site_records()` failing with `HTTP Error 401: Unauthorized`, while the active `LOTTE_CINEMA` discovery logic in `PythonCollectorBridge` filtered cinemas down to preferred IDs `3037` and `9111`, then stopped after the first working movie per cinema. The resulting discovered targets for `2026-04-29` were only `위례 -> 왕과 사는 남자` and `하남미사 -> 프로젝트 헤일메리`, which matches the two Lotte showtimes seen in TiDB and explains why Gangnam-area live search is dominated by Megabox.
+- details: direct collector execution showed `CgvCollector.build_site_records()` failing with `HTTP Error 401: Unauthorized`, while the active `LOTTE_CINEMA` discovery logic in `PythonCollectorBridge` filtered cinemas down to preferred IDs `3037` and `9111`, then stopped after the first working movie per cinema. The resulting discovered targets for `2026-04-29` were only `?꾨? -> ?뺢낵 ?щ뒗 ?⑥옄` and `?섎궓誘몄궗 -> ?꾨줈?앺듃 ?ㅼ씪硫붾━`, which matches the two Lotte showtimes seen in TiDB and explains why Gangnam-area live search is dominated by Megabox.
 - status: open
 
 ## 2026-04-29T18:20:00+09:00
 - time: 2026-04-29 KST
 - location: LOTTE auto-discovery patch verification
 - summary: `LOTTE_CINEMA` startup sync now fans out across more cinema/movie targets instead of staying pinned to two preferred single-movie bundles
-- details: removed the hardcoded preferred-cinema defaults, raised the default Lotte cinema discovery breadth, added a per-cinema movie target limit, updated the discovery script to emit multiple working movie targets per cinema, and passed `ShowtimeSyncServiceTests`. After rebuilding and restarting the backend, startup logs showed multiple `LOTTE_CINEMA` bundle persists for `2026-04-29` with `showtimes=3`, `showtimes=5`, and `showtimes=2`, and TiDB rows now include theaters such as `가산디지털` in addition to the earlier `위례` and `하남미사`.
+- details: removed the hardcoded preferred-cinema defaults, raised the default Lotte cinema discovery breadth, added a per-cinema movie target limit, updated the discovery script to emit multiple working movie targets per cinema, and passed `ShowtimeSyncServiceTests`. After rebuilding and restarting the backend, startup logs showed multiple `LOTTE_CINEMA` bundle persists for `2026-04-29` with `showtimes=3`, `showtimes=5`, and `showtimes=2`, and TiDB rows now include theaters such as `媛?곕뵒吏?? in addition to the earlier `?꾨?` and `?섎궓誘몄궗`.
 - status: resolved
 
 ## 2026-04-30T16:57:40+09:00
@@ -108,4 +108,60 @@
 - location: backend/frontend local restart
 - summary: backend and frontend servers were started successfully after launching them outside the sandboxed process tree
 - details: the backend JAR is listening on port `8080` with PID `3144`, `/api/health` returns `status=ok`, and the frontend static server responds on `http://localhost:5500/movies.html`. This resolves the earlier process-launch blocker for the current verification run.
+- status: resolved
+
+## 2026-05-06T15:40:00+09:00
+- time: 2026-05-06 KST
+- location: `collectors/cgv_mh/collector.py` live verification
+- summary: the new API-free `cgv-mh` collector fetched the live CGV theaters page successfully but did not extract any theater records from the current page structure
+- details: running a direct Python check against `CgvMhCollector.build_theater_records()` returned `count=0`, while `fetch_theaters_page()` succeeded with an HTML payload length of `79101`. This shows external access is working and the remaining blocker is parser compatibility with CGV's newer Next.js page data layout rather than network connectivity.
+- status: open
+
+## 2026-05-06T17:15:00+09:00
+- time: 2026-05-06 KST
+- location: `collectors/cgv_mh/collector.py` live endpoint verification
+- summary: CGV's current web-backed theater and showtime endpoints require a signed request plus an `accessToken` cookie that is not available to an anonymous session in this environment
+- details: bundle inspection confirmed the live frontend signs `api.cgv.co.kr` requests with `X-TIMESTAMP` and `X-SIGNATURE`, and local verification reproduced that signature with a browser-like TLS client. The Cloudflare `403` layer was bypassed with `curl_cffi`, but every theater/showtime endpoint still returned `401 Unauthorized3` without an `accessToken` cookie. Anonymous calls to `oidc.cgv.co.kr/common/auth/refreshtoken` also returned `-1001/-1002`, so the remaining blocker is upstream auth, not HTML parsing.
+- status: open
+
+## 2026-05-07T10:08:00+09:00
+- time: 2026-05-07 KST
+- location: `collectors/cgv-mh.py` direct CLI run
+- summary: the CGV collector CLI still fails immediately without `CGV_ACCESS_TOKEN`
+- details: running `python .\collectors\cgv-mh.py --theater-code 0056 --play-date 20260507` exited with `CGV_ACCESS_TOKEN is required for the current CGV web flow. The live browser endpoints return 401 without the accessToken cookie.` This confirms the current blocker remains upstream auth input, not local script bootstrapping.
+- status: open
+
+## 2026-05-07T10:17:00+09:00
+- time: 2026-05-07 KST
+- location: `collectors/cgv_mh/collector.py` schedule fetch
+- summary: the collector now reads the CGV token from `.env` and passes auth, but schedule collection fails because `/cnm/atkt/searchMovScnInfo` is missing a required request parameter
+- details: running `python .\collectors\cgv-mh.py --theater-code 0056 --play-date 20260507` progressed past auth and then raised `RuntimeError: CGV endpoint /cnm/atkt/searchMovScnInfo failed: 400 諛쒕ℓ?듭젣踰붿쐞肄붾뱶???꾩닔 ?붿껌 ?뚮씪誘명꽣 ?낅땲??` The current blocker is request shape for `searchMovScnInfo`, not token loading.
+- status: open
+
+## 2026-05-07T10:51:17+09:00
+- time: 2026-05-07 KST
+- location: nearby live runtime verification for `CGV,LOTTE,MEGA`
+- summary: the latest backend wiring includes CGV in the refresh-backed provider path, but Gangnam nearby runtime still resolves `cgvCandidates=0` so only Lotte data surfaced in the verified API response
+- details: after rebuilding `bootJar`, a fresh local backend run answered `/api/live/nearby?lat=37.4979&lng=127.0276&date=2026-05-07&providers=CGV,LOTTE,MEGA&limit=100` with `pendingRefresh=true` and warning `CGV, MEGA showtimes are still being collected for this area. retry shortly.` The refresh logs from the same run showed `Nearby refresh requested date=2026-05-07 cgvCandidates=0 lotteCandidates=1 megaboxCandidates=3 radiusKm=8`, then only Lotte discovery/storage logs. This means the CGV collector bridge is wired in code, but the current nearby theater source does not yield any CGV targets for that search yet.
+- status: open
+
+## 2026-05-07T11:21:20+09:00
+- time: 2026-05-07 KST
+- location: nearby live runtime verification for `CGV,LOTTE,MEGA`
+- summary: the CGV nearby candidate and metadata-source regression is resolved
+- details: `TheaterMapService` now merges DB theater rows with the checked-in theater map fallback, and `refreshCgv()` no longer depends on pre-existing `theaters` metadata rows before issuing a collector request. A fresh local backend run for `/api/live/nearby?lat=37.4979&lng=127.0276&date=2026-05-07&providers=CGV,LOTTE,MEGA&limit=100` logged `cgvCandidates=1`, `Nearby refresh collecting provider=CGV theater=0056`, and `Nearby refresh stored provider=CGV date=2026-05-07 theaters=1 screens=5 showtimes=23`. The second response returned `34` rows with provider counts `CGV=23` and `LOTTE=11`; only Megabox remained pending in that run.
+- status: resolved
+
+## 2026-05-07T11:45:15+09:00
+- time: 2026-05-07 KST
+- location: Donggyo-dong local nearby search investigation
+- summary: `?쒖슱 留덊룷援??숆탳?? nearby searches currently collapse to one frontend movie card because only LOTTE schedules are returning, while CGV remains pending and MEGABOX refresh is failing upstream
+- details: local verification on `http://127.0.0.1:5500/movies.html?region=?쒖슱%20留덊룷援?20?숆탳??lat=37.5571&lng=126.9235&date=2026-05-07&timeStart=11:00&timeEnd=16:59` showed `result-count=1` and one visible card. The matching backend API response for `lat=37.5571&lng=126.9235` returned `resultCount=3`, but all three rows were LOTTE schedules for the same movie (`?대ぉ吏`), so the frontend correctly aggregated them into a single card. Backend logs from the same run repeatedly warned `CGV, MEGA showtimes are still being collected for this area. retry shortly.`, and `NearbyShowtimeRefreshService` logged `Python collector failed` for `MEGABOX` JSON decode errors during nearby refresh. This means the visible one-card result is driven by incomplete upstream provider coverage, not by the frontend count logic itself.
+- status: open
+
+## 2026-05-07T15:48:00+09:00
+- time: 2026-05-07 KST
+- location: `collectors/__init__.py` during nearby live refresh
+- summary: LOTTE and MEGABOX nearby refreshes regressed because the root `collectors` package still imports the removed `collectors.cgv` module
+- details: local backend logs for direct-compare requests showed both `collectLotteNearbyDiscovery` and `collectMegaboxNearbyDiscovery` failing before any provider-specific logic ran, with `ModuleNotFoundError: No module named 'collectors.cgv'` raised from `collectors/__init__.py`. Because Python executes the package root before `collectors.lotte.collector` or `collectors.megabox.collector`, this stale import blocks both providers. The fix is to remove the obsolete CGV package imports at the root package level.
 - status: resolved

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
-from urllib.request import Request, urlopen
 
+import requests
 
 MEGABOX_BASE_URL = "https://www.megabox.co.kr"
 MASTER_LIST_URL = (
@@ -26,14 +27,38 @@ DEFAULT_HEADERS = {
 class MegaboxApiClient:
     def __init__(self, headers: dict[str, str] | None = None) -> None:
         self.headers = {**DEFAULT_HEADERS, **(headers or {})}
+        self.session = requests.Session()
+        self.session.headers.update(self.headers)
+        # Megabox sometimes needs initial cookies to not block API calls
+        try:
+            self.session.get(MEGABOX_BASE_URL, timeout=10)
+        except Exception:
+            pass
+
+    def _refresh_session(self) -> None:
+        try:
+            self.session.get(MEGABOX_BASE_URL, timeout=10)
+        except Exception:
+            pass
 
     def _post_json(self, url: str, payload: dict[str, Any]) -> dict[str, Any]:
-        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        request = Request(url, headers=self.headers, data=body, method="POST")
-        with urlopen(request, timeout=30) as response:
-            charset = response.headers.get_content_charset() or "utf-8"
-            text = response.read().decode(charset, errors="replace")
-        return json.loads(text)
+        last_error: Exception | None = None
+        for attempt in range(5):
+            try:
+                response = self.session.post(url, json=payload, timeout=30)
+                text = response.text.strip()
+                if not text or text.startswith("<") or text.startswith("Workload"):
+                    raise RuntimeError(f"Megabox API returned invalid response for {url}: {text[:100]}")
+                return response.json()
+            except Exception as e:
+                last_error = e
+                if attempt == 4:
+                    raise
+                self._refresh_session()
+                time.sleep(1.5 + attempt)
+        if last_error is not None:
+            raise last_error
+        return {}
 
     def fetch_master(self, play_de: str) -> dict[str, Any]:
         return self._post_json(MASTER_LIST_URL, {"playDe": play_de})

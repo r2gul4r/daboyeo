@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -44,6 +45,7 @@ class NearbyShowtimeRefreshServiceTests {
         LiveMovieSearchCriteria criteria = sampleCriteria();
 
         when(resolver.resolve(criteria)).thenReturn(new NearbyTheaterTargetResolver.Resolution(
+            List.of(),
             List.of(new NearbyTheaterTargetResolver.TheaterMapEntry(CollectorProvider.LOTTE_CINEMA, "1003", "Test", 37.0d, 127.0d, 1.0d)),
             List.of()
         ));
@@ -93,6 +95,7 @@ class NearbyShowtimeRefreshServiceTests {
 
         when(resolver.resolve(criteria)).thenReturn(new NearbyTheaterTargetResolver.Resolution(
             List.of(),
+            List.of(),
             List.of(new NearbyTheaterTargetResolver.TheaterMapEntry(CollectorProvider.MEGABOX, "1372", "Gangnam", 37.0d, 127.0d, 1.0d))
         ));
         when(repository.findTheaterSyncMetadata(eq(CollectorProvider.MEGABOX), any()))
@@ -133,6 +136,7 @@ class NearbyShowtimeRefreshServiceTests {
         LiveMovieSearchCriteria criteria = sampleCriteria();
 
         when(resolver.resolve(criteria)).thenReturn(new NearbyTheaterTargetResolver.Resolution(
+            List.of(),
             List.of(),
             List.of(
                 new NearbyTheaterTargetResolver.TheaterMapEntry(CollectorProvider.MEGABOX, "1372", "Gangnam", 37.0d, 127.0d, 1.0d),
@@ -210,6 +214,67 @@ class NearbyShowtimeRefreshServiceTests {
     }
 
     @Test
+    void nearbyRefreshFallsBackToRecentMegaboxMovieIdsWhenDiscoveryFails() {
+        CollectorSyncProperties properties = sampleProperties();
+        NearbyTheaterTargetResolver resolver = mock(NearbyTheaterTargetResolver.class);
+        NearbyRefreshRepository repository = mock(NearbyRefreshRepository.class);
+        PythonCollectorBridge bridge = mock(PythonCollectorBridge.class);
+        CollectorBundlePersistenceService persistenceService = mock(CollectorBundlePersistenceService.class);
+        LiveMovieSearchCriteria criteria = sampleCriteria();
+
+        when(resolver.resolve(criteria)).thenReturn(new NearbyTheaterTargetResolver.Resolution(
+            List.of(),
+            List.of(),
+            List.of(new NearbyTheaterTargetResolver.TheaterMapEntry(CollectorProvider.MEGABOX, "1372", "Gangnam", 37.0d, 127.0d, 1.0d))
+        ));
+        when(repository.findTheaterSyncMetadata(eq(CollectorProvider.MEGABOX), any()))
+            .thenReturn(List.of(new NearbyRefreshRepository.TheaterSyncMetadata(
+                CollectorProvider.MEGABOX,
+                "1372",
+                "Gangnam",
+                "",
+                "11"
+            )));
+        when(repository.findLatestShowtimeCollectedAt(eq(CollectorProvider.MEGABOX), eq(criteria.date()), any()))
+            .thenReturn(Map.of("1372", LocalDateTime.of(2026, 4, 29, 0, 0)));
+        doThrow(new IllegalStateException("Megabox workload"))
+            .when(bridge).collectMegaboxNearbyDiscovery(eq(criteria.date()), eq("11"));
+        when(repository.findRecentExternalMovieIds(eq(CollectorProvider.MEGABOX), any(), eq(criteria.date().minusDays(7)), eq(criteria.date()), eq(12)))
+            .thenReturn(List.of("M100", "M200"));
+        when(bridge.collectShowtimeBundle(any())).thenReturn(Map.of(
+            "movies", List.of(),
+            "areas", List.of(),
+            "schedules", List.of(),
+            "seat_records", List.of()
+        ));
+        when(persistenceService.persist(eq("MEGABOX"), any(), eq(false)))
+            .thenReturn(new CollectorBundleIngestCommand.IngestResult(1, 0, 0, 0));
+
+        NearbyShowtimeRefreshService service = new NearbyShowtimeRefreshService(
+            properties,
+            resolver,
+            repository,
+            bridge,
+            persistenceService,
+            new SyncTaskExecutor(),
+            FIXED_CLOCK
+        );
+
+        service.requestRefresh(criteria);
+
+        verify(bridge, times(1)).collectMegaboxNearbyDiscovery(criteria.date(), "11");
+        verify(repository, times(1)).findRecentExternalMovieIds(
+            eq(CollectorProvider.MEGABOX),
+            any(),
+            eq(criteria.date().minusDays(7)),
+            eq(criteria.date()),
+            eq(12)
+        );
+        verify(bridge, times(2)).collectShowtimeBundle(any());
+        verify(persistenceService, times(2)).persist(eq("MEGABOX"), any(), eq(false));
+    }
+
+    @Test
     void nearbyRefreshAwaitReturnsCompletedWhenSyncExecutorFinishesWithinTimeout() {
         CollectorSyncProperties properties = sampleProperties();
         NearbyTheaterTargetResolver resolver = mock(NearbyTheaterTargetResolver.class);
@@ -219,6 +284,7 @@ class NearbyShowtimeRefreshServiceTests {
         LiveMovieSearchCriteria criteria = sampleCriteria();
 
         when(resolver.resolve(criteria)).thenReturn(new NearbyTheaterTargetResolver.Resolution(
+            List.of(),
             List.of(new NearbyTheaterTargetResolver.TheaterMapEntry(CollectorProvider.LOTTE_CINEMA, "1003", "Test", 37.0d, 127.0d, 1.0d)),
             List.of()
         ));
@@ -248,6 +314,47 @@ class NearbyShowtimeRefreshServiceTests {
         NearbyShowtimeRefreshService.RefreshWaitOutcome outcome = service.requestRefreshAndAwait(criteria, Duration.ofSeconds(1));
 
         assertThat(outcome).isEqualTo(NearbyShowtimeRefreshService.RefreshWaitOutcome.COMPLETED);
+    }
+
+    @Test
+    void nearbyRefreshPersistsCgvTargetsWhenStale() {
+        CollectorSyncProperties properties = sampleProperties();
+        NearbyTheaterTargetResolver resolver = mock(NearbyTheaterTargetResolver.class);
+        NearbyRefreshRepository repository = mock(NearbyRefreshRepository.class);
+        PythonCollectorBridge bridge = mock(PythonCollectorBridge.class);
+        CollectorBundlePersistenceService persistenceService = mock(CollectorBundlePersistenceService.class);
+        LiveMovieSearchCriteria criteria = sampleCriteria();
+
+        when(resolver.resolve(criteria)).thenReturn(new NearbyTheaterTargetResolver.Resolution(
+            List.of(new NearbyTheaterTargetResolver.TheaterMapEntry(CollectorProvider.CGV, "0056", "CGV Gangnam", 37.0d, 127.0d, 1.0d)),
+            List.of(),
+            List.of()
+        ));
+        when(repository.findLatestShowtimeCollectedAt(eq(CollectorProvider.CGV), eq(criteria.date()), any()))
+            .thenReturn(Map.of("0056", LocalDateTime.of(2026, 4, 29, 0, 0)));
+        when(bridge.collectShowtimeBundle(any())).thenReturn(Map.of());
+        when(persistenceService.persist(eq("CGV"), any(), eq(false)))
+            .thenReturn(new CollectorBundleIngestCommand.IngestResult(1, 1, 1, 1));
+
+        NearbyShowtimeRefreshService service = new NearbyShowtimeRefreshService(
+            properties,
+            resolver,
+            repository,
+            bridge,
+            persistenceService,
+            new SyncTaskExecutor(),
+            FIXED_CLOCK
+        );
+
+        service.requestRefresh(criteria);
+
+        ArgumentCaptor<kr.daboyeo.backend.sync.bridge.ShowtimeCollectionRequest> requestCaptor =
+            ArgumentCaptor.forClass(kr.daboyeo.backend.sync.bridge.ShowtimeCollectionRequest.class);
+        verify(bridge, times(1)).collectShowtimeBundle(requestCaptor.capture());
+        assertThat(requestCaptor.getValue().provider()).isEqualTo(CollectorProvider.CGV);
+        assertThat(requestCaptor.getValue().siteNo()).isEqualTo("0056");
+        verify(repository, never()).findTheaterSyncMetadata(eq(CollectorProvider.CGV), any());
+        verify(persistenceService, times(1)).persist(eq("CGV"), any(), eq(false));
     }
 
     private static CollectorSyncProperties sampleProperties() {

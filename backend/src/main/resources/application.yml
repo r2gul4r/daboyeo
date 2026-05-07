@@ -52,8 +52,8 @@ daboyeo:
       auto-discovery-enabled: ${DABOYEO_SHOWTIME_AUTO_DISCOVERY_ENABLED:true}
       discovery-movie-limit: ${DABOYEO_SHOWTIME_DISCOVERY_MOVIE_LIMIT:20}
       discovery-lotte-cinema-limit: ${DABOYEO_SHOWTIME_DISCOVERY_LOTTE_CINEMA_LIMIT:50}
-      discovery-lotte-movie-target-limit: ${DABOYEO_SHOWTIME_DISCOVERY_LOTTE_MOVIE_TARGET_LIMIT:5}
-      discovery-lotte-total-target-limit: ${DABOYEO_SHOWTIME_DISCOVERY_LOTTE_TOTAL_TARGET_LIMIT:12}
+      discovery-lotte-movie-target-limit: ${DABOYEO_SHOWTIME_DISCOVERY_LOTTE_MOVIE_TARGET_LIMIT:8}
+      discovery-lotte-total-target-limit: ${DABOYEO_SHOWTIME_DISCOVERY_LOTTE_TOTAL_TARGET_LIMIT:20}
       discovery-megabox-bundle-limit: ${DABOYEO_SHOWTIME_DISCOVERY_MEGABOX_BUNDLE_LIMIT:20}
       nearby-refresh-enabled: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_ENABLED:true}
       nearby-refresh-max-theaters-per-provider: ${DABOYEO_SHOWTIME_NEARBY_REFRESH_MAX_THEATERS_PER_PROVIDER:6}
