@@ -1,0 +1,51 @@
+.env
+
+# Root-level local tool artifacts. Keep these ignored if tools regenerate them.
+.codex-backups/
+.playwright-cli/
+.local/
+.vscode/
+
+# Python caches
+__pycache__/
+collectors/__pycache__/
+collectors/*/__pycache__/
+
+# Root Markdown is private by default. Shared docs belong in README.md or docs/**.
+/*.md
+!/README.md
+!/AGENTS.md
+!/ERROR_LOG.md
+!/MULTI_AGENT_LOG.md
+!/STATE.md
+
+# Java / Spring
+.gradle/
+build/
+backend/.gradle/
+backend/.gradle-user-home/
+backend/.gradle-runtime/
+backend/build/
+backend/bin/
+
+# Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Python
+.venv/
+venv/
+*.pyc
+
+# Local database and generated data
+db/local/
+db/samples/*.json
+db/samples/*.csv
+*.sqlite
+*.sqlite3
+
+# Logs and local runtime output
+*.log
+logs/

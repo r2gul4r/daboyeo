@@ -1,0 +1,748 @@
+{
+  "key": "LOTTE",
+  "provider": "LOTTE CINEMA",
+  "theaterName": "롯데시네마 월드타워",
+  "screenName": "2관 샤롯데",
+  "screenType": "샤롯데",
+  "showDate": "2026-04-10",
+  "startTime": "14:45",
+  "totalSeatCount": 32,
+  "remainingSeatCount": 2,
+  "note": "롯데시네마 월드타워 샤롯데 2관 실좌표 기반",
+  "movieName": "프로젝트 헤일메리",
+  "bookingKey": {
+    "cinema_id": 1016,
+    "screen_id": 1202,
+    "play_date": "2026-04-10",
+    "play_sequence": 2,
+    "screen_division_code": 300
+  },
+  "rowLabels": [
+    {
+      "row": "A",
+      "y": 2082
+    },
+    {
+      "row": "B",
+      "y": 3904
+    },
+    {
+      "row": "C",
+      "y": 5726
+    },
+    {
+      "row": "D",
+      "y": 7548
+    }
+  ],
+  "zoneBoxes": [],
+  "entrances": [
+    {
+      "label": "입구",
+      "x": 525,
+      "y": 9195
+    }
+  ],
+  "seats": [
+    {
+      "id": "1A01",
+      "label": "A1",
+      "x": 1510,
+      "y": 2082,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1A02",
+      "label": "A2",
+      "x": 2360,
+      "y": 2082,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1A03",
+      "label": "A3",
+      "x": 4016,
+      "y": 2082,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1A04",
+      "label": "A4",
+      "x": 4866,
+      "y": 2082,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1A05",
+      "label": "A5",
+      "x": 6436,
+      "y": 2082,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1A06",
+      "label": "A6",
+      "x": 7286,
+      "y": 2082,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1A07",
+      "label": "A7",
+      "x": 8903,
+      "y": 2082,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1A08",
+      "label": "A8",
+      "x": 9753,
+      "y": 2082,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1B01",
+      "label": "B1",
+      "x": 1510,
+      "y": 3904,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1B02",
+      "label": "B2",
+      "x": 2360,
+      "y": 3904,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1B03",
+      "label": "B3",
+      "x": 4016,
+      "y": 3904,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1B04",
+      "label": "B4",
+      "x": 4866,
+      "y": 3904,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1B05",
+      "label": "B5",
+      "x": 6436,
+      "y": 3904,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1B06",
+      "label": "B6",
+      "x": 7286,
+      "y": 3904,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1B07",
+      "label": "B7",
+      "x": 8903,
+      "y": 3904,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1B08",
+      "label": "B8",
+      "x": 9753,
+      "y": 3904,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1C01",
+      "label": "C1",
+      "x": 1510,
+      "y": 5726,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1C02",
+      "label": "C2",
+      "x": 2360,
+      "y": 5726,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1C03",
+      "label": "C3",
+      "x": 4016,
+      "y": 5726,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1C04",
+      "label": "C4",
+      "x": 4866,
+      "y": 5726,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1C05",
+      "label": "C5",
+      "x": 6436,
+      "y": 5726,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1C06",
+      "label": "C6",
+      "x": 7286,
+      "y": 5726,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1C07",
+      "label": "C7",
+      "x": 8903,
+      "y": 5726,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1C08",
+      "label": "C8",
+      "x": 9753,
+      "y": 5726,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1D01",
+      "label": "D1",
+      "x": 1510,
+      "y": 7548,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1D02",
+      "label": "D2",
+      "x": 2360,
+      "y": 7548,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1D03",
+      "label": "D3",
+      "x": 4016,
+      "y": 7548,
+      "w": 680,
+      "h": 1458,
+      "status": "sold",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 50
+      }
+    },
+    {
+      "id": "1D04",
+      "label": "D4",
+      "x": 4866,
+      "y": 7548,
+      "w": 680,
+      "h": 1458,
+      "status": "sold",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 50
+      }
+    },
+    {
+      "id": "1D05",
+      "label": "D5",
+      "x": 6436,
+      "y": 7548,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1D06",
+      "label": "D6",
+      "x": 7286,
+      "y": 7548,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1D07",
+      "label": "D7",
+      "x": 8903,
+      "y": 7548,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    },
+    {
+      "id": "1D08",
+      "label": "D8",
+      "x": 9753,
+      "y": 7548,
+      "w": 680,
+      "h": 1458,
+      "status": "available",
+      "type": "일반석",
+      "zone": "블록 1",
+      "providerMeta": {
+        "customerDivisionCode": 0,
+        "physicalBlockCode": 1,
+        "displayPhysicalBlockCode": 1,
+        "logicalBlockCode": 0,
+        "seatBlockSet": "N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N",
+        "salesDisableTicketCode": "11,12,40,50,65,66,80",
+        "sweetSpotYn": "N",
+        "seatStatusCode": 0
+      }
+    }
+  ],
+  "priceItems": [
+    {
+      "customerDivisionCode": 10,
+      "ticketCode": 10,
+      "seatBlockCode": 1,
+      "serviceFee": 25000,
+      "movieFee": 15000,
+      "totalPrice": 40000
+    },
+    {
+      "customerDivisionCode": 20,
+      "ticketCode": 20,
+      "seatBlockCode": 1,
+      "serviceFee": 23000,
+      "movieFee": 12000,
+      "totalPrice": 35000
+    }
+  ],
+  "customerDivisions": [
+    {
+      "code": 10,
+      "name": "성인"
+    },
+    {
+      "code": 20,
+      "name": "청소년"
+    }
+  ]
+}
