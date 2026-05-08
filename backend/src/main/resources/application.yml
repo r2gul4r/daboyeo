@@ -1,5 +1,5 @@
 server:
-  port: ${DABOYEO_BACKEND_PORT:5500}
+  port: ${DABOYEO_BACKEND_PORT:8080}
 
 spring:
   application:
