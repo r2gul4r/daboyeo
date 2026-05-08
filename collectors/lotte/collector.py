@@ -170,6 +170,17 @@ class LotteCinemaCollector:
             )
         return records
 
+    def build_theater_schedule_records(
+        self,
+        play_date: str,
+        cinema_selector: str,
+    ) -> list[dict[str, Any]]:
+        return self.build_schedule_records(
+            play_date=play_date,
+            cinema_selector=cinema_selector,
+            representation_movie_code="",
+        )
+
     def fetch_seat_map(
         self,
         cinema_id: int,

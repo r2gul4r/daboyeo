@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=../basic/movieReview.html">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DABOYEO | 영화 리뷰</title>
+  <script>
+    const target = new URL("../basic/movieReview.html", window.location.href);
+    target.search = window.location.search;
+    target.hash = window.location.hash;
+    window.location.replace(target);
+  </script>
+</head>
+<body>
+  <p><a href="../basic/movieReview.html">영화 리뷰 페이지로 이동</a></p>
+</body>
+</html>

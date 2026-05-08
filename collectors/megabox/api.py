@@ -23,6 +23,10 @@ DEFAULT_HEADERS = {
     "X-Requested-With": "XMLHttpRequest",
 }
 
+WORKLOAD_RETRY_MARKER = "Workload is so high"
+DEFAULT_MAX_ATTEMPTS = 7
+DEFAULT_BASE_BACKOFF_SECONDS = 2.5
+
 
 class MegaboxApiClient:
     def __init__(self, headers: dict[str, str] | None = None) -> None:
@@ -41,21 +45,32 @@ class MegaboxApiClient:
         except Exception:
             pass
 
+    def _sleep_before_retry(self, attempt: int, workload_retry: bool) -> None:
+        base_delay = DEFAULT_BASE_BACKOFF_SECONDS if workload_retry else 1.5
+        # Keep retries deterministic while spacing out overload responses more aggressively.
+        time.sleep(base_delay + attempt * (1.75 if workload_retry else 1.0))
+
     def _post_json(self, url: str, payload: dict[str, Any]) -> dict[str, Any]:
         last_error: Exception | None = None
-        for attempt in range(5):
+        for attempt in range(DEFAULT_MAX_ATTEMPTS):
+            workload_retry = False
             try:
                 response = self.session.post(url, json=payload, timeout=30)
                 text = response.text.strip()
-                if not text or text.startswith("<") or text.startswith("Workload"):
+                if not text or text.startswith("<"):
+                    raise RuntimeError(f"Megabox API returned invalid response for {url}: {text[:100]}")
+                if WORKLOAD_RETRY_MARKER in text:
+                    workload_retry = True
                     raise RuntimeError(f"Megabox API returned invalid response for {url}: {text[:100]}")
                 return response.json()
             except Exception as e:
                 last_error = e
-                if attempt == 4:
+                if WORKLOAD_RETRY_MARKER in str(e):
+                    workload_retry = True
+                if attempt == DEFAULT_MAX_ATTEMPTS - 1:
                     raise
                 self._refresh_session()
-                time.sleep(1.5 + attempt)
+                self._sleep_before_retry(attempt, workload_retry)
         if last_error is not None:
             raise last_error
         return {}

@@ -165,3 +165,38 @@
 - summary: LOTTE and MEGABOX nearby refreshes regressed because the root `collectors` package still imports the removed `collectors.cgv` module
 - details: local backend logs for direct-compare requests showed both `collectLotteNearbyDiscovery` and `collectMegaboxNearbyDiscovery` failing before any provider-specific logic ran, with `ModuleNotFoundError: No module named 'collectors.cgv'` raised from `collectors/__init__.py`. Because Python executes the package root before `collectors.lotte.collector` or `collectors.megabox.collector`, this stale import blocks both providers. The fix is to remove the obsolete CGV package imports at the root package level.
 - status: resolved
+
+## 2026-05-08T09:56:18+09:00
+- time: 2026-05-08 KST
+- location: Render backend deploy / Spring Flyway startup
+- summary: backend deploy fails because Flyway meets a non-empty `daboyeo` schema without `flyway_schema_history`, while the packaged backend migration set is also out of sync with repository migration versions
+- details: startup aborts with `BeanCreationException` from `flywayInitializer` and the message `Found non-empty schema(s) 'daboyeo' but no schema history table`. Local inspection also showed `backend/src/main/resources/db/migration` only packaged `V004__anonymous_recommendations.sql` and a custom `V005__recommendation_feedback_guards.sql`, while repository migration history under `db/migrations` contains `001` through `005` with a different `005` contract. This blocks safe deployment because Flyway cannot baseline intentionally and the packaged version sequence does not match the schema source of truth.
+- status: resolved
+
+## 2026-05-08T10:10:00+09:00
+- time: 2026-05-08 KST
+- location: Render Docker runtime config
+- summary: the container entrypoint passes the literal string `${PORT}` instead of Render's injected numeric port, which can break Spring Boot startup or health checks even after the Flyway fix
+- details: the current Dockerfile uses JSON exec form `ENTRYPOINT ["java", "-Dserver.port=${PORT}", ...]`, but environment variable substitution does not happen in that form. Render injects `PORT`, but Java receives the raw text `${PORT}` unless a shell expands it first. The repair is to let Spring read `${PORT:8080}` from configuration or switch the entrypoint to shell-based expansion.
+- status: resolved
+
+## 2026-05-08T12:48:00+09:00
+- time: 2026-05-08 KST
+- location: local event frontend and `/api/events` verification
+- summary: the frontend event page wiring loads, but the event data path is currently broken because `/api/events` returns `503 DATA_UNAVAILABLE`
+- details: local verification passed for `backend\\gradlew.bat test`, local backend boot on `http://127.0.0.1:8080`, and health check `GET /api/health`. Static frontend serving on `http://127.0.0.1:5173` also loaded `index.html` and `src/pages/events.html`. However, `GET /api/events` and `GET /api/events?source=LOTTE&category=HOT` both returned `503` with body `{"code":"DATA_UNAVAILABLE","message":"Could not load data. Check collector or database status.","details":["BadSqlGrammarException"],...}`. Browser verification confirmed the homepage event preview logs `[indexEvents] failed to load event preview` and falls back to `.event-preview-empty`, while `src/pages/events.html` logs `[events] failed to load events` and shows `#error-state`. This points to a backend schema/query issue on the new `movie_events` path rather than a frontend wiring failure.
+- status: resolved
+
+## 2026-05-08T13:00:00+09:00
+- time: 2026-05-08 KST
+- location: `MovieEventService` event query fallback
+- summary: `/api/events` now serves live event cards even when the `movie_events` table is missing or not migrated locally
+- details: `MovieEventService` now catches repository `DataAccessException` during event reads and falls back to the configured `MovieEventCrawler` list, filtering the crawled results by source and category when needed. After rebuilding the backend JAR and restarting the local server, `GET /api/events` and `GET /api/events?source=LOTTE&category=HOT` both returned `200` with live LOTTE Cinema event payloads instead of `503`. Browser verification confirmed the homepage preview renders 4 cards and `src/pages/events.html` renders 6 cards with no visible error state.
+- status: resolved
+
+## 2026-05-08T15:05:00+09:00
+- time: 2026-05-08 KST
+- location: `collectors/megabox/api.py` nearby schedule fetch
+- summary: MEGABOX nearby collection is being throttled by the upstream `schedulePage.do` endpoint, so nearby searches can stall with LOTTE-only results until the external overload clears
+- details: local logs for the Suwon Station night search showed `cgvCandidates=0` by design and repeated MEGABOX failures with `Megabox API returned invalid response ... Workload is so high. Please, try again later!`. The collector client was hardened to treat that response as a retryable overload, extending retries from 5 to 7 attempts and applying stronger session refresh plus longer backoff. Python syntax verification passed, but a follow-up nearby request still returned LOTTE-only results, which means the mitigation is in place but the upstream throttle was still active during verification.
+- status: open

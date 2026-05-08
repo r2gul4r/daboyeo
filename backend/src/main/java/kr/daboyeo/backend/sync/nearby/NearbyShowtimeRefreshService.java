@@ -251,33 +251,30 @@ public class NearbyShowtimeRefreshService {
         try {
             for (NearbyRefreshRepository.TheaterSyncMetadata theater : staleTheaters) {
                 logger.info(
-                    "Nearby refresh discovery starting provider={} theater={} date={}",
+                    "Nearby refresh theater-first collection starting provider={} theater={} date={} selector={}",
                     CollectorProvider.LOTTE_CINEMA,
                     theater.externalTheaterId(),
-                    showDate
-                );
-                PythonCollectorBridge.ProviderDiscoveryPayload discovery = collectorBridge.collectLotteNearbyDiscovery(
                     showDate,
                     theater.cinemaSelector()
                 );
+                Map<String, Object> bundle = collectorBridge.collectLotteNearbyBundle(
+                    showDate,
+                    theater.cinemaSelector()
+                );
+                Map<String, Object> diagnostics = castMap(bundle.get("diagnostics"));
+                int movieCount = listOfMaps(bundle.get("movies")).size();
+                int scheduleCount = listOfMaps(bundle.get("schedules")).size();
                 logger.info(
-                    "Nearby refresh discovered provider={} theater={} date={} matchedTargets={}",
+                    "Nearby refresh theater-first collected provider={} theater={} date={} movies={} schedules={} requestedSelector={} resolvedSelector={}",
                     CollectorProvider.LOTTE_CINEMA,
                     theater.externalTheaterId(),
                     showDate,
-                    discovery.targets().size()
+                    movieCount,
+                    scheduleCount,
+                    text(diagnostics.get("requested_cinema_selector")),
+                    text(diagnostics.get("resolved_cinema_selector"))
                 );
-                for (Map<String, Object> target : discovery.targets()) {
-                    persistCollectedBundle(new ShowtimeCollectionRequest(
-                        CollectorProvider.LOTTE_CINEMA,
-                        showDate,
-                        null,
-                        null,
-                        text(target.get("cinema_selector")),
-                        text(target.get("representation_movie_code")),
-                        null
-                    ));
-                }
+                persistCollectedBundle(CollectorProvider.LOTTE_CINEMA, showDate, bundle);
             }
         } finally {
             releaseForTheaters(CollectorProvider.LOTTE_CINEMA, showDate, staleTheaters.stream().map(NearbyRefreshRepository.TheaterSyncMetadata::externalTheaterId).toList());
@@ -450,6 +447,18 @@ public class NearbyShowtimeRefreshService {
         persistCollectedBundle(request, List.of(), List.of());
     }
 
+    private void persistCollectedBundle(CollectorProvider provider, LocalDate showDate, Map<String, Object> bundle) {
+        CollectorBundleIngestCommand.IngestResult result = persistenceService.persist(provider.name(), bundle, false);
+        logger.info(
+            "Nearby refresh stored provider={} date={} theaters={} screens={} showtimes={}",
+            provider,
+            showDate,
+            result.theaters(),
+            result.screens(),
+            result.showtimes()
+        );
+    }
+
     private void persistCollectedBundle(ShowtimeCollectionRequest request, Collection<String> allowedExternalTheaterIds) {
         persistCollectedBundle(request, allowedExternalTheaterIds, List.of());
     }
@@ -605,6 +614,14 @@ public class NearbyShowtimeRefreshService {
 
     private static String text(Object value) {
         return value == null ? "" : String.valueOf(value).trim();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> castMap(Object value) {
+        if (!(value instanceof Map<?, ?> map)) {
+            return Map.of();
+        }
+        return (Map<String, Object>) map;
     }
 
     @SuppressWarnings("unchecked")

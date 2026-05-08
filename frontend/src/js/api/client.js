@@ -1,7 +1,50 @@
-const DEFAULT_API_BASE_URL = "http://localhost:8080";
+const LOCAL_API_BASE_URL = "http://localhost:8080";
+
+function readApiBaseOverride() {
+  if (typeof window !== "undefined" && typeof window.DABOYEO_API_BASE_URL === "string") {
+    return window.DABOYEO_API_BASE_URL.trim();
+  }
+
+  if (typeof document !== "undefined") {
+    const metaValue = document
+      .querySelector('meta[name="daboyeo-api-base-url"]')
+      ?.getAttribute("content");
+    if (typeof metaValue === "string" && metaValue.trim()) {
+      return metaValue.trim();
+    }
+  }
+
+  return "";
+}
+
+function isLocalHost(hostname) {
+  const normalized = String(hostname || "").toLowerCase();
+  return normalized === "localhost" || normalized === "127.0.0.1" || normalized === "::1";
+}
+
+function normalizeBaseUrl(value) {
+  return String(value || "").replace(/\/+$/, "");
+}
+
+function resolveDefaultApiBaseUrl() {
+  if (typeof window === "undefined" || !window.location) {
+    return LOCAL_API_BASE_URL;
+  }
+
+  if (window.location.protocol === "file:") {
+    return LOCAL_API_BASE_URL;
+  }
+
+  if (isLocalHost(window.location.hostname)) {
+    return LOCAL_API_BASE_URL;
+  }
+
+  return window.location.origin;
+}
 
 export function getApiBaseUrl() {
-  return window.DABOYEO_API_BASE_URL || DEFAULT_API_BASE_URL;
+  const override = readApiBaseOverride();
+  return normalizeBaseUrl(override || resolveDefaultApiBaseUrl());
 }
 
 async function requestJson(path, options = {}) {
@@ -71,4 +114,18 @@ export async function sendRecommendationFeedback(runId, payload) {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function fetchMovieEvents(filters = {}) {
+  const params = new URLSearchParams();
+
+  if (filters.source) {
+    params.set("source", filters.source);
+  }
+  if (filters.category) {
+    params.set("category", filters.category);
+  }
+
+  const query = params.toString();
+  return requestJson(`/api/events${query ? `?${query}` : ""}`);
 }

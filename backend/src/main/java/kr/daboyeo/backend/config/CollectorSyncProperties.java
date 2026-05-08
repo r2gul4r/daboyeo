@@ -64,9 +64,9 @@ public class CollectorSyncProperties {
         private boolean autoDiscoveryEnabled = false;
         private boolean cleanupEnabled = true;
         private int retentionDays = 3;
-        private int discoveryMovieLimit = 20;
+        private int discoveryMovieLimit = 100;
         private int discoveryLotteCinemaLimit = 50;
-        private int discoveryLotteMovieTargetLimit = 5;
+        private int discoveryLotteMovieTargetLimit = 8;
         private int discoveryLotteTotalTargetLimit = 12;
         private int discoveryMegaboxBundleLimit = 20;
         private boolean nearbyRefreshEnabled = true;

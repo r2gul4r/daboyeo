@@ -3,17 +3,54 @@
  */
 
 const movieGrid = document.getElementById('movie-grid');
-const DEFAULT_API_BASE_ORIGIN = 'http://localhost:8080';
+const LOCAL_API_BASE_ORIGIN = 'http://localhost:8080';
 const API_BASE_URL = resolveApiBaseUrl();
 
 function resolveApiBaseUrl() {
-  const override = typeof window !== 'undefined' ? window.DABOYEO_API_BASE_URL : '';
-  const baseOrigin = normalizeApiOrigin(override || DEFAULT_API_BASE_ORIGIN);
+  const baseOrigin = normalizeApiOrigin(readApiBaseOverride() || resolveDefaultApiOrigin());
   return `${baseOrigin}/api`;
 }
 
 function normalizeApiOrigin(value) {
-  return String(value || DEFAULT_API_BASE_ORIGIN).replace(/\/+$/, '');
+  return String(value || '').replace(/\/+$/, '');
+}
+
+function readApiBaseOverride() {
+  if (typeof window !== 'undefined' && typeof window.DABOYEO_API_BASE_URL === 'string') {
+    return window.DABOYEO_API_BASE_URL.trim();
+  }
+
+  if (typeof document !== 'undefined') {
+    const metaValue = document
+      .querySelector('meta[name="daboyeo-api-base-url"]')
+      ?.getAttribute('content');
+    if (typeof metaValue === 'string' && metaValue.trim()) {
+      return metaValue.trim();
+    }
+  }
+
+  return '';
+}
+
+function isLocalHost(hostname) {
+  const normalized = String(hostname || '').toLowerCase();
+  return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1';
+}
+
+function resolveDefaultApiOrigin() {
+  if (typeof window === 'undefined' || !window.location) {
+    return LOCAL_API_BASE_ORIGIN;
+  }
+
+  if (window.location.protocol === 'file:') {
+    return LOCAL_API_BASE_ORIGIN;
+  }
+
+  if (isLocalHost(window.location.hostname)) {
+    return LOCAL_API_BASE_ORIGIN;
+  }
+
+  return window.location.origin;
 }
 
 function createElement(tagName, className, textContent) {

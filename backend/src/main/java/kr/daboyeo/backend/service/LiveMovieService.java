@@ -179,34 +179,7 @@ public class LiveMovieService {
     }
 
     private List<LiveMovieScheduleItem> findNearbyItems(LiveMovieSearchCriteria criteria) {
-        return keepNearestTheaterPerProvider(toItems(repository.findNearbySchedules(criteria), criteria));
-    }
-
-    private List<LiveMovieScheduleItem> keepNearestTheaterPerProvider(List<LiveMovieScheduleItem> items) {
-        if (items.isEmpty()) {
-            return items;
-        }
-
-        Map<String, LiveMovieScheduleItem> nearestByProvider = new LinkedHashMap<>();
-        for (LiveMovieScheduleItem item : items) {
-            nearestByProvider.putIfAbsent(normalizeProviderValue(item.provider()), item);
-        }
-
-        return items.stream()
-            .filter(item -> sameTheater(item, nearestByProvider.get(normalizeProviderValue(item.provider()))))
-            .toList();
-    }
-
-    private boolean sameTheater(LiveMovieScheduleItem left, LiveMovieScheduleItem right) {
-        if (left == null || right == null) {
-            return false;
-        }
-        if (hasText(left.provider_code()) && hasText(left.theater_id()) && hasText(right.provider_code()) && hasText(right.theater_id())) {
-            return left.provider_code().equalsIgnoreCase(right.provider_code())
-                && left.theater_id().equalsIgnoreCase(right.theater_id());
-        }
-        return normalizeText(left.provider()).equals(normalizeText(right.provider()))
-            && normalizeText(left.theater_name()).equals(normalizeText(right.theater_name()));
+        return toItems(repository.findNearbySchedules(criteria), criteria);
     }
 
     private String normalizeText(String value) {

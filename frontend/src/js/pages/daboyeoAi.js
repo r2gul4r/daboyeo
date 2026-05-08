@@ -1078,7 +1078,7 @@ function renderRecommendationErrorStep() {
 function renderSessionErrorStep() {
   return renderErrorPanel(
     "익명 세션을 만들지 못했어",
-    state.run.error?.message || "Spring API가 localhost:8080에서 실행 중인지 확인해줘.",
+    state.run.error?.message || "Spring API 연결 주소가 올바른지 확인해줘.",
     [
       { label: "다시 연결", onClick: ensureSession },
       { label: "홈으로", onClick: goToMainPage, secondary: true },

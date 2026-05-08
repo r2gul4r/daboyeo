@@ -287,6 +287,19 @@
       </div>
     </div>
 
+    <section class="main-event-section" id="events">
+      <div class="section-header">
+        <div class="section-title-group">
+          <div class="now-playing-title">지금 인기 이벤트</div>
+          <div class="now-playing-subtitle">놓치면 아쉬운 영화관별 혜택을 빠르게 훑어봐.</div>
+        </div>
+        <a href="./src/pages/events.html" class="more-link">
+          모두 보기 <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      <div id="main-event-grid" class="event-grid"></div>
+    </section>
+
     <!-- Seat Recommendation Section -->
     <div class="ai-recommendation-section" id="ai">
       <div class="ai-section-label">성향 좌석 추천</div>
@@ -316,7 +329,7 @@
           <div class="ai-description-text">
             DABOYEO의 성향별 좌석 추천은 성격 유형과 관람 스타일을 바탕으로 편하게 고를 수 있는 명당 구역을 제안합니다. MBTI별 추천부터 커플 좌석, 단체 좌석, 랜덤 뽑기까지 영화관에서 더 잘 맞는 자리를 찾아보세요.
           </div>
-          <button class="best-seat-cta-btn" type="button" data-seat-flow="mbti" onclick="window.location.href='./src/basic/seatRecommendMbti.html?flow=mbti'"><i class="fas fa-chair"></i> 명당 좌석 찾기</button>
+          <button class="best-seat-cta-btn" type="button" data-seat-flow="mbti" onclick="window.location.href='./src/pages/seatRecommendMbti.html?flow=mbti'"><i class="fas fa-chair"></i> 명당 좌석 찾기</button>
         </div>
       </div>
     </div>
@@ -362,6 +375,7 @@
 
   <script src="./src/js/include.js"></script>
   <script src="./src/js/pages/common.js"></script>
+  <script type="module" src="./src/js/pages/indexEvents.js"></script>
   <script type="module" src="./src/js/pages/script.js"></script>
   <script type="module" src="./src/js/api/kakaoMap.js"></script>
 </body>

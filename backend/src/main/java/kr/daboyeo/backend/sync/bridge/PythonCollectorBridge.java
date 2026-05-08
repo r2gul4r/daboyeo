@@ -69,7 +69,8 @@ public class PythonCollectorBridge {
         env.put("MEGABOX_AREA_CODES", String.join("||", properties.getShowtimes().getMegaboxAreaCodes()));
         Map<String, Object> payload = executeJsonScript(script, env);
         return new ProviderDiscoveryPayload(
-            listOfMaps(payload.get("targets"))
+            listOfMaps(payload.get("targets")),
+            discoveryDiagnostics(payload)
         );
     }
 
@@ -80,7 +81,14 @@ public class PythonCollectorBridge {
         env.put("DISCOVERY_MOVIE_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryMovieLimit()));
         env.put("DISCOVERY_LOTTE_MOVIE_TARGET_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryLotteMovieTargetLimit()));
         Map<String, Object> payload = executeJsonScript(buildNearbyLotteDiscoveryScript(), env);
-        return new ProviderDiscoveryPayload(listOfMaps(payload.get("targets")));
+        return new ProviderDiscoveryPayload(listOfMaps(payload.get("targets")), discoveryDiagnostics(payload));
+    }
+
+    public Map<String, Object> collectLotteNearbyBundle(java.time.LocalDate playDate, String cinemaSelector) {
+        Map<String, String> env = new LinkedHashMap<>();
+        env.put("PLAY_DATE", playDate.toString());
+        env.put("CINEMA_SELECTOR", cinemaSelector);
+        return executeJsonScript(buildNearbyLotteTheaterBundleScript(), env);
     }
 
     public ProviderDiscoveryPayload collectMegaboxNearbyDiscovery(java.time.LocalDate playDate, String areaCode) {
@@ -90,7 +98,7 @@ public class PythonCollectorBridge {
         env.put("DISCOVERY_MOVIE_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryMovieLimit()));
         env.put("DISCOVERY_BUNDLE_LIMIT", String.valueOf(properties.getShowtimes().getDiscoveryMegaboxBundleLimit()));
         Map<String, Object> payload = executeJsonScript(buildNearbyMegaboxDiscoveryScript(), env);
-        return new ProviderDiscoveryPayload(listOfMaps(payload.get("targets")));
+        return new ProviderDiscoveryPayload(listOfMaps(payload.get("targets")), discoveryDiagnostics(payload));
     }
 
     public SeatCollectionResult collectSeatSnapshot(SeatCollectionRequest request) {
@@ -366,6 +374,8 @@ public class PythonCollectorBridge {
             target_limit = int(os.environ.get('DISCOVERY_LOTTE_MOVIE_TARGET_LIMIT', '5'))
             movies = [row for row in collector.build_movie_records() if row.get('movie_no')][:movie_limit]
             targets = []
+            sampled_probes = []
+            matched_probes = []
             cinema_id = cinema_selector.split('|')[-1] if '|' in cinema_selector else cinema_selector
             for movie in movies:
                 movie_no = str(movie.get('movie_no') or '').strip()
@@ -376,7 +386,17 @@ public class PythonCollectorBridge {
                     cinema_selector=cinema_selector,
                     representation_movie_code=movie_no,
                 )
+                schedule_count = len(schedules)
+                probe = {
+                    'movie_no': movie_no,
+                    'movie_name': movie.get('movie_name'),
+                    'schedule_count': schedule_count,
+                    'matched': bool(schedules),
+                }
+                if len(sampled_probes) < 20:
+                    sampled_probes.append(probe)
                 if schedules:
+                    matched_probes.append(probe)
                     targets.append({
                         'cinema_selector': cinema_selector,
                         'representation_movie_code': movie_no,
@@ -387,7 +407,20 @@ public class PythonCollectorBridge {
                     if len(targets) >= target_limit:
                         break
             Path(os.environ['OUTPUT_JSON_PATH']).write_text(
-                json.dumps({'targets': targets}, ensure_ascii=False),
+                json.dumps({
+                    'targets': targets,
+                    'diagnostics': {
+                        'provider': 'LOTTE_CINEMA',
+                        'cinema_selector': cinema_selector,
+                        'cinema_id': cinema_id,
+                        'movie_limit': movie_limit,
+                        'target_limit': target_limit,
+                        'probed_movie_count': len(movies),
+                        'matched_target_count': len(targets),
+                        'sampled_probes': sampled_probes,
+                        'matched_probes': matched_probes,
+                    },
+                }, ensure_ascii=False),
                 encoding='utf-8'
             )
             """;
@@ -422,6 +455,70 @@ public class PythonCollectorBridge {
                 json.dumps({'targets': targets}, ensure_ascii=False),
                 encoding='utf-8'
             )
+            """;
+    }
+
+    private static String buildNearbyLotteTheaterBundleScript() {
+        return """
+            import json, os
+            from pathlib import Path
+            from collectors.lotte.collector import LotteCinemaCollector
+
+            collector = LotteCinemaCollector()
+            play_date = os.environ['PLAY_DATE']
+            requested_selector = os.environ['CINEMA_SELECTOR']
+            cinema_id = requested_selector.split('|')[-1] if '|' in requested_selector else requested_selector
+
+            cinemas = [
+                cinema for cinema in collector.build_cinema_records()
+                if str(cinema.get('cinema_id') or '').strip() == cinema_id
+            ]
+            preferred_cinema = next(
+                (
+                    cinema for cinema in cinemas
+                    if str(cinema.get('division_code') or '').strip() == '1'
+                ),
+                cinemas[0] if cinemas else None
+            )
+            cinema_selector = collector.build_cinema_selector((preferred_cinema or {}).get('raw') or {}) or requested_selector
+
+            schedules = collector.build_theater_schedule_records(
+                play_date=play_date,
+                cinema_selector=cinema_selector,
+            )
+            matched_movie_ids = {
+                str(schedule.get('movie_no') or '').strip()
+                for schedule in schedules
+                if str(schedule.get('movie_no') or '').strip()
+            }
+            movies = [
+                movie for movie in collector.build_movie_records()
+                if str(movie.get('movie_no') or '').strip() in matched_movie_ids
+            ]
+            play_dates = [
+                play_day for play_day in collector.build_play_date_records()
+                if str(play_day.get('play_date') or '').strip() == play_date
+            ]
+
+            bundle = {
+                'play_date': play_date,
+                'movie_count': len(movies),
+                'cinema_count': len(cinemas),
+                'play_date_count': len(play_dates),
+                'schedule_count': len(schedules),
+                'seat_count': 0,
+                'movies': movies,
+                'cinemas': cinemas,
+                'play_dates': play_dates,
+                'schedules': schedules,
+                'seat_records': [],
+                'seat_summary': None,
+                'diagnostics': {
+                    'requested_cinema_selector': requested_selector,
+                    'resolved_cinema_selector': cinema_selector,
+                },
+            }
+            Path(os.environ['OUTPUT_JSON_PATH']).write_text(json.dumps(bundle, ensure_ascii=False), encoding='utf-8')
             """;
     }
 
@@ -503,8 +600,21 @@ public class PythonCollectorBridge {
             .toList();
     }
 
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> discoveryDiagnostics(Object value) {
+        if (!(value instanceof Map<?, ?> map)) {
+            return Map.of();
+        }
+        Object diagnostics = map.get("diagnostics");
+        if (!(diagnostics instanceof Map<?, ?> diagnosticsMap)) {
+            return Map.of();
+        }
+        return (Map<String, Object>) diagnosticsMap;
+    }
+
     public record ProviderDiscoveryPayload(
-        List<Map<String, Object>> targets
+        List<Map<String, Object>> targets,
+        Map<String, Object> diagnostics
     ) {
     }
 }
